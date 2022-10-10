@@ -68,6 +68,7 @@ func (e *sharePlugin) ListenOps(op interface{}) {
 		err = e.shareWebsite(*o)
 		tag = o.Tag
 	case *TextOp:
+		defer textOpPool.Release(o)
 		err = e.shareText(*o)
 		tag = o.Tag
 	}
