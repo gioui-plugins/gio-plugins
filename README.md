@@ -70,7 +70,8 @@ Of course, `pingpong` has no use in real-world applications, but it can be used 
 | **[PingPong](https://github.com/gioui-plugins/gio-plugins/tree/main/pingpong)** | Test if the plugin system is working.            | _Android, iOS, macOS, Windows, WebAssembly, Linux, FreeBSD_  |  
 | **[Share](https://github.com/gioui-plugins/gio-plugins/tree/main/share)** | Share text/links using the native share dialog.            | _Android, iOS, macOS, Windows, WebAssembly_  |  
 | **[WebViewer](https://github.com/gioui-plugins/gio-plugins/tree/main/webviewer)** | Display in-app webview using the native webview implementation on each platform.            | _Android, iOS, macOS, Windows, WebAssembly_  |  
-| **[Hyperlink](https://github.com/gioui-plugins/gio-plugin/tree/main/hyperlink)** |  Open hyperlinks in the default browser.            | _Android, iOS, macOS, Windows, WebAssembly_  |  
+| **[Hyperlink](https://github.com/gioui-plugins/gio-plugins/tree/main/hyperlink)** |  Open hyperlinks in the default browser.            | _Android, iOS, macOS, Windows, WebAssembly_  |  
+| **[Explorer](https://github.com/gioui-plugins/gio-plugins/tree/main/explorer)** |  Opens the native file-dialog, to read/write files.  | _Android, iOS, macOS, Windows, WebAssembly_  |  
 
 **We have few plugins planned:**
 
