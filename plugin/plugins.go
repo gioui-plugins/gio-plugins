@@ -1,13 +1,14 @@
 package plugin
 
 import (
+	"reflect"
+	"sync"
+
 	"gioui.org/app"
 	"gioui.org/io/event"
 	"gioui.org/io/pointer"
 	"gioui.org/op"
 	"gioui.org/op/clip"
-	"reflect"
-	"sync"
 )
 
 // Handler is the interface that represents the Plugin.
@@ -75,6 +76,11 @@ type OpPool[T any] struct {
 // call Release() after you done using the op.
 func NewOpPool[T any]() OpPool[T] {
 	return OpPool[T]{pool: sync.Pool{New: func() any { return new(T) }}}
+}
+
+// Get returns a new op from the pool.
+func (x *OpPool[T]) Get() *T {
+	return x.pool.Get().(*T)
 }
 
 // WriteOp adds the given data into the op.Ops queue.
