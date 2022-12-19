@@ -53,9 +53,9 @@ You can receive responses using the `Tag`, as Gio-core operations:
 
 ```go
 for _, evt := range gtx.Events(&something) {
-if evt, ok := evt.(pingpong.PongEvent); ok {
-fmt.Println(evt.Pong)
-} 
+    if evt, ok := evt.(pingpong.PongEvent); ok {
+        fmt.Println(evt.Pong)
+    } 
 }
 ```
 
@@ -65,46 +65,25 @@ Of course, `pingpong` has no use in real-world applications, but it can be used 
 
 **We have few plugins available:**
 
-- **[PingPong](https://github.com/gioui-plugins/gio-plugin/tree/main/pingpong)**:
-    - Test if the plugin system is working.
-- **[Share](https://github.com/gioui-plugins/gio-plugin/tree/main/share)**:
-    - Share text/links using the native share dialog.
-    - _Android, iOS, macOS, Windows, WebAssembly_
-- **[WebViewer](https://github.com/gioui-plugins/gio-plugin/tree/main/webviewer)**:
-    - Display in-app webview using the native webview implementation on each platform.
-    - _Android, iOS, macOS, Windows, WebAssembly*_
-- **[Hyperlink](https://github.com/gioui-plugins/gio-plugin/tree/main/hyperlink)**:
-    - Open hyperlinks in the default browser.
-    - _Android, iOS, FreeBSD, Linux, macOS, Windows, WebAssembly_
+| Name           | Description | OS |
+|----------------|------------------|-----------------|
+| **[PingPong](https://github.com/gioui-plugins/gio-plugins/tree/main/pingpong)** | Test if the plugin system is working.            | _Android, iOS, macOS, Windows, WebAssembly, Linux, FreeBSD_  |  
+| **[Share](https://github.com/gioui-plugins/gio-plugins/tree/main/share)** | Share text/links using the native share dialog.            | _Android, iOS, macOS, Windows, WebAssembly_  |  
+| **[WebViewer](https://github.com/gioui-plugins/gio-plugins/tree/main/webviewer)** | Display in-app webview using the native webview implementation on each platform.            | _Android, iOS, macOS, Windows, WebAssembly_  |  
+| **[Hyperlink](https://github.com/gioui-plugins/gio-plugin/tree/main/hyperlink)** |  Open hyperlinks in the default browser.            | _Android, iOS, macOS, Windows, WebAssembly_  |  
 
 **We have few plugins planned:**
 
-Some plugins are planned, but not yet implemented, such as (in no particular order):
+Some plugins are planned, but not yet implemented, follow the development at https://github.com/orgs/gioui-plugins/projects/1. Also, 
+consider send some 👍 on issues which mentions features that you like.
 
-- WebAuthn:
-    - Use the native WebAuthn (previously U2F) API to authenticate users.
-- Credential Storage:
-    - Use the native secure storage to store and retrieve credentials (such as tokens and passwords).
-        - (Alternative: github.com/inkeliz/giocredentials)
-- Camera:
-    - Use the native camera API to take pictures and videos.
-- File-Dialog:
-    - Use the native file dialog to open and save files.
-        - (Alternative: github.com/gioui/gio-x/tree/main/explorer)
-- Gamepad:
-    - Use the native gamepad API to get the current state of the gamepad, in real-time.
-        - (Alternative: github.com/gioui/gio-x/pull/8)
-- Geolocation:
-    - Use the native GPS/Geolocation API to get the current location of the device, and updates in real-time, preferable
-      even when the app is in background.
-- Push-Notifications:
-    - Use the native push notification API to receive push notifications, even when the app is closed and (if possible)
-      supporting custom protocols and sockets.
-- System Status:
-    - Get system status, such as dark mode, locale/language, battery, audio volume, network mode, etc.
-        - (Alternative: github.com/gioui/gio-x/tree/main/pref)
+
 
 If you want to help, please open an issue or a PR! If you want to suggest a plugin, please open an issue.
+
+-----------
+
+
 
 ### Creating a new plugin
 
