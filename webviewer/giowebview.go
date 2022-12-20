@@ -22,13 +22,19 @@ import (
 var (
 	wantOp = []reflect.Type{
 		reflect.TypeOf(&webViewOp{}),
-		reflect.TypeOf(&RectOp{}),
 		reflect.TypeOf(&OffsetOp{}),
+		reflect.TypeOf(&RectOp{}),
 		reflect.TypeOf(&NavigateOp{}),
-		reflect.TypeOf(&ExecuteJavascriptOp{}),
+		reflect.TypeOf(&DestroyOp{}),
+		reflect.TypeOf(&SetCookieOp{}),
+		reflect.TypeOf(&ListCookieOp{}),
+		reflect.TypeOf(&RemoveCookieOp{}),
 		reflect.TypeOf(&SetStorageOp{}),
 		reflect.TypeOf(&ListStorageOp{}),
 		reflect.TypeOf(&RemoveStorageOp{}),
+		reflect.TypeOf(&ExecuteJavascriptOp{}),
+		reflect.TypeOf(&InstallJavascriptOp{}),
+		reflect.TypeOf(&MessageReceiverOp{}),
 	}
 	wantEvent = []reflect.Type{
 		reflect.TypeOf(app.ViewEvent{}),
@@ -661,15 +667,6 @@ type MessageReceiverOp struct {
 	Name string
 }
 
-// MessageEvent is the event sent when receiving a message,
-// from previously defined MessageReceiverOp.
-type MessageEvent struct {
-	Message string
-}
-
-// ImplementsEvent the event.Event interface.
-func (c MessageEvent) ImplementsEvent() {}
-
 var poolMessageReceiverOp = plugin.NewOpPool[MessageReceiverOp]()
 
 // Add adds a new ExecuteJavascriptOp to the queue.
@@ -689,6 +686,15 @@ func (o *MessageReceiverOp) execute(_ *app.Window, p *webViewPlugin, _ system.Fr
 		p.plugin.SendEvent(p.activeTag, ErrorEvent{error: err})
 	}
 }
+
+// MessageEvent is the event sent when receiving a message,
+// from previously defined MessageReceiverOp.
+type MessageEvent struct {
+	Message string
+}
+
+// ImplementsEvent the event.Event interface.
+func (c MessageEvent) ImplementsEvent() {}
 
 // NavigationEvent is issued when the webview change the URL.
 type NavigationEvent webview.NavigationEvent

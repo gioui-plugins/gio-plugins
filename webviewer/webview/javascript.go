@@ -1,8 +1,9 @@
 package webview
 
 import (
-	"github.com/gioui-plugins/gio-plugins/webviewer/webview/internal"
 	"strconv"
+
+	"github.com/gioui-plugins/gio-plugins/webviewer/webview/internal"
 )
 
 type JavascriptManager interface {
