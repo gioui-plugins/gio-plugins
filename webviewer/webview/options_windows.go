@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"os"
 	"strings"
+
+	"golang.org/x/sys/windows"
 )
 
 func (r *driver) setProxy() {
@@ -21,9 +23,7 @@ func (r *driver) setProxy() {
 		proxy = fmt.Sprintf("[%s]:%s", options.proxy.ip, options.proxy.port)
 	}
 
-	os.Setenv("WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS",
-		fmt.Sprintf(`%s --proxy-server="%s"`, os.Getenv("WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS"), proxy),
-	)
+	os.Setenv("WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS", fmt.Sprintf(`%s --proxy-server="%s"`, os.Getenv("WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS"), proxy))
 }
 
 func (r *driver) setCerts() {
@@ -42,7 +42,20 @@ func (r *driver) setCerts() {
 		h.Reset()
 	}
 
-	os.Setenv("WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS",
-		fmt.Sprintf(`%s --ignore-certificate-errors-spki-list="%s"`, os.Getenv("WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS"), jcerts),
-	)
+	os.Setenv("WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS", fmt.Sprintf(`%s --ignore-certificate-errors-spki-list="%s"`, os.Getenv("WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS"), jcerts))
+}
+
+func (r *driver) setDir() {
+	options.Lock()
+	defer options.Unlock()
+
+	if len(options.folder) == 0 {
+		return
+	}
+
+	f, err := windows.UTF16FromString(options.folder)
+	if err != nil {
+		return
+	}
+	r.dir = f
 }

@@ -1,6 +1,7 @@
 package webviewer
 
 import (
+	"container/list"
 	"image"
 	"net/url"
 	"reflect"
@@ -44,9 +45,17 @@ var (
 	}
 )
 
+var webViewPluginInstances = struct {
+	sync.Mutex
+	list []*webViewPlugin
+}{}
+
 func init() {
 	plugin.Register(func(w *app.Window, plugin *plugin.Plugin) plugin.Handler {
-		return &webViewPlugin{
+		p := &webViewPlugin{
+			funcs:     new(list.List).Init(),
+			funcsChan: make(chan struct{}, 1),
+
 			window: w,
 			plugin: plugin,
 
@@ -55,12 +64,20 @@ func init() {
 			seem:   make([]bool, 0, 8),
 			bounds: make([][2]f32.Point, 0, 8),
 		}
+		go p.runFuncs()
+		webViewPluginInstances.Lock()
+		webViewPluginInstances.list = append(webViewPluginInstances.list, p)
+		webViewPluginInstances.Unlock()
+		return p
 	})
 }
 
 type webViewPlugin struct {
 	window *app.Window
 	plugin *plugin.Plugin
+
+	funcs     *list.List
+	funcsChan chan struct{}
 
 	mutex sync.Mutex
 
@@ -139,6 +156,36 @@ func (p *webViewPlugin) ListenEvents(evt event.Event) {
 		p.activeIndex = 0
 		p.active = nil
 		p.activeTag = nil
+	}
+}
+
+func (p *webViewPlugin) run(f func()) {
+	p.mutex.Lock()
+	defer p.mutex.Unlock()
+
+	p.funcs.PushBack(f)
+
+	select {
+	case p.funcsChan <- struct{}{}:
+	default:
+	}
+}
+
+func (p *webViewPlugin) runFuncs() {
+	for range p.funcsChan {
+		for {
+			p.mutex.Lock()
+			f := p.funcs.Front()
+			var fn func()
+			if f != nil {
+				fn = f.Value.(func())
+				p.funcs.Remove(f)
+			}
+			p.mutex.Unlock()
+			if fn != nil {
+				fn()
+			}
+		}
 	}
 }
 
@@ -316,10 +363,7 @@ func (o *RectOp) execute(_ *app.Window, p *webViewPlugin, e system.FrameEvent) {
 	p.bounds[p.activeIndex][0].X += float32(unit.Dp(e.Metric.PxPerDp) * e.Insets.Left)
 	p.bounds[p.activeIndex][0].Y += float32(unit.Dp(e.Metric.PxPerDp) * e.Insets.Top)
 
-	p.active.Resize(
-		webview.Point{X: p.bounds[p.activeIndex][1].X, Y: p.bounds[p.activeIndex][1].Y},
-		webview.Point{X: p.bounds[p.activeIndex][0].X, Y: p.bounds[p.activeIndex][0].Y},
-	)
+	p.active.Resize(webview.Point{X: p.bounds[p.activeIndex][1].X, Y: p.bounds[p.activeIndex][1].Y}, webview.Point{X: p.bounds[p.activeIndex][0].X, Y: p.bounds[p.activeIndex][0].Y})
 }
 
 // NavigateOp redirects the last Display to the
@@ -386,13 +430,13 @@ func (o *SetCookieOp) execute(_ *app.Window, p *webViewPlugin, _ system.FrameEve
 		return
 	}
 
-	go func() {
+	p.run(func() {
 		defer poolSetCookieOp.Release(o)
 		err := manager.AddCookie(o.Cookie)
 		if err != nil {
 			p.plugin.SendEvent(wvTag, ErrorEvent{error: err})
 		}
-	}()
+	})
 }
 
 // RemoveCookieOp sets given cookie in the webview.
@@ -415,13 +459,13 @@ func (o *RemoveCookieOp) execute(_ *app.Window, p *webViewPlugin, _ system.Frame
 		return
 	}
 
-	go func() {
+	p.run(func() {
 		defer poolRemoveCookieOp.Release(o)
 		err := manager.RemoveCookie(o.Cookie)
 		if err != nil {
 			p.plugin.SendEvent(wvTag, ErrorEvent{error: err})
 		}
-	}()
+	})
 }
 
 // ListCookieOp lists all cookies in the webview.
@@ -453,7 +497,7 @@ func (o *ListCookieOp) execute(_ *app.Window, p *webViewPlugin, _ system.FrameEv
 	manager := p.active.DataManager()
 	wvTag := p.activeTag
 
-	go func() {
+	p.run(func() {
 		defer poolListCookieOp.Release(o)
 		evt := CookiesEvent{
 			Cookies: o.Buffer,
@@ -466,7 +510,7 @@ func (o *ListCookieOp) execute(_ *app.Window, p *webViewPlugin, _ system.FrameEv
 		if err != nil {
 			p.plugin.SendEvent(wvTag, ErrorEvent{error: err})
 		}
-	}()
+	})
 }
 
 // StorageType is the type of storage.
@@ -496,7 +540,7 @@ func (o *SetStorageOp) execute(_ *app.Window, p *webViewPlugin, _ system.FrameEv
 	manager := p.active.DataManager()
 	wvTag := p.activeTag
 
-	go func() {
+	p.run(func() {
 		defer poolSetStorageOp.Release(o)
 		var err error
 		switch o.Local {
@@ -508,7 +552,7 @@ func (o *SetStorageOp) execute(_ *app.Window, p *webViewPlugin, _ system.FrameEv
 		if err != nil {
 			p.plugin.SendEvent(wvTag, ErrorEvent{error: err})
 		}
-	}()
+	})
 }
 
 // RemoveStorageOp sets given Storage in the webview.
@@ -528,7 +572,7 @@ func (o *RemoveStorageOp) execute(_ *app.Window, p *webViewPlugin, _ system.Fram
 	manager := p.active.DataManager()
 	wvTag := p.activeTag
 
-	go func() {
+	p.run(func() {
 		defer poolRemoveStorageOp.Release(o)
 		var err error
 		switch o.Local {
@@ -540,7 +584,7 @@ func (o *RemoveStorageOp) execute(_ *app.Window, p *webViewPlugin, _ system.Fram
 		if err != nil {
 			p.plugin.SendEvent(wvTag, ErrorEvent{error: err})
 		}
-	}()
+	})
 }
 
 // ListStorageOp lists all Storage in the webview.
@@ -574,7 +618,7 @@ func (o *ListStorageOp) execute(_ *app.Window, p *webViewPlugin, _ system.FrameE
 	manager := p.active.DataManager()
 	wvTag := p.activeTag
 
-	go func() {
+	p.run(func() {
 		defer poolListStorageOp.Release(o)
 		evt := StorageEvent{
 			Storage: o.Buffer,
@@ -594,7 +638,7 @@ func (o *ListStorageOp) execute(_ *app.Window, p *webViewPlugin, _ system.FrameE
 		if err != nil {
 			p.plugin.SendEvent(wvTag, ErrorEvent{error: err})
 		}
-	}()
+	})
 }
 
 // ExecuteJavascriptOp executes given JavaScript in the webview.
@@ -613,13 +657,13 @@ func (o *ExecuteJavascriptOp) execute(_ *app.Window, p *webViewPlugin, _ system.
 	manager := p.active.JavascriptManager()
 	wvTag := p.activeTag
 
-	go func() {
+	p.run(func() {
 		defer poolExecuteJavascriptOp.Release(o)
 		err := manager.RunJavaScript(o.Script)
 		if err != nil {
 			p.plugin.SendEvent(wvTag, ErrorEvent{error: err})
 		}
-	}()
+	})
 }
 
 // InstallJavascriptOp installs given JavaScript in the webview, executing
@@ -640,13 +684,13 @@ func (o *InstallJavascriptOp) execute(_ *app.Window, p *webViewPlugin, _ system.
 	manager := p.active.JavascriptManager()
 	wvTag := p.activeTag
 
-	go func() {
+	p.run(func() {
 		defer poolInstallJavascriptOp.Release(o)
 		err := manager.InstallJavascript(o.Script, webview.JavascriptOnLoadStart)
 		if err != nil {
 			p.plugin.SendEvent(wvTag, ErrorEvent{error: err})
 		}
-	}()
+	})
 }
 
 // MessageReceiverOp receives a message from the webview,
@@ -675,16 +719,20 @@ func (o MessageReceiverOp) Add(op *op.Ops) {
 }
 
 func (o *MessageReceiverOp) execute(_ *app.Window, p *webViewPlugin, _ system.FrameEvent) {
-	defer poolMessageReceiverOp.Release(o)
-
 	manager := p.active.JavascriptManager()
-	err := manager.AddCallback(o.Name, func(msg string) {
-		p.plugin.SendEvent(o.Tag, MessageEvent{Message: msg})
-	})
+	wvTag := p.activeTag
+	tag := o.Tag
 
-	if err != nil {
-		p.plugin.SendEvent(p.activeTag, ErrorEvent{error: err})
-	}
+	p.run(func() {
+		defer poolMessageReceiverOp.Release(o)
+		err := manager.AddCallback(o.Name, func(msg string) {
+			p.plugin.SendEvent(tag, MessageEvent{Message: msg})
+		})
+
+		if err != nil {
+			p.plugin.SendEvent(wvTag, ErrorEvent{error: err})
+		}
+	})
 }
 
 // MessageEvent is the event sent when receiving a message,

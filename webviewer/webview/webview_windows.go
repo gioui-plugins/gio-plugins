@@ -20,6 +20,7 @@ func init() {
 type driver struct {
 	config Config
 	active uint32
+	dir    []uint16
 
 	controllerCompletedHandler  *_ICoreWebView2CreateCoreWebView2ControllerCompletedHandler
 	environmentCompletedHandler *_ICoreWebView2CreateCoreWebView2EnvironmentCompletedHandler
@@ -41,6 +42,7 @@ func (r *driver) attach(w *webview) error {
 	// [Windows] Certs and Proxies must be defined before the initialization
 	r.setCerts()
 	r.setProxy()
+	r.setDir()
 
 	go r.config.RunOnMain(func() {
 		windows.CoInitializeEx(0, 0x2)
@@ -75,15 +77,8 @@ func (r *driver) attach(w *webview) error {
 			VTBL: _CoreWebView2CreateCoreWebView2ControllerCompletedHandlerVTBL,
 			Invoke: func(this *_ICoreWebView2CreateCoreWebView2ControllerCompletedHandler, err uintptr, val *_ICoreWebView2Controller) uintptr {
 				r.controller = val
-				syscall.SyscallN(
-					val.VTBL._IUnknownVTBL.Add,
-					uintptr(unsafe.Pointer(r.controller)),
-				)
-				syscall.SyscallN(
-					val.VTBL.GetCoreWebView2,
-					uintptr(unsafe.Pointer(val)),
-					uintptr(unsafe.Pointer(&r.webview2)),
-				)
+				syscall.SyscallN(val.VTBL._IUnknownVTBL.Add, uintptr(unsafe.Pointer(r.controller)))
+				syscall.SyscallN(val.VTBL.GetCoreWebView2, uintptr(unsafe.Pointer(val)), uintptr(unsafe.Pointer(&r.webview2)))
 				syscall.SyscallN(r.webview2.VTBL._IUnknownVTBL.Add, uintptr(unsafe.Pointer(r.webview2)))
 
 				syscall.SyscallN(r.webview2.VTBL._IUnknownVTBL.Query, uintptr(unsafe.Pointer(r.webview2)), uintptr(unsafe.Pointer(&_GUIDCoreWebView22)), uintptr(unsafe.Pointer(&r.webview22)))
@@ -109,7 +104,12 @@ func (r *driver) attach(w *webview) error {
 			},
 		}
 
-		hr, _, _ := _CreateCoreWebView2EnvironmentWithOptions.Call(0, 0, 0, uint64(uintptr(unsafe.Pointer(r.environmentCompletedHandler))))
+		pathPtr := uintptr(0)
+		if len(r.dir) > 0 {
+			pathPtr = uintptr(unsafe.Pointer(&r.dir[0]))
+		}
+
+		hr, _, _ := _CreateCoreWebView2EnvironmentWithOptions.Call(0, uint64(pathPtr), 0, uint64(uintptr(unsafe.Pointer(r.environmentCompletedHandler))))
 		if hr != 0 {
 			cerr <- ErrInvalidOptionChange
 			return
@@ -143,47 +143,24 @@ func (r *driver) configure(w *webview, config Config) {
 
 func (r *driver) resize(w *webview, pos [4]float32) {
 	if pos[2] == 0 && pos[3] == 0 {
-		syscall.SyscallN(
-			r.controller.VTBL.PutIsVisible,
-			uintptr(unsafe.Pointer(r.controller)),
-			0,
-		)
+		syscall.SyscallN(r.controller.VTBL.PutIsVisible, uintptr(unsafe.Pointer(r.controller)), 0)
 	} else {
 		pos := [4]int32{int32(pos[0] + 0.5), int32(pos[1] + 0.5), int32(pos[0]+0.5) + int32(pos[2]+0.5), int32(pos[1]+0.5) + int32(pos[3]+0.5)}
-		syscall.SyscallN(
-			r.controller.VTBL.PutIsVisible,
-			uintptr(unsafe.Pointer(r.controller)),
-			1,
-		)
-		syscall.SyscallN(
-			r.controller.VTBL.PutBounds,
-			uintptr(unsafe.Pointer(r.controller)),
-			uintptr(unsafe.Pointer(&pos)),
-		)
+		syscall.SyscallN(r.controller.VTBL.PutIsVisible, uintptr(unsafe.Pointer(r.controller)), 1)
+		syscall.SyscallN(r.controller.VTBL.PutBounds, uintptr(unsafe.Pointer(r.controller)), uintptr(unsafe.Pointer(&pos)))
 	}
 }
 
 func (r *driver) navigate(w *webview, url *url.URL) {
-	syscall.SyscallN(
-		r.webview2.VTBL.Navigate,
-		uintptr(unsafe.Pointer(r.webview2)),
-		uintptr(unsafe.Pointer(windows.StringToUTF16Ptr(url.String()))),
-		0,
-	)
+	syscall.SyscallN(r.webview2.VTBL.Navigate, uintptr(unsafe.Pointer(r.webview2)), uintptr(unsafe.Pointer(windows.StringToUTF16Ptr(url.String()))), 0)
 }
 
 func (r *driver) close(w *webview) {
 	if r.webview2 != nil {
-		syscall.SyscallN(
-			r.webview2.VTBL._IUnknownVTBL.Release,
-			uintptr(unsafe.Pointer(r.webview2)),
-		)
+		syscall.SyscallN(r.webview2.VTBL._IUnknownVTBL.Release, uintptr(unsafe.Pointer(r.webview2)))
 	}
 	if r.controller != nil {
-		syscall.SyscallN(
-			r.controller.VTBL._IUnknownVTBL.Release,
-			uintptr(unsafe.Pointer(r.controller)),
-		)
+		syscall.SyscallN(r.controller.VTBL._IUnknownVTBL.Release, uintptr(unsafe.Pointer(r.controller)))
 	}
 }
 

@@ -8,8 +8,9 @@ import (
 
 var options = struct {
 	sync.Mutex
-	proxy struct{ ip, port string }
-	certs []*x509.Certificate
+	proxy  struct{ ip, port string }
+	certs  []*x509.Certificate
+	folder string
 }{}
 
 // SetProxy sets the HTTP proxy to use for the webview.
@@ -47,5 +48,21 @@ func SetCustomCertificates(certs []*x509.Certificate) error {
 	}
 
 	options.certs = certs
+	return nil
+}
+
+// SetDirectory sets the folder to use for the webview.
+// It's applied for all viewers, and must be called before creating any WebView.
+//
+// Only supported by Windows.
+func SetDirectory(folder string) error {
+	options.Lock()
+	defer options.Unlock()
+
+	if options.folder != "" {
+		return ErrInvalidOptionChange
+	}
+	
+	options.folder = folder
 	return nil
 }
