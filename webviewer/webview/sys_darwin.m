@@ -43,6 +43,7 @@
 
 CFTypeRef config() {
     WKWebViewConfiguration *conf = [[WKWebViewConfiguration alloc] init];
+    [conf.preferences setValue:@YES forKey:@"developerExtrasEnabled"];
     return CFBridgingRetain(conf);
 }
 

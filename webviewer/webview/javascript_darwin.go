@@ -54,11 +54,13 @@ func (j *javascriptManager) RunJavaScript(js string) error {
 	defer dr.Delete()
 
 	j.webview.scheduler.MustRun(func() {
-		C.runJavascript(j.webview.driver.webviewObject, C.CString(js), C.uintptr_t(dr))
+		code := C.CString(js)
+		defer C.free(unsafe.Pointer(code))
+
+		C.runJavascript(j.webview.driver.webviewObject, code, C.uintptr_t(dr))
 	})
 
-	<-done
-	return nil
+	return <-done
 }
 
 // InstallJavascript implements the JavascriptManager interface.
