@@ -11,6 +11,7 @@ var options = struct {
 	proxy  struct{ ip, port string }
 	certs  []*x509.Certificate
 	folder string
+	debug  int8
 }{}
 
 // SetProxy sets the HTTP proxy to use for the webview.
@@ -62,7 +63,27 @@ func SetDirectory(folder string) error {
 	if options.folder != "" {
 		return ErrInvalidOptionChange
 	}
-	
+
 	options.folder = folder
+	return nil
+}
+
+// SetDebug enables the debug (such as the inspector) for the webview.
+// It's applied for all viewers, and must be called before creating any WebView.
+//
+// Only supported by macOS, iOS and Android.
+func SetDebug(enable bool) error {
+	options.Lock()
+	defer options.Unlock()
+
+	if options.debug != 0 {
+		return ErrInvalidOptionChange
+	}
+
+	if enable {
+		options.debug = 1
+	} else {
+		options.debug = -1
+	}
 	return nil
 }

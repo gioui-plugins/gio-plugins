@@ -43,8 +43,12 @@
 
 CFTypeRef config() {
     WKWebViewConfiguration *conf = [[WKWebViewConfiguration alloc] init];
-    [conf.preferences setValue:@YES forKey:@"developerExtrasEnabled"];
     return CFBridgingRetain(conf);
+}
+
+void enableDebug(CFTypeRef config) {
+    WKWebViewConfiguration *conf = (__bridge WKWebViewConfiguration *)config;
+    [conf.preferences setValue:@YES forKey:@"developerExtrasEnabled"];
 }
 
 CFTypeRef create(CFTypeRef config, uintptr_t handler) {
