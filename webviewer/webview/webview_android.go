@@ -14,6 +14,8 @@ type driver struct {
 
 	clsWebView jni.Class
 	objWebView jni.Object
+
+	methods map[string]jni.MethodID
 }
 
 func (r *driver) attach(w *webview) (err error) {
@@ -53,6 +55,10 @@ func (r *driver) attach(w *webview) (err error) {
 			}
 
 			if err := r.setCerts(); err != nil {
+				return err
+			}
+
+			if err := r.setDebug(); err != nil {
 				return err
 			}
 
@@ -130,15 +136,23 @@ func (r *driver) call(name, sig string) (err error) {
 
 func (r *driver) callArgs(name, sig string, args func(env jni.Env) []jni.Value) (err error) {
 	err = jni.Do(r.config.VM, func(env jni.Env) error {
-		return jni.CallVoidMethod(env, r.objWebView, jni.GetMethodID(env, r.clsWebView, name, sig), args(env)...)
+		return jni.CallVoidMethod(env, r.objWebView, r.methodID(env, name, sig), args(env)...)
 	})
 	return err
 }
 
 func (r *driver) callBooleanArgs(name, sig string, args func(env jni.Env) []jni.Value) (b bool, err error) {
 	err = jni.Do(r.config.VM, func(env jni.Env) error {
-		b, err = jni.CallBooleanMethod(env, r.objWebView, jni.GetMethodID(env, r.clsWebView, name, sig), args(env)...)
+		b, err = jni.CallBooleanMethod(env, r.objWebView, r.methodID(env, name, sig), args(env)...)
 		return err
 	})
 	return b, err
+}
+
+func (r *driver) methodID(env jni.Env, name, sig string) jni.MethodID {
+	m, ok := r.methods[name]
+	if !ok {
+		m = jni.GetMethodID(env, r.clsWebView, name, sig)
+	}
+	return m
 }

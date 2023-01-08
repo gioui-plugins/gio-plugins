@@ -53,3 +53,14 @@ func (r *driver) setCerts() error {
 
 	return nil
 }
+
+func (r *driver) setDebug() error {
+	options.Lock()
+	d := options.debug
+	options.Unlock()
+	if d <= 0 {
+		return nil
+	}
+
+	return r.call("webview_debug", "()V")
+}

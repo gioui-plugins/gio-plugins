@@ -42,6 +42,7 @@ func (r *driver) attach(w *webview) (err error) {
 		defer w.mutex.Unlock()
 
 		r.webviewConfig = C.config()
+		r.setDebug()
 		r.webviewObject = C.create(r.webviewConfig, C.uintptr_t(uintptr(w.handle)))
 
 		w.javascriptManager = newJavascriptManager(w)

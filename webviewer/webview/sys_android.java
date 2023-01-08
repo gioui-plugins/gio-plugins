@@ -329,6 +329,9 @@ public class sys_android {
         return true;
     }
 
+    public void webview_debug() {
+         webBrowser.setWebContentsDebuggingEnabled(true);
+    }
 
     static private native void reportDone(long handler, String error);
     static private native void sendCallback(long handler, String msg);

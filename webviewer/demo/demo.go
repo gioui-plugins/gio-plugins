@@ -53,6 +53,7 @@ func main() {
 	}
 	flag.Parse()
 
+	webview.SetDebug(true)
 	window := app.NewWindow()
 
 	browsers := NewBrowser()
