@@ -8,6 +8,9 @@ require (
 	github.com/go-ole/go-ole v1.2.6
 	github.com/inkeliz/go_inkwasm v0.0.0-20220912074516-049d3472c98a
 	github.com/jchv/go-winloader v0.0.0-20210711035445-715c2860da7e
+	golang.org/x/crypto v0.0.0-20191011191535-87dc89f01550
+	golang.org/x/exp/shiny v0.0.0-20220921164117-439092de6870
+	golang.org/x/image v0.0.0-20220902085622-e7cb96979f69
 	golang.org/x/sys v0.0.0-20220919091848-fb04ddd9f9c8
 )
 
@@ -19,8 +22,6 @@ require (
 	github.com/benoitkugler/textlayout v0.2.0 // indirect
 	github.com/gioui/uax v0.2.1-0.20220819135011-cda973fac06d // indirect
 	github.com/go-text/typesetting v0.0.0-20220919164209-53347960f378 // indirect
-	golang.org/x/exp/shiny v0.0.0-20220921164117-439092de6870 // indirect
-	golang.org/x/image v0.0.0-20220902085622-e7cb96979f69 // indirect
 	golang.org/x/mod v0.5.1 // indirect
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c // indirect
 	golang.org/x/text v0.3.7 // indirect
