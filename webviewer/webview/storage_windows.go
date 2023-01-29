@@ -6,7 +6,6 @@ import (
 	"time"
 	"unsafe"
 
-	"github.com/gioui-plugins/gio-plugins/webviewer/webview/internal"
 	"golang.org/x/sys/windows"
 )
 
@@ -28,9 +27,7 @@ func newCookieManager(w *webview) *cookieManager {
 }
 
 func (s *cookieManager) Cookies(fn DataLooper[CookieData]) (err error) {
-	done := make(chan error)
-	dr := internal.NewHandle(done)
-	defer dr.Delete()
+	done := make(chan error, 1)
 
 	handler := &_ICoreWebView2GetCookiesCompletedHandler{
 		VTBL: _CoreWebView2GetCookiesCompletedHandlerVTBL,
@@ -92,18 +89,11 @@ func (s *cookieManager) Cookies(fn DataLooper[CookieData]) (err error) {
 		},
 	}
 
-	var url uintptr
 	s.scheduler.MustRun(func() {
-		syscall.SyscallN(
-			s.webview.driver.webview2.VTBL.GetSource,
-			uintptr(unsafe.Pointer(s.webview.driver.webview2)),
-			uintptr(unsafe.Pointer(&url)),
-		)
-
 		syscall.SyscallN(
 			s._ICoreWebView2CookieManager.VTBL.GetCookies,
 			uintptr(unsafe.Pointer(s._ICoreWebView2CookieManager)),
-			url,
+			0,
 			uintptr(unsafe.Pointer(handler)),
 		)
 	})

@@ -28,7 +28,7 @@ func newCookieManager(w *webview) *cookieManager {
 
 // Cookies implements the CookieManager interface.
 func (s *cookieManager) Cookies(fn DataLooper[CookieData]) (err error) {
-	done := make(chan error)
+	done := make(chan error, 1)
 	dr, fr := internal.NewHandle(done), internal.NewHandle(fn)
 	defer dr.Delete()
 	defer fr.Delete()
@@ -79,7 +79,7 @@ func Java_com_inkeliz_webview_sys_1android_getCookiesCallback(env *C.JNIEnv, cla
 
 // AddCookie implements the CookieManager interface.
 func (s *cookieManager) AddCookie(c CookieData) error {
-	done := make(chan error)
+	done := make(chan error, 1)
 	dr := internal.NewHandle(done)
 	defer dr.Delete()
 
@@ -109,7 +109,8 @@ func (s *cookieManager) AddCookie(c CookieData) error {
 			}
 		})
 	})
-	return <-done
+
+	return nil
 }
 
 // RemoveCookie implements the CookieManager interface.

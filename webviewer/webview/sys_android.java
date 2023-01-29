@@ -207,7 +207,7 @@ public class sys_android {
         wc.handler = handler;
         webBrowser.setWebChromeClient(wc);
 
-        webBrowser.setVisibility(View.VISIBLE);
+        webBrowser.setVisibility(View.GONE);
 
         primaryView.addView(webBrowser);
         primaryView.bringChildToFront(webBrowser);
@@ -233,9 +233,9 @@ public class sys_android {
             @Override
             public void onReceiveValue(Boolean value) {
                 cookieManager.flush();
-                reportDone(done, "");
             }
         });
+        reportDone(done, "");
     }
 
     public void webview_navigate(String url) {

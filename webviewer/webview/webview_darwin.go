@@ -35,8 +35,6 @@ type driver struct {
 }
 
 func (r *driver) attach(w *webview) (err error) {
-	defer w.scheduler.SetRunner(w.driver.config.RunOnMain)
-
 	r.config.RunOnMain(func() {
 		w.mutex.Lock()
 		defer w.mutex.Unlock()
@@ -50,6 +48,11 @@ func (r *driver) attach(w *webview) (err error) {
 
 		C.run(r.webviewObject, C.CFTypeRef(r.config.View))
 	})
+
+	w.mutex.Lock()
+	config := r.config
+	w.mutex.Unlock()
+	w.scheduler.SetRunner(config.RunOnMain)
 
 	return nil
 }

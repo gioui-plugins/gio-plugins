@@ -21,6 +21,7 @@ type driver struct {
 	config Config
 	active uint32
 	dir    []uint16
+	err    error
 
 	controllerCompletedHandler  *_ICoreWebView2CreateCoreWebView2ControllerCompletedHandler
 	environmentCompletedHandler *_ICoreWebView2CreateCoreWebView2EnvironmentCompletedHandler
@@ -36,6 +37,7 @@ func (r *driver) attach(w *webview) error {
 	cerr := make(chan error, 1)
 
 	if err := r.checkInstall(); err != nil {
+		r.err = err
 		return err
 	}
 
@@ -44,7 +46,11 @@ func (r *driver) attach(w *webview) error {
 	r.setProxy()
 	r.setDir()
 
-	go r.config.RunOnMain(func() {
+	w.mutex.Lock()
+	config := r.config
+	w.mutex.Unlock()
+
+	go config.RunOnMain(func() {
 		windows.CoInitializeEx(0, 0x2)
 
 		r.callbackLoad = &_ICoreWebView2SourceChangedEventHandler{
@@ -98,7 +104,7 @@ func (r *driver) attach(w *webview) error {
 			Invoke: func(this *_ICoreWebView2CreateCoreWebView2EnvironmentCompletedHandler, err uintptr, val *_ICoreWebView2Environment) uintptr {
 				syscall.SyscallN(val.VTBL._IUnknownVTBL.Add, uintptr(unsafe.Pointer(val)))
 
-				syscall.SyscallN(val.VTBL.CreateCoreWebView2Controller, uintptr(unsafe.Pointer(val)), r.config.HWND, uintptr(unsafe.Pointer(r.controllerCompletedHandler)))
+				syscall.SyscallN(val.VTBL.CreateCoreWebView2Controller, uintptr(unsafe.Pointer(val)), config.HWND, uintptr(unsafe.Pointer(r.controllerCompletedHandler)))
 
 				return 0
 			},
@@ -118,14 +124,16 @@ func (r *driver) attach(w *webview) error {
 		cerr <- nil
 	})
 
-	if err := <-cerr; err != nil {
-		return err
-	}
-
 	go func() {
+		if err := <-cerr; err != nil {
+			r.err = err
+			return
+		}
+
 		for atomic.LoadUint32(&r.active) == 0 {
 		}
-		w.scheduler.SetRunner(r.config.RunOnMain)
+
+		w.scheduler.SetRunner(config.RunOnMain)
 	}()
 
 	w.javascriptManager = newJavascriptManager(w)
@@ -135,9 +143,8 @@ func (r *driver) attach(w *webview) error {
 }
 
 func (r *driver) configure(w *webview, config Config) {
-	r.config = config
 	if atomic.LoadUint32(&r.active) == 1 {
-		w.scheduler.SetRunner(w.driver.config.RunOnMain)
+		w.scheduler.SetRunner(config.RunOnMain)
 	}
 }
 

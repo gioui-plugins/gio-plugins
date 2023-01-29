@@ -21,9 +21,13 @@ type driver struct {
 func (r *driver) attach(w *webview) (err error) {
 	w.scheduler.SetRunner(w.driver.config.RunOnMain)
 
-	w.driver.config.RunOnMain(func() {
-		err = jni.Do(r.config.VM, func(env jni.Env) error {
-			cls, err := jni.LoadClass(env, jni.ClassLoaderFor(env, w.driver.config.Context), "com/inkeliz/webview/sys_android")
+	w.mutex.Lock()
+	config := r.config
+	w.mutex.Unlock()
+
+	config.RunOnMain(func() {
+		err = jni.Do(config.VM, func(env jni.Env) error {
+			cls, err := jni.LoadClass(env, jni.ClassLoaderFor(env, config.Context), "com/inkeliz/webview/sys_android")
 			if err != nil {
 				return err
 			}
@@ -41,7 +45,7 @@ func (r *driver) attach(w *webview) (err error) {
 
 			err = r.callArgs("webview_create", "(Landroid/view/View;J)V", func(env jni.Env) []jni.Value {
 				return []jni.Value{
-					jni.Value(r.config.View),
+					jni.Value(config.View),
 					jni.Value(uintptr(w.handle)),
 				}
 			})
@@ -64,6 +68,7 @@ func (r *driver) attach(w *webview) (err error) {
 
 			w.javascriptManager = newJavascriptManager(w)
 			w.dataManager = newDataManager(w)
+			w.visible = false
 
 			return nil
 		})
@@ -78,7 +83,7 @@ func (r *driver) attach(w *webview) (err error) {
 
 func (r *driver) configure(w *webview, config Config) {
 	r.config = config
-	w.scheduler.SetRunner(w.driver.config.RunOnMain)
+	w.scheduler.SetRunner(config.RunOnMain)
 }
 
 func (r *driver) resize(w *webview, pos [4]float32) {
@@ -117,7 +122,6 @@ func (r *driver) close(w *webview) {
 	}
 
 	r.call("webview_destroy", "()V")
-
 	go jni.Do(r.config.VM, func(env jni.Env) error {
 		jni.DeleteGlobalRef(env, jni.Object(r.clsWebView))
 		jni.DeleteGlobalRef(env, r.objWebView)
