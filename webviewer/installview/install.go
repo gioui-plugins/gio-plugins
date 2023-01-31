@@ -23,6 +23,10 @@ func (i *Installer) Install() error {
 //
 // The download link will vary between OSes.
 func Download(ctx context.Context, client *http.Client) (*Installer, error) {
+	if DownloadURL == "" {
+		return new(Installer), nil
+	}
+
 	if client == nil {
 		client = http.DefaultClient
 	}

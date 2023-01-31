@@ -58,7 +58,7 @@ func (j *javascriptManager) installCallback() {
 
 // RunJavaScript implements the JavascriptManager interface.
 func (j *javascriptManager) RunJavaScript(js string) error {
-	done := make(chan error)
+	done := make(chan error, 1)
 	fr := internal.NewHandle(done)
 	defer fr.Delete()
 

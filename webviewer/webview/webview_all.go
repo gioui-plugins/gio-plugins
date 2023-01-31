@@ -103,4 +103,6 @@ func (w *webview) Events() chan Event { return w.fan.Add() }
 func (w *webview) DataManager() DataManager { return w.dataManager }
 
 // JavascriptManager implements the WebView interface.
-func (w *webview) JavascriptManager() JavascriptManager { return w.javascriptManager }
+func (w *webview) JavascriptManager() JavascriptManager {
+	return w.javascriptManager
+}

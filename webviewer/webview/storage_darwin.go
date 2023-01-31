@@ -30,7 +30,7 @@ func newCookieManager(w *webview) *cookieManager {
 
 // Cookies implements the CookieManager interface.
 func (s *cookieManager) Cookies(fn DataLooper[CookieData]) (err error) {
-	done := make(chan error)
+	done := make(chan error, 1)
 
 	fr, dr := internal.NewHandle(fn), internal.NewHandle(done)
 	defer fr.Delete()
@@ -57,7 +57,7 @@ func getCookiesCallback(handler uintptr, features uint64, name, value, domain, p
 
 // AddCookie implements the CookieManager interface.
 func (s *cookieManager) AddCookie(c CookieData) error {
-	done := make(chan error)
+	done := make(chan error, 1)
 	dr := internal.NewHandle(done)
 	defer dr.Delete()
 
@@ -80,7 +80,7 @@ func (s *cookieManager) AddCookie(c CookieData) error {
 
 // RemoveCookie implements the CookieManager interface.
 func (s *cookieManager) RemoveCookie(c CookieData) error {
-	done := make(chan error)
+	done := make(chan error, 1)
 	dr := internal.NewHandle(done)
 	defer dr.Delete()
 

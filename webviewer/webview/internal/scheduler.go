@@ -73,7 +73,10 @@ func (s *Scheduler) SetRunner(r func(f func())) {
 
 				s.mutex.Lock()
 				if s.counter != last && len(s.update) == 0 {
-					s.update <- struct{}{}
+					select {
+					case s.update <- struct{}{}:
+					default:
+					}
 				}
 				s.mutex.Unlock()
 			}
