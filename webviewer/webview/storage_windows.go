@@ -2,6 +2,7 @@ package webview
 
 import (
 	"math"
+	"runtime"
 	"syscall"
 	"time"
 	"unsafe"
@@ -145,4 +146,51 @@ func (s *cookieManager) RemoveCookie(c CookieData) error {
 	})
 
 	return nil
+}
+
+type cacheManager struct {
+	*webview
+	*_ICoreWebView2Profile
+	*_ICoreWebView2Profile2
+}
+
+func newCacheManager(w *webview) *cacheManager {
+	r := &cacheManager{webview: w}
+	w.scheduler.MustRun(func() {
+		syscall.SyscallN(
+			r.webview.driver.webview213.VTBL.GetProfile,
+			uintptr(unsafe.Pointer(r.webview.driver.webview213)),
+			uintptr(unsafe.Pointer(&r._ICoreWebView2Profile)),
+		)
+
+		syscall.SyscallN(
+			r._ICoreWebView2Profile.VTBL.Query,
+			uintptr(unsafe.Pointer(r._ICoreWebView2Profile)),
+			uintptr(unsafe.Pointer(&_GUIDCoreWebView2Profile2)),
+			uintptr(unsafe.Pointer(&r._ICoreWebView2Profile2)),
+		)
+	})
+	return r
+}
+
+func (s *cacheManager) ClearAll() error {
+	done := make(chan error, 1)
+	handler := &_ICoreWebView2ClearBrowsingDataCompletedHandler{
+		VTBL: _CoreWebView2ClearBrowsingDataCompletedHandler,
+		Invoke: func(this *_ICoreWebView2ClearBrowsingDataCompletedHandler, err uintptr) uintptr {
+			done <- nil
+			return 0
+		},
+	}
+	defer runtime.KeepAlive(handler)
+
+	s.scheduler.Run(idMethodClearCache, func() {
+		syscall.SyscallN(
+			s._ICoreWebView2Profile2.VTBL.ClearBrowsingDataAll,
+			uintptr(unsafe.Pointer(s._ICoreWebView2Profile2)),
+			uintptr(unsafe.Pointer(handler)),
+		)
+	})
+
+	return <-done
 }

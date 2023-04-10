@@ -33,6 +33,7 @@ var (
 		reflect.TypeOf(&SetStorageOp{}),
 		reflect.TypeOf(&ListStorageOp{}),
 		reflect.TypeOf(&RemoveStorageOp{}),
+		reflect.TypeOf(&ClearCacheOp{}),
 		reflect.TypeOf(&ExecuteJavascriptOp{}),
 		reflect.TypeOf(&InstallJavascriptOp{}),
 		reflect.TypeOf(&MessageReceiverOp{}),
@@ -635,6 +636,27 @@ func (o *ListStorageOp) execute(_ *app.Window, p *webViewPlugin, _ system.FrameE
 		})
 
 		p.plugin.SendEvent(o.Tag, evt)
+		if err != nil {
+			p.plugin.SendEvent(wvTag, ErrorEvent{error: err})
+		}
+	})
+}
+
+type ClearCacheOp struct{}
+
+var poolClearCacheOp = plugin.NewOpPool[ClearCacheOp]()
+
+func (o ClearCacheOp) Add(op *op.Ops) {
+	poolClearCacheOp.WriteOp(op, o)
+}
+
+func (o *ClearCacheOp) execute(_ *app.Window, p *webViewPlugin, _ system.FrameEvent) {
+	manager := p.active.DataManager()
+	wvTag := p.activeTag
+
+	p.run(func() {
+		defer poolClearCacheOp.Release(o)
+		err := manager.ClearAll()
 		if err != nil {
 			p.plugin.SendEvent(wvTag, ErrorEvent{error: err})
 		}

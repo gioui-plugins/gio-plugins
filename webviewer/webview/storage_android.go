@@ -117,3 +117,28 @@ func (s *cookieManager) AddCookie(c CookieData) error {
 func (s *cookieManager) RemoveCookie(c CookieData) error {
 	return ErrNotSupported
 }
+
+type cacheManager struct {
+	*webview
+}
+
+func newCacheManager(w *webview) *cacheManager {
+	r := &cacheManager{webview: w}
+	return r
+}
+
+func (s *cacheManager) ClearAll() (err error) {
+	done := make(chan error, 1)
+	dr := internal.NewHandle(done)
+	defer dr.Delete()
+
+	s.scheduler.MustRun(func() {
+		s.driver.callArgs("webview_clearData", "(J)V", func(env jni.Env) []jni.Value {
+			return []jni.Value{
+				jni.Value(int64(dr)),
+			}
+		})
+	})
+
+	return <-done
+}

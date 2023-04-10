@@ -13,6 +13,7 @@ import android.webkit.WebViewClient;
 import android.widget.Toast;
 import android.webkit.WebView;
 import android.webkit.WebChromeClient;
+import android.webkit.WebStorage;
 import android.util.Log;
 import android.os.Build;
 import android.os.Parcelable;
@@ -236,6 +237,22 @@ public class sys_android {
             }
         });
         reportDone(done, "");
+    }
+
+    public void webview_clearData(long done) {
+        webBrowser.clearCache(true);
+        webBrowser.clearHistory();
+        webBrowser.clearFormData();
+
+        WebStorage.getInstance().deleteAllData();
+
+        CookieManager cookieManager = CookieManager.getInstance();
+        cookieManager.removeAllCookies(new ValueCallback<Boolean>() {
+            @Override
+            public void onReceiveValue(Boolean aBoolean) {
+                reportDone(done, "");
+            }
+        });
     }
 
     public void webview_navigate(String url) {

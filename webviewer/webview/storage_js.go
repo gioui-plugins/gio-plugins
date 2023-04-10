@@ -22,3 +22,13 @@ func (*cookieManager) AddCookie(_ CookieData) error {
 func (*cookieManager) RemoveCookie(_ CookieData) error {
 	return ErrNotSupported
 }
+
+type cacheManager struct{}
+
+func newCacheManager(w *webview) *cacheManager {
+	return new(cacheManager)
+}
+
+func (s *cacheManager) ClearAll() error {
+	return ErrNotSupported
+}

@@ -14,7 +14,7 @@ type Scheduler struct {
 
 	mutex   sync.Mutex
 	counter int
-	tasks   map[int]func()
+	tasks   map[int]int
 	queue   []func()
 	update  chan struct{}
 }
@@ -49,13 +49,10 @@ func (s *Scheduler) SetRunner(r func(f func())) {
 					s.mutex.Unlock()
 					continue
 				}
-
 				last = s.counter
+
 				for i := range s.tasks {
-					if s.tasks[i] != nil {
-						fns = append(fns, s.tasks[i])
-					}
-					s.tasks[i] = nil
+					s.tasks[i] = -1
 				}
 				for i := range s.queue {
 					fns = append(fns, s.queue[i])
@@ -97,10 +94,17 @@ func (s *Scheduler) Run(method int, f func()) {
 	defer s.mutex.Unlock()
 
 	if s.tasks == nil {
-		s.tasks = make(map[int]func(), 32)
+		s.tasks = make(map[int]int, 32)
 	}
 
-	s.tasks[method] = f
+	i, ok := s.tasks[method]
+	if i < 0 || !ok {
+		s.tasks[method] = len(s.queue)
+		s.queue = append(s.queue, f)
+	} else {
+		s.queue[i] = f
+	}
+
 	s.counter++
 
 	s.signal()

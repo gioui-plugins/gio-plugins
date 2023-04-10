@@ -11,12 +11,14 @@ import (
 type dataManager struct {
 	CookieManager
 	StorageManager
+	CacheManager
 }
 
 func newDataManager(w *webview) DataManager {
 	return &dataManager{
 		CookieManager:  newCookieManager(w),
 		StorageManager: newStorageManager(w),
+		CacheManager:   newCacheManager(w),
 	}
 }
 
