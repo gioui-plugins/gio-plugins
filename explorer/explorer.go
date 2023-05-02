@@ -2,35 +2,11 @@ package explorer
 
 import (
 	"errors"
+	"github.com/gioui-plugins/gio-plugins/explorer/mimetype"
 	"io"
-	"reflect"
 	"strings"
 	"sync"
-
-	"gioui.org/app"
-	"gioui.org/io/event"
-	"gioui.org/op"
-	"github.com/gioui-plugins/gio-plugins/explorer/mimetype"
-	"github.com/gioui-plugins/gio-plugins/plugin"
 )
-
-var (
-	wantOps = []reflect.Type{
-		reflect.TypeOf(&OpenFileOp{}),
-		// reflect.TypeOf(&OpenDirectoryOp{}),
-		reflect.TypeOf(&SaveFileOp{}),
-		// reflect.TypeOf(&SaveDirectoryOp{}),
-	}
-	wantEvents = []reflect.Type{
-		reflect.TypeOf(app.ViewEvent{}),
-	}
-)
-
-func init() {
-	plugin.Register(func(w *app.Window, p *plugin.Plugin) plugin.Handler {
-		return &explorerPlugin{window: w, plugin: p}
-	})
-}
 
 var (
 	// ErrUserDecline is returned when the user doesn't select the file.
@@ -39,138 +15,32 @@ var (
 	ErrNotAvailable = errors.New("current OS not supported")
 )
 
-type explorerPlugin struct {
-	window *app.Window
-	plugin *plugin.Plugin
-	mutex  sync.Mutex
-
-	// explorer holds OS-Specific content, it varies for each OS.
-	explorer
+type Explorer struct {
+	// driver holds OS-Specific content, it varies for each OS.
+	driver
 }
 
-func (e *explorerPlugin) TypeOp() []reflect.Type {
-	return wantOps
+func NewExplorer(config Config) *Explorer {
+	house := &Explorer{}
+	attachDriver(house, config)
+	return house
 }
 
-func (e *explorerPlugin) TypeEvent() []reflect.Type {
-	return wantEvents
+func (e *Explorer) Configure(config Config) {
+	configureDriver(&e.driver, config)
 }
 
-func (e *explorerPlugin) ListenOps(op interface{}) {
-	switch o := op.(type) {
-	case *OpenFileOp:
-		o.execute(e)
-	case *SaveFileOp:
-		o.execute(e)
-	}
+func (e *Explorer) OpenFile(mimes []mimetype.MimeType) (io.ReadCloser, error) {
+	return e.driver.openFile(mimes)
 }
 
-func (e *explorerPlugin) ListenEvents(evt event.Event) {
-	e.listenEvents(evt)
+func (e *Explorer) SaveFile(name string, mime mimetype.MimeType) (io.WriteCloser, error) {
+	return e.driver.saveFile(name, mime)
 }
-
-type result struct {
-	file  interface{}
-	error error
-}
-
-// OpenFileOp opens the file selector and returns the selected file.
-// The Mimetype may filter the files that can be selected.
-type OpenFileOp struct {
-	Tag      event.Tag
-	Mimetype []mimetype.MimeType
-}
-
-var openFileOpPool = plugin.NewOpPool[OpenFileOp]()
-
-// Add adds the operation into the queue.
-func (o OpenFileOp) Add(ops *op.Ops) {
-	oc := openFileOpPool.Get()
-	oc.Tag = o.Tag
-	oc.Mimetype = o.Mimetype
-	if l := len(o.Mimetype) - cap(oc.Mimetype); l > 0 {
-		oc.Mimetype = append(oc.Mimetype, make([]mimetype.MimeType, l)...)
-	}
-	oc.Mimetype = oc.Mimetype[:len(o.Mimetype)]
-	copy(oc.Mimetype, o.Mimetype)
-	plugin.WriteOp(ops, oc)
-}
-
-func (o *OpenFileOp) execute(p *explorerPlugin) {
-	go func() {
-		defer openFileOpPool.Release(o)
-
-		res, err := p.openFile(o.Mimetype)
-		if err != nil {
-			if err == ErrUserDecline {
-				p.plugin.SendEvent(o.Tag, CancelEvent{})
-			} else {
-				p.plugin.SendEvent(o.Tag, ErrorEvent{error: err})
-			}
-			return
-		}
-
-		p.plugin.SendEvent(o.Tag, OpenFileEvent{File: res})
-	}()
-}
-
-// SaveFileOp opens the file-picker to save a file, the file is created if it doesn't exist, or replace existent file.
-// The Filename is a suggestion for the file name, the user can change it.
-type SaveFileOp struct {
-	Tag      event.Tag
-	Filename string
-	Mimetype mimetype.MimeType
-}
-
-var saveFileOpPool = plugin.NewOpPool[SaveFileOp]()
-
-// Add adds the event into the queue.
-func (o SaveFileOp) Add(ops *op.Ops) {
-	saveFileOpPool.WriteOp(ops, o)
-}
-
-func (o *SaveFileOp) execute(p *explorerPlugin) {
-	go func() {
-		defer saveFileOpPool.Release(o)
-
-		if strings.HasPrefix(o.Filename, "."+o.Mimetype.Extension) {
-			o.Filename = o.Filename[:len(o.Filename)-(1+len(o.Mimetype.Extension))]
-		}
-
-		res, err := p.saveFile(o.Filename, o.Mimetype)
-		if err != nil {
-			if err == ErrUserDecline {
-				p.plugin.SendEvent(o.Tag, CancelEvent{})
-			} else {
-				p.plugin.SendEvent(o.Tag, ErrorEvent{error: err})
-			}
-			return
-		}
-		p.plugin.SendEvent(o.Tag, SaveFileEvent{File: res})
-	}()
-}
-
-// OpenFileEvent is sent as response to OpenFileOp.
-type OpenFileEvent struct {
-	File io.ReadCloser
-}
-
-// SaveFileEvent is sent as response to SaveFileOp.
-type SaveFileEvent struct {
-	File io.WriteCloser
-}
-
-// ErrorEvent is issued when error occurs.
-type ErrorEvent struct {
-	error
-}
-
-// CancelEvent is sent when the user cancels the file selector.
-type CancelEvent struct{}
-
-func (OpenFileEvent) ImplementsEvent() {}
-func (SaveFileEvent) ImplementsEvent() {}
-func (ErrorEvent) ImplementsEvent()    {}
-func (CancelEvent) ImplementsEvent()   {}
 
 var stringBuilderPool = sync.Pool{New: func() any { return &strings.Builder{} }}
+
+type result[T any] struct {
+	file  T
+	error error
+}

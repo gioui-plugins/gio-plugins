@@ -4,15 +4,16 @@
 package hyperlink
 
 import (
-	"gioui.org/io/event"
 	"net/url"
 	"os/exec"
 )
 
-type hyperlink struct{}
+type driver struct{}
 
-func (*hyperlinkPlugin) listenEvents(_ event.Event) {}
+func attachDriver(house *Hyperlink, config Config) {}
 
-func (*hyperlinkPlugin) open(u *url.URL) error {
+func configureDriver(driver *driver, config Config) {}
+
+func (*driver) open(u *url.URL) error {
 	return exec.Command("open", u.String()).Run()
 }

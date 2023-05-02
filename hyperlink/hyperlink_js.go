@@ -1,5 +1,4 @@
 //go:build js
-// +build js
 
 package hyperlink
 
@@ -15,9 +14,15 @@ var (
 	_body     = js.Global().Get("document").Get("body")
 )
 
-type hyperlink struct{}
+type driver struct{}
 
-func (*hyperlinkPlugin) listenEvents(event event.Event) {
+func attachDriver(house *Hyperlink, config Config) {
+	house.driver = driver{}
+}
+
+func configureDriver(driver *driver, config Config) {}
+
+func (*driver) listenEvents(event event.Event) {
 	if _, ok := event.(system.StageEvent); ok {
 		links := _body.Call("querySelectorAll", "a.hyperlink")
 		if !links.Truthy() {
@@ -29,7 +34,7 @@ func (*hyperlinkPlugin) listenEvents(event event.Event) {
 	}
 }
 
-func (*hyperlink) open(u *url.URL) error {
+func (*driver) open(u *url.URL) error {
 	if ok := js.Global().Call("open", u.String(), "_blank", "noreferrer,noopener").Truthy(); !ok {
 		// If there's a error let's use the hacky way:
 		// It will create a "fullscreen <a>", which clicking will

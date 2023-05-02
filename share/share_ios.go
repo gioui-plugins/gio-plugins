@@ -7,62 +7,77 @@ package share
 #include <UIKit/UIKit.h>
 #include <stdint.h>
 
-static void openShare(CFTypeRef viewController, NSArray * obj) {
+static CFTypeRef openShare(CFTypeRef viewController, NSArray * obj) {
 	UIActivityViewController * activityController = [[UIActivityViewController alloc] initWithActivityItems:obj applicationActivities:nil];
 	[(__bridge UIViewController *)viewController presentViewController:activityController animated:YES completion:nil];
+
+	return CFBridgingRetain(activityController);
 }
 
-static void shareText(CFTypeRef viewController, char * text) {
+static CFTypeRef shareText(CFTypeRef viewController, char * text) {
 	NSString * content = [NSString stringWithUTF8String: text];
-	openShare(viewController, @[content]);
+	return openShare(viewController, @[content]);
 }
 
-static void shareWebsite(CFTypeRef viewController, char * link) {
+static CFTypeRef shareWebsite(CFTypeRef viewController, char * link) {
 	NSString * content = [NSString stringWithUTF8String: link];
-	openShare(viewController, @[[NSURL URLWithString:content]]);
+	return openShare(viewController, @[[NSURL URLWithString:content]]);
 }
 
 */
 import "C"
 import (
+	"sync"
 	"unsafe"
-
-	"gioui.org/app"
-	"gioui.org/io/event"
 )
 
-type share struct {
-	window         *app.Window
-	viewController C.CFTypeRef
+type driver struct {
+	mutex  sync.Mutex
+	config Config
+
+	shareObject C.CFTypeRef
 }
 
-func newShare(w *app.Window) share {
-	return share{
-		window: w,
-	}
+func attachDriver(house *Share, config Config) {
+	house.driver = driver{}
+	configureDriver(&house.driver, config)
 }
 
-func (e *sharePlugin) listenEvents(evt event.Event) {
-	switch evt := evt.(type) {
-	case app.ViewEvent:
-		e.viewController = C.CFTypeRef(evt.ViewController)
-	}
+func configureDriver(driver *driver, config Config) {
+	driver.mutex.Lock()
+	defer driver.mutex.Unlock()
+
+	driver.config = config
 }
 
-func (e *sharePlugin) shareText(op TextOp) error {
-	go e.window.Run(func() {
-		t := C.CString(op.Text)
+func (e *driver) shareText(title, text string) error {
+	go e.config.RunOnMain(func() {
+		e.mutex.Lock()
+		defer e.mutex.Unlock()
+
+		t := C.CString(text)
 		defer C.free(unsafe.Pointer(t))
-		C.shareText(e.viewController, t)
+
+		if e.shareObject != 0 {
+			C.CFRelease(e.shareObject)
+		}
+		e.shareObject = C.shareText(C.CFTypeRef(e.config.View), t)
 	})
 	return nil
 }
 
-func (e *sharePlugin) shareWebsite(op WebsiteOp) error {
-	go e.window.Run(func() {
-		l := C.CString(op.Link)
+func (e *driver) shareWebsite(title, description, url string) error {
+	go e.config.RunOnMain(func() {
+		e.mutex.Lock()
+		defer e.mutex.Unlock()
+
+		l := C.CString(url)
 		defer C.free(unsafe.Pointer(l))
-		C.shareWebsite(e.viewController, l)
+
+		if e.shareObject != 0 {
+			C.CFRelease(e.shareObject)
+		}
+		e.shareObject = C.shareWebsite(C.CFTypeRef(e.config.View), l)
 	})
 	return nil
 }

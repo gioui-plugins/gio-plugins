@@ -1,19 +1,18 @@
 //go:build (linux && !android) || openbsd || freebsd || netbsd || dragonfly
-// +build linux,!android openbsd freebsd netbsd dragonfly
 
 package hyperlink
 
 import (
 	"net/url"
 	"os/exec"
-
-	"gioui.org/io/event"
 )
 
-type hyperlink struct{}
+type driver struct{}
 
-func (*hyperlinkPlugin) listenEvents(_ event.Event) {}
+func attachDriver(house *Hyperlink, config Config) {}
 
-func (*hyperlinkPlugin) open(u *url.URL) error {
+func configureDriver(driver *driver, config Config) {}
+
+func (*driver) open(u *url.URL) error {
 	return exec.Command("xdg-open", u.String()).Run()
 }

@@ -14,10 +14,10 @@ import (
 	"runtime"
 	"runtime/cgo"
 	"strings"
+	"sync"
 	"unsafe"
 
 	"gioui.org/app"
-	"gioui.org/io/event"
 	"git.wow.st/gmp/jni"
 	"github.com/gioui-plugins/gio-plugins/explorer/mimetype"
 )
@@ -25,20 +25,31 @@ import (
 //go:generate javac -source 8 -target 8  -bootclasspath $ANDROID_HOME/platforms/android-30/android.jar -d $TEMP/explorer_explorer_android/classes explorer_android.java
 //go:generate jar cf explorer_android.jar -C $TEMP/explorer_explorer_android/classes .
 
-type explorer struct {
-	window *app.Window
-	view   uintptr
+type driver struct {
+	config Config
+	mutex  sync.Mutex
 
-	libObject jni.Object
-	libClass  jni.Class
+	explorerObject jni.Object
+	explorerClass  jni.Class
 
-	openMethodFile jni.MethodID
-	saveMethodFile jni.MethodID
+	explorerMethodOpen jni.MethodID
+	explorerMethodSave jni.MethodID
 }
 
-func (e *explorerPlugin) listenEvents(evt event.Event) {
-	if evt, ok := evt.(app.ViewEvent); ok {
-		e.view = evt.View
+func attachDriver(house *Explorer, config Config) {
+	house.driver = driver{}
+	configureDriver(&house.driver, config)
+}
+
+func configureDriver(driver *driver, config Config) {
+	driver.mutex.Lock()
+	old := driver.config.View
+	driver.config = config
+	driver.mutex.Unlock()
+
+	if old != driver.config.View {
+		driver.destroy()
+		driver.init()
 	}
 }
 
@@ -46,67 +57,71 @@ func (e *explorerPlugin) listenEvents(evt event.Event) {
 // is defined on explorer_android.java file). The Java class doesn't retain information about the view,
 // the view (GioView/GioActivity) is passed as argument for each openFile/saveFile function, so it
 // can safely change between each call.
-func (e *explorerPlugin) init(env jni.Env) error {
-	if e.libObject != 0 && e.libClass != 0 {
-		return nil // Already initialized
-	}
+func (e *driver) init() error {
+	return jni.Do(jni.JVMFor(e.config.VM), func(env jni.Env) error {
+		e.mutex.Lock()
+		defer e.mutex.Unlock()
 
-	class, err := jni.LoadClass(env, jni.ClassLoaderFor(env, jni.Object(app.AppContext())), "org/gioui/x/explorer/explorer_android")
-	if err != nil {
-		return err
-	}
+		if e.explorerClass != 0 && e.explorerObject != 0 {
+			return nil // Already initialized
+		}
 
-	obj, err := jni.NewObject(env, class, jni.GetMethodID(env, class, "<init>", `()V`))
-	if err != nil {
-		return err
-	}
+		class, err := jni.LoadClass(env, jni.ClassLoaderFor(env, jni.Object(app.AppContext())), "org/gioui/x/explorer/explorer_android")
+		if err != nil {
+			return err
+		}
 
-	e.libObject = jni.NewGlobalRef(env, obj)
-	e.libClass = jni.Class(jni.NewGlobalRef(env, jni.Object(class)))
-	e.openMethodFile = jni.GetMethodID(env, e.libClass, "openFile", "(Landroid/view/View;Ljava/lang/String;I)V")
-	e.saveMethodFile = jni.GetMethodID(env, e.libClass, "saveFile", "(Landroid/view/View;Ljava/lang/String;I)V")
+		obj, err := jni.NewObject(env, class, jni.GetMethodID(env, class, "<init>", `()V`))
+		if err != nil {
+			return err
+		}
 
-	return nil
+		e.explorerObject = jni.NewGlobalRef(env, obj)
+		e.explorerClass = jni.Class(jni.NewGlobalRef(env, jni.Object(class)))
+		e.explorerMethodOpen = jni.GetMethodID(env, e.explorerClass, "openFile", "(Landroid/view/View;Ljava/lang/String;I)V")
+		e.explorerMethodSave = jni.GetMethodID(env, e.explorerClass, "saveFile", "(Landroid/view/View;Ljava/lang/String;I)V")
+
+		return nil
+	})
 }
 
-func (e *explorerPlugin) destroy() {
+func (e *driver) destroy() {
 	jni.Do(jni.JVMFor(app.JavaVM()), func(env jni.Env) error {
-		if e.libObject != 0 {
-			jni.DeleteGlobalRef(env, e.libObject)
-			e.libObject = 0
+		e.mutex.Lock()
+		defer e.mutex.Unlock()
+
+		if e.explorerObject != 0 {
+			jni.DeleteGlobalRef(env, e.explorerObject)
+			e.explorerObject = 0
 		}
-		if e.libClass != 0 {
-			jni.DeleteGlobalRef(env, jni.Object(e.libClass))
-			e.libClass = 0
+		if e.explorerClass != 0 {
+			jni.DeleteGlobalRef(env, jni.Object(e.explorerClass))
+			e.explorerClass = 0
 		}
 		return nil
 	})
 }
 
-func (e *explorerPlugin) saveFile(filename string, mime mimetype.MimeType) (io.WriteCloser, error) {
-	res := make(chan result)
-	callback := func(r result) {
+func (e *driver) saveFile(filename string, mime mimetype.MimeType) (io.WriteCloser, error) {
+	res := make(chan result[io.WriteCloser])
+	callback := func(r result[io.WriteCloser]) {
 		res <- r
 	}
 
-	go e.window.Run(func() {
+	go e.config.RunOnMain(func() {
 		err := jni.Do(jni.JVMFor(app.JavaVM()), func(env jni.Env) error {
 			e.mutex.Lock()
 			defer e.mutex.Unlock()
 
-			if err := e.init(env); err != nil {
-				return err
-			}
-
-			return jni.CallVoidMethod(env, e.libObject, e.explorer.saveMethodFile,
-				jni.Value(e.view),
+			return jni.CallVoidMethod(env, e.explorerClass, e.explorerMethodSave,
+				jni.Value(e.config.View),
 				jni.Value(jni.JavaString(env, strings.TrimPrefix(strings.ToLower(filepath.Ext(filename)), "."))),
 				jni.Value(cgo.NewHandle(callback)),
 			)
 		})
 
 		if err != nil {
-			res <- result{error: err}
+			res <- result[io.WriteCloser]{error: err}
 		}
 	})
 
@@ -118,24 +133,20 @@ func (e *explorerPlugin) saveFile(filename string, mime mimetype.MimeType) (io.W
 	return r.file.(io.WriteCloser), nil
 }
 
-func (e *explorerPlugin) openFile(mime []mimetype.MimeType) (io.ReadCloser, error) {
+func (e *driver) openFile(mime []mimetype.MimeType) (io.ReadCloser, error) {
 	s := stringBuilderPool.Get().(*strings.Builder)
 
-	res := make(chan result)
-	callback := func(r result) {
+	res := make(chan result[io.ReadCloser])
+	callback := func(r result[io.ReadCloser]) {
 		defer stringBuilderPool.Put(s)
 		res <- r
 		s.Reset()
 	}
 
-	go e.window.Run(func() {
+	go e.config.RunOnMain(func() {
 		err := jni.Do(jni.JVMFor(app.JavaVM()), func(env jni.Env) error {
 			e.mutex.Lock()
 			defer e.mutex.Unlock()
-
-			if err := e.init(env); err != nil {
-				return err
-			}
 
 			for i, v := range mime {
 				if i > 0 {
@@ -144,14 +155,14 @@ func (e *explorerPlugin) openFile(mime []mimetype.MimeType) (io.ReadCloser, erro
 				v.WriteTo(s)
 			}
 
-			return jni.CallVoidMethod(env, e.libObject, e.explorer.openMethodFile,
-				jni.Value(e.view),
+			return jni.CallVoidMethod(env, e.explorerObject, e.explorerMethodOpen,
+				jni.Value(e.config.View),
 				jni.Value(jni.JavaString(env, s.String())),
 				jni.Value(cgo.NewHandle(callback)),
 			)
 		})
 		if err != nil {
-			res <- result{error: err}
+			res <- result[io.ReadCloser]{error: err}
 		}
 	})
 
@@ -165,17 +176,17 @@ func (e *explorerPlugin) openFile(mime []mimetype.MimeType) (io.ReadCloser, erro
 
 //export Java_org_gioui_x_explorer_explorer_1android_ImportCallback
 func Java_org_gioui_x_explorer_explorer_1android_ImportCallback(env *C.JNIEnv, _ C.jclass, stream C.jobject, handler C.jlong, err C.jstring) {
-	fileCallback(env, stream, handler, err)
+	fileCallback[io.ReadCloser](env, stream, handler, err)
 }
 
 //export Java_org_gioui_x_explorer_explorer_1android_ExportCallback
 func Java_org_gioui_x_explorer_explorer_1android_ExportCallback(env *C.JNIEnv, _ C.jclass, stream C.jobject, handler C.jlong, err C.jstring) {
-	fileCallback(env, stream, handler, err)
+	fileCallback[io.WriteCloser](env, stream, handler, err)
 }
 
-func fileCallback(env *C.JNIEnv, stream C.jobject, handler C.jlong, err C.jstring) {
-	if callback, ok := cgo.Handle(handler).Value().(func(result)); ok {
-		var res result
+func fileCallback[T io.ReadCloser | io.WriteCloser](env *C.JNIEnv, stream C.jobject, handler C.jlong, err C.jstring) {
+	if callback, ok := cgo.Handle(handler).Value().(func(result[T])); ok {
+		var res result[T]
 		env := jni.EnvFor(uintptr(unsafe.Pointer(env)))
 		if stream == 0 {
 			res.error = ErrUserDecline
@@ -185,7 +196,11 @@ func fileCallback(env *C.JNIEnv, stream C.jobject, handler C.jlong, err C.jstrin
 				}
 			}
 		} else {
-			res.file, res.error = newFile(env, jni.NewGlobalRef(env, jni.Object(uintptr(stream))))
+			file, err := newFile(env, jni.NewGlobalRef(env, jni.Object(uintptr(stream))))
+			if file != nil {
+				res.file = file.(T)
+			}
+			res.error = err
 		}
 
 		callback(res)

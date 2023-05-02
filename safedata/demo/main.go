@@ -2,6 +2,9 @@ package main
 
 import (
 	"fmt"
+	"gioui.org/font"
+	"gioui.org/op/paint"
+	"image/color"
 	"os"
 	"sync"
 
@@ -24,10 +27,10 @@ func main() {
 
 	window := app.NewWindow()
 
-	shaper := text.NewCache(gofont.Collection())
+	shaper := text.NewShaper(gofont.Collection())
 
 	mutex := new(sync.Mutex)
-	textx := ""
+	txt := ""
 
 	ops := new(op.Ops)
 	ready := make(chan int, 1)
@@ -42,7 +45,8 @@ func main() {
 				mutex.Lock()
 				gtx := layout.NewContext(ops, evt)
 
-				widget.Label{}.Layout(gtx, shaper, text.Font{}, 12, textx)
+				paint.ColorOp{Color: color.NRGBA{0, 0, 0, 255}}.Add(gtx.Ops)
+				widget.Label{}.Layout(gtx, shaper, font.Font{}, 12, txt, op.CallOp{})
 
 				op.InvalidateOp{}.Add(gtx.Ops)
 				evt.Frame(ops)
@@ -61,13 +65,13 @@ func main() {
 			// Add a secret
 			err := sh.Set(safedata.Secret{
 				Identifier:  "my-secret4",
-				Description: "aaaa",
+				Description: "some secret",
 				Data:        []byte("my-secret-data"),
 			})
 
 			if err != nil {
 				mutex.Lock()
-				textx = string("ERR ON ADD->" + err.Error())
+				txt = string("ERR ON ADD->" + err.Error())
 				mutex.Unlock()
 			}
 			m <- struct{}{}
@@ -79,9 +83,9 @@ func main() {
 			x, err := sh.Get("my-secret4")
 			mutex.Lock()
 			if err != nil {
-				textx += "\n" + string("ERR ON GET->"+err.Error())
+				txt += "\n" + string("ERR ON GET -> "+err.Error())
 			} else {
-				textx = string(x.Data)
+				txt = string(x.Data)
 			}
 			mutex.Unlock()
 

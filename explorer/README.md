@@ -8,13 +8,32 @@ Opens the native file-dialog/file-picker.
 
 ## Usage
 
+## Freestanding
+
+- `exporer.NewExplorer`:
+  - Creates a instance of Explorer struct, given the config.
+- `explorer.Configure`:
+  - Updates the current Explorer with the given config.
+- `explorer.OpenFile`:
+  - Opens the native file dialog to open a single file.
+- `explorer.SaveFile`:
+  - Opens the native file dialog to save a single file.
+
+## Gio
+
+## Non-Plugin:
+
+If you want to use it without plugin, read the Freestanding instructions. We provide some helper functions, such as NewConfigFromViewEvent and such.
+
+## Plugin:
+
 To open an single file, you can use `explorer.OpenFileOp`.
 
 That will open native File Dialog/File Picker. Once the file is selected by the end-user,
 one `explorer.OpenFileEvent` will be sent to the given `Tag`. 
 
 ```go
-explorer.OpenFileOp{
+gioexplorer.OpenFileOp{
     Tag: yourTag, 
     Mimetype: []mimetype.MimeType{
       {Extension: "png", Type: "image", Subtype: "png"},
@@ -30,22 +49,22 @@ explorer.OpenFileOp{
 
 Operations must be added with `.Add(gtx.Ops)` method. The operation will be executed at the end of the frame.
 
-- `explorer.OpenFileOp`:
+- `gioexplorer.OpenFileOp`:
   - Opens the native file dialog to open/import a single file.
-- `explorer.SaveFileOp`:
+- `gioexplorer.SaveFileOp`:
   - Open the native file dialog to save/export a single file.
 
 ## Events:
 
 Events are response sent using the `Tag` and should be handled with `gtx.Events()`.
 
-- `explorer.OpenFileEvent`:
+- `gioexplorer.OpenFileEvent`:
   - Sent to `Tag` when the user chooses the file to be read/open. That event contains one io.ReadCloser.
-- `explorer.SaveFileEvent`:
+- `gioexplorer.SaveFileEvent`:
   - Sent to `Tag` when the user chooses the file to save/replace. That event contains one io.WriteCloser.
-- `explorer.ErrorEvent`:
+- `gioexplorer.ErrorEvent`:
   - Sent to `Tag` when some error occurs.
-- `explorer.CancelEvent`: 
+- `gioexplorer.CancelEvent`: 
   - Sent to `Tag` when the user closes the file-dialog or not select one valid file.
 
 ## Features

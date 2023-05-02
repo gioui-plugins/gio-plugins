@@ -8,12 +8,28 @@ Open a hyperlink in the default browser.
 
 ## Usage
 
+## Freestanding
+
+- `hyperlink.NewShare`:
+  - Creates a instance of Share struct, given the config.
+- `hyperlink.Configure`:
+  - Updates the current Share with the given config.
+- `hyperlink.Open`:
+  - Opens the link in the default browser. 
+  - By default, only supports `http` and `https` schemes.
+
+## Gio
+
+## Non-Plugin:
+
+If you want to use it without plugin, read the Freestanding instructions. We provide some helper functions, such as NewConfigFromViewEvent and such.
+
 To open one link, you can use the `Open` operation.
 
 That will open the link in the default browser. You can use `OpenURL` to open a `*url.URL`:
 
 ```go
-hyperlink.OpenOp{URI: &url.URL{
+giohyperlink.OpenOp{URI: &url.URL{
     Scheme: "https",
     Host:   "github.com",
 }}.Add(gtx.Ops)
@@ -23,14 +39,14 @@ hyperlink.OpenOp{URI: &url.URL{
 
 Operations must be added with `.Add(gtx.Ops)` method. The operation will be executed at the end of the frame.
 
-- `share.OpenOp`:
+- `giohyperlink.OpenOp`:
     - Opens the link in the default browser. Currently, only supports `http` and `https` schemes.
 
 ## Events:
 
 Events are response sent using the `Tag` and should be handled with `gtx.Events()`.
 
-- `webviewer.ErrorEvent`:
+- `giohyperlink.ErrorEvent`:
     - Sent to `Tag` when it's not possible to open the hyperlink.
 
 ## Features

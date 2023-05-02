@@ -1,6 +1,8 @@
 package main
 
 import (
+	"gioui.org/font"
+	"github.com/gioui-plugins/gio-plugins/explorer/gioexplorer"
 	"image"
 	"image/color"
 	_ "image/gif"
@@ -17,13 +19,12 @@ import (
 	"gioui.org/op/paint"
 	"gioui.org/text"
 	"gioui.org/widget"
-	"github.com/gioui-plugins/gio-plugins/explorer"
 	"github.com/gioui-plugins/gio-plugins/explorer/mimetype"
 	"github.com/gioui-plugins/gio-plugins/plugin"
 	_ "golang.org/x/image/webp"
 )
 
-var _Sharper = text.NewCache(gofont.Collection())
+var _Sharper = text.NewShaper(gofont.Collection())
 var _ImageResult = make(chan img)
 
 type img struct {
@@ -84,13 +85,13 @@ var _FileTypes = []mimetype.MimeType{
 func (p *Page) Layout(gtx layout.Context) layout.Dimensions {
 
 	if p.uploadClickable.Clicked() {
-		explorer.OpenFileOp{Tag: p.tag, Mimetype: _FileTypes}.Add(gtx.Ops)
+		gioexplorer.OpenFileOp{Tag: p.tag, Mimetype: _FileTypes}.Add(gtx.Ops)
 		p.error = ""
 		p.cancel = false
 	}
 
 	if p.saveClickable.Clicked() {
-		explorer.SaveFileOp{Tag: p.tag, Mimetype: _FileTypes[0], Filename: "image.png"}.Add(gtx.Ops)
+		gioexplorer.SaveFileOp{Tag: p.tag, Mimetype: _FileTypes[0], Filename: "image.png"}.Add(gtx.Ops)
 		p.error = ""
 		p.cancel = false
 	}
@@ -100,7 +101,7 @@ func (p *Page) Layout(gtx layout.Context) layout.Dimensions {
 			continue
 		}
 		switch evt := evt.(type) {
-		case explorer.SaveFileEvent:
+		case gioexplorer.SaveFileEvent:
 			go func() {
 				defer evt.File.Close()
 
@@ -109,7 +110,7 @@ func (p *Page) Layout(gtx layout.Context) layout.Dimensions {
 					return
 				}
 			}()
-		case explorer.OpenFileEvent:
+		case gioexplorer.OpenFileEvent:
 			p.loading = true
 			go func() {
 				defer evt.File.Close()
@@ -121,9 +122,9 @@ func (p *Page) Layout(gtx layout.Context) layout.Dimensions {
 				}
 				_ImageResult <- img{widget: widget.Image{Fit: widget.Contain, Position: layout.Center, Src: paint.NewImageOp(i)}, image: i}
 			}()
-		case explorer.ErrorEvent:
+		case gioexplorer.ErrorEvent:
 			p.error = evt.Error()
-		case explorer.CancelEvent:
+		case gioexplorer.CancelEvent:
 			p.cancel = true
 		}
 	}
@@ -131,10 +132,10 @@ func (p *Page) Layout(gtx layout.Context) layout.Dimensions {
 	return layout.Flex{Axis: layout.Vertical}.Layout(gtx,
 		layout.Rigid(func(gtx layout.Context) layout.Dimensions {
 			if p.error != "" {
-				return widget.Label{}.Layout(gtx, _Sharper, text.Font{}, 16, p.error)
+				return widget.Label{}.Layout(gtx, _Sharper, font.Font{}, 16, p.error, op.CallOp{})
 			}
 			if p.cancel {
-				return widget.Label{}.Layout(gtx, _Sharper, text.Font{}, 16, "Canceled")
+				return widget.Label{}.Layout(gtx, _Sharper, font.Font{}, 16, "Canceled", op.CallOp{})
 			}
 			return layout.Dimensions{}
 		}),
@@ -170,7 +171,7 @@ func (b Button) Layout(gtx layout.Context) layout.Dimensions {
 		gtx := gtx
 		gtx.Constraints.Min = image.Point{}
 		paint.ColorOp{Color: color.NRGBA{R: 255, G: 255, B: 255, A: 255}}.Add(gtx.Ops)
-		labelDims = widget.Label{Alignment: text.Start, MaxLines: 1}.Layout(gtx, _Sharper, text.Font{}, 14, b.text)
+		labelDims = widget.Label{Alignment: text.Start, MaxLines: 1}.Layout(gtx, _Sharper, font.Font{}, 14, b.text, op.CallOp{})
 	}
 	call := macro.Stop()
 

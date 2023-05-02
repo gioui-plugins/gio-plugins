@@ -1,22 +1,23 @@
 package explorer
 
 import (
-	"fmt"
 	"io"
 	"strings"
 	"syscall/js"
 
-	"gioui.org/io/event"
 	"github.com/gioui-plugins/gio-plugins/explorer/mimetype"
 )
 
-type explorer struct{}
+type driver struct{}
 
-func (e *explorerPlugin) listenEvents(_ event.Event) {
-	// NO-OP
+func attachDriver(house *Explorer, config Config) {
+	house.driver = driver{}
+	configureDriver(&house.driver, config)
 }
 
-func (e *explorerPlugin) saveFile(name string, mime mimetype.MimeType) (io.WriteCloser, error) {
+func configureDriver(driver *driver, config Config) {}
+
+func (e *driver) saveFile(name string, mime mimetype.MimeType) (io.WriteCloser, error) {
 	if js.Global().Get("showSaveFilePicker").IsUndefined() {
 		return newFileWriterLegacy(name), nil
 	}
@@ -41,9 +42,8 @@ func (e *explorerPlugin) saveFile(name string, mime mimetype.MimeType) (io.Write
 	return newFileWriter(writable[0]), nil
 }
 
-func (e *explorerPlugin) openFile(mimes []mimetype.MimeType) (io.ReadCloser, error) {
+func (e *driver) openFile(mimes []mimetype.MimeType) (io.ReadCloser, error) {
 	if js.Global().Get("showOpenFilePicker").IsUndefined() {
-		fmt.Println("fallback to legacy")
 		return e.openFileLegacy(mimes)
 	}
 
@@ -74,8 +74,8 @@ func (e *explorerPlugin) openFile(mimes []mimetype.MimeType) (io.ReadCloser, err
 	return newFileReader(file[0]), nil
 }
 
-func (e *explorerPlugin) openFileLegacy(mimes []mimetype.MimeType) (io.ReadCloser, error) {
-	res := make(chan result)
+func (e *driver) openFileLegacy(mimes []mimetype.MimeType) (io.ReadCloser, error) {
+	res := make(chan result[io.ReadCloser])
 	callback := openCallbackLegacy(res)
 
 	extensions := stringBuilderPool.Get().(*strings.Builder)
@@ -139,15 +139,15 @@ func await(value js.Value) ([]js.Value, bool) {
 	return r, true
 }
 
-func openCallbackLegacy(r chan result) js.Func {
+func openCallbackLegacy(r chan result[io.ReadCloser]) js.Func {
 	// There's no way to detect when the dialog is closed, so we can't re-use the callback.
 	return js.FuncOf(func(this js.Value, args []js.Value) interface{} {
 		files := args[0].Get("target").Get("files")
 		if files.Length() <= 0 {
-			r <- result{error: ErrUserDecline}
+			r <- result[io.ReadCloser]{error: ErrUserDecline}
 			return nil
 		}
-		r <- result{file: newFileReader(files.Index(0))}
+		r <- result[io.ReadCloser]{file: newFileReader(files.Index(0))}
 		return nil
 	})
 }

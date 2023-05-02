@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"gioui.org/font"
 	"image"
 	"image/color"
 	"math"
@@ -28,7 +29,7 @@ import (
 )
 
 var (
-	GlobalShaper = text.NewCache(gofont.Collection())
+	GlobalShaper = text.NewShaper(gofont.Collection())
 	DefaultURL   = "https://google.com"
 
 	IconAdd, _            = widget.NewIcon(icons.ContentAdd)
@@ -127,18 +128,16 @@ func NewBrowser() *Browsers {
 			gtx.Constraints.Min.Y = 0
 			gtx.Constraints.Max.X -= gtx.Dp(16)
 			macro := op.Record(gtx.Ops)
-			dims := b.Address[b.Selected].Layout(gtx, GlobalShaper, text.Font{}, gtx.Metric.DpToSp(16), func(gtx layout.Context) layout.Dimensions {
-				paint.ColorOp{Color: color.NRGBA{R: 255, G: 255, B: 255, A: 255}}.Add(gtx.Ops)
-				b.Address[b.Selected].PaintText(gtx)
 
-				paint.ColorOp{Color: color.NRGBA{R: 123, G: 123, B: 123, A: 255}}.Add(gtx.Ops)
-				b.Address[b.Selected].PaintCaret(gtx)
+			textMaterial := op.Record(gtx.Ops)
+			paint.ColorOp{Color: color.NRGBA{R: 255, G: 255, B: 255, A: 255}}.Add(gtx.Ops)
+			tmat := textMaterial.Stop()
 
-				paint.ColorOp{Color: color.NRGBA{R: 123, G: 123, B: 123, A: 255}}.Add(gtx.Ops)
-				b.Address[b.Selected].PaintSelection(gtx)
+			selectMaterial := op.Record(gtx.Ops)
+			paint.ColorOp{Color: color.NRGBA{R: 123, G: 123, B: 123, A: 255}}.Add(gtx.Ops)
+			smat := selectMaterial.Stop()
 
-				return layout.Dimensions{Size: gtx.Constraints.Max}
-			})
+			dims := b.Address[b.Selected].Layout(gtx, GlobalShaper, font.Font{}, gtx.Metric.DpToSp(16), tmat, smat)
 			call := macro.Stop()
 
 			defer op.Offset(image.Point{X: gtx.Dp(8), Y: (gtx.Constraints.Max.Y - dims.Size.Y - dims.Baseline) / 2}).Push(gtx.Ops).Pop()
@@ -300,10 +299,13 @@ func (b *Browsers) Layout(gtx layout.Context) layout.Dimensions {
 
 					return b.Tabs[i].Layout(gtx, func(gtx layout.Context) layout.Dimensions {
 						return layout.UniformInset(4).Layout(gtx, func(gtx layout.Context) layout.Dimensions {
+							colorMaterial := op.Record(gtx.Ops)
 							paint.ColorOp{Color: color.NRGBA{R: 255, G: 255, B: 255, A: 255}}.Add(gtx.Ops)
+							pcolor := colorMaterial.Stop()
+
 							macro := op.Record(gtx.Ops)
 							gtx.Constraints.Min.Y = 0
-							dims := widget.Label{Alignment: text.Start, MaxLines: 1}.Layout(gtx, GlobalShaper, text.Font{}, gtx.Metric.DpToSp(16), b.Titles[i])
+							dims := widget.Label{Alignment: text.Start, MaxLines: 1}.Layout(gtx, GlobalShaper, font.Font{}, gtx.Metric.DpToSp(16), b.Titles[i], pcolor)
 							call := macro.Stop()
 
 							defer op.Offset(image.Point{X: 0, Y: (gtx.Constraints.Max.Y - dims.Size.Y) / 2}).Push(gtx.Ops).Pop()
@@ -370,12 +372,16 @@ type Button struct {
 func (b Button) Layout(gtx layout.Context) layout.Dimensions {
 	return b.Clickable.Layout(gtx, func(gtx layout.Context) layout.Dimensions {
 		macro := op.Record(gtx.Ops)
+
+		colorMaterial := op.Record(gtx.Ops)
 		c := color.NRGBA{R: 32, G: 32, B: 32, A: 255}
 		paint.ColorOp{Color: c}.Add(gtx.Ops)
+		pcolor := colorMaterial.Stop()
+
 		gtx.Constraints.Min.Y = 0
 		var dims layout.Dimensions
 		if b.Icon == nil {
-			dims = widget.Label{Alignment: text.Start, MaxLines: 1}.Layout(gtx, GlobalShaper, text.Font{}, gtx.Metric.DpToSp(16), b.Text)
+			dims = widget.Label{Alignment: text.Start, MaxLines: 1}.Layout(gtx, GlobalShaper, font.Font{}, gtx.Metric.DpToSp(16), b.Text, pcolor)
 		} else {
 			gtx := gtx
 			gtx.Constraints.Max.Y = gtx.Sp(gtx.Metric.DpToSp(16))

@@ -18,41 +18,42 @@ import "C"
 import (
 	"io"
 	"net/url"
+
 	"os"
 	"runtime"
 	"runtime/cgo"
 	"strings"
 	"unsafe"
 
-	"gioui.org/app"
-	"gioui.org/io/event"
 	"github.com/gioui-plugins/gio-plugins/explorer/mimetype"
 )
 
-type explorer struct {
-	view C.CFTypeRef
+type driver struct {
+	config Config
 }
 
-func (e *explorerPlugin) listenEvents(evt event.Event) {
-	switch evt := evt.(type) {
-	case app.ViewEvent:
-		e.view = C.CFTypeRef(evt.View)
-	}
+func attachDriver(house *Explorer, config Config) {
+	house.driver = driver{}
+	configureDriver(&house.driver, config)
 }
 
-func (e *explorerPlugin) saveFile(name string, mime mimetype.MimeType) (io.WriteCloser, error) {
+func configureDriver(driver *driver, config Config) {
+	driver.config = config
+}
+
+func (e *driver) saveFile(name string, mime mimetype.MimeType) (io.WriteCloser, error) {
 	cname := C.CString(name)
 	defer C.free(unsafe.Pointer(cname))
 
-	res := make(chan result)
-	callback := func(r result) {
+	res := make(chan result[io.WriteCloser])
+	callback := func(r result[io.WriteCloser]) {
 		res <- r
 	}
 	hcallback := cgo.NewHandle(callback)
 	defer hcallback.Delete()
 
-	go e.window.Run(func() {
-		C.saveFile(e.view, cname, C.uintptr_t(hcallback))
+	go e.config.RunOnMain(func() {
+		C.saveFile(e.config.View, cname, C.uintptr_t(hcallback))
 	})
 
 	r := <-res
@@ -64,9 +65,9 @@ func (e *explorerPlugin) saveFile(name string, mime mimetype.MimeType) (io.Write
 
 }
 
-func (e *explorerPlugin) openFile(mimes []mimetype.MimeType) (io.ReadCloser, error) {
-	res := make(chan result)
-	callback := func(r result) {
+func (e *driver) openFile(mimes []mimetype.MimeType) (io.ReadCloser, error) {
+	res := make(chan result[io.ReadCloser])
+	callback := func(r result[io.ReadCloser]) {
 		res <- r
 	}
 	hcallback := cgo.NewHandle(callback)
@@ -80,8 +81,8 @@ func (e *explorerPlugin) openFile(mimes []mimetype.MimeType) (io.ReadCloser, err
 	cextensions := C.CString(strings.Join(extensions, ","))
 	defer C.free(unsafe.Pointer(cextensions))
 
-	go e.window.Run(func() {
-		C.openFile(e.view, cextensions, C.uintptr_t(hcallback))
+	go e.config.RunOnMain(func() {
+		C.openFile(e.config.View, cextensions, C.uintptr_t(hcallback))
 	})
 
 	r := <-res
@@ -93,34 +94,38 @@ func (e *explorerPlugin) openFile(mimes []mimetype.MimeType) (io.ReadCloser, err
 
 //export importCallback
 func importCallback(u *C.char, id uintptr) {
-	if v, ok := cgo.Handle(id).Value().(func(result)); ok {
-		v(newOSFile(u, os.Open))
+	if v, ok := cgo.Handle(id).Value().(func(result[io.ReadCloser])); ok {
+		v(newOSFile[io.ReadCloser](u, func(s string) (io.ReadCloser, error) {
+			return os.Open(s)
+		}))
 	}
 }
 
 //export exportCallback
 func exportCallback(u *C.char, id uintptr) {
-	if v, ok := cgo.Handle(id).Value().(func(result)); ok {
-		v(newOSFile(u, os.Create))
+	if v, ok := cgo.Handle(id).Value().(func(result[io.WriteCloser])); ok {
+		v(newOSFile[io.WriteCloser](u, func(s string) (io.WriteCloser, error) {
+			return os.Create(s)
+		}))
 	}
 }
 
-func newOSFile(u *C.char, action func(s string) (*os.File, error)) result {
+func newOSFile[T io.ReadCloser | io.ReadCloser](u *C.char, action func(s string) (T, error)) result[T] {
 	name := C.GoString(u)
 	if name == "" {
-		return result{error: ErrUserDecline, file: nil}
+		return result[T]{error: ErrUserDecline}
 	}
 
 	uri, err := url.Parse(name)
 	if err != nil {
-		return result{error: err, file: nil}
+		return result[T]{error: err}
 	}
 
 	path, err := url.PathUnescape(uri.Path)
 	if err != nil {
-		return result{error: err, file: nil}
+		return result[T]{error: err}
 	}
 
 	f, err := action(path)
-	return result{error: err, file: f}
+	return result[T]{error: err, file: f}
 }

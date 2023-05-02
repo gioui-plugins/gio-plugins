@@ -5,21 +5,16 @@
 
 package share
 
-import (
-	"gioui.org/app"
-	"gioui.org/io/event"
-)
+type driver struct{}
 
-type share struct{}
+func attachDriver(house *Share, config Config) {}
 
-func newShare(w *app.Window) *share {
-	return new(share)
+func configureDriver(driver *driver, config Config) {}
+
+func (e *driver) shareText(title, text string) error {
+	return ErrNotAvailable
 }
 
-func (e *sharePlugin) listenEvents(_ event.Event) {
-
-}
-
-func (e *sharePlugin) shareShareable(shareable Shareable) error {
+func (e *driver) shareWebsite(title, description, url string) error {
 	return ErrNotAvailable
 }
