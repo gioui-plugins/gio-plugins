@@ -87,11 +87,11 @@ func (d driverCredentialsManagement) setSecret(secret Secret) error {
 	obj.Set("password", secret.Data)
 
 	res := make(chan error, 1)
-	success := js.FuncOf(func(this interface{}, args []interface{}) any {
+	success := js.FuncOf(func(this js.Value, args []js.Value) any {
 		res <- nil
 		return nil
 	})
-	failure := js.FuncOf(func(this interface{}, args []interface{}) any {
+	failure := js.FuncOf(func(this js.Value, args []js.Value) any {
 		res <- ErrUserRefused
 		return nil
 	})
@@ -110,17 +110,13 @@ func (d driverCredentialsManagement) listSecret(looper Looper) error {
 
 func (d driverCredentialsManagement) getSecret(_ string, secret *Secret) error {
 	err := make(chan error, 1)
-	success := js.FuncOf(func(this interface{}, args []interface{}) any {
+	success := js.FuncOf(func(this js.Value, args []js.Value) any {
 		if len(args) == 0 {
 			err <- ErrUserRefused
 			return nil
 		}
 
-		cred, ok := args[0].(js.Value)
-		if !ok {
-			err <- ErrUserRefused
-			return nil
-		}
+		cred := args[0]
 
 		pass := cred.Get("password")
 		name := cred.Get("name")
@@ -138,7 +134,7 @@ func (d driverCredentialsManagement) getSecret(_ string, secret *Secret) error {
 		err <- nil
 		return nil
 	})
-	failure := js.FuncOf(func(this interface{}, args []interface{}) any {
+	failure := js.FuncOf(func(this js.Value, args []js.Value) any {
 		err <- ErrUserRefused
 		return nil
 	})
