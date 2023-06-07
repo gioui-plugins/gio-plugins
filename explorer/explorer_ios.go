@@ -30,33 +30,34 @@ import (
 	"sync"
 	"unsafe"
 
-	"gioui.org/app"
-	"gioui.org/io/event"
 	"github.com/gioui-plugins/gio-plugins/explorer/mimetype"
 )
 
-type explorer struct {
-	window *app.Window
+type driver struct {
+	config Config
+	mutex  sync.Mutex
+
 	picker C.CFTypeRef
 
 	savePool *sync.Pool
 	openPool *sync.Pool
 }
 
-func (e *explorerPlugin) listenEvents(evt event.Event) {
-	switch evt := evt.(type) {
-	case app.ViewEvent:
-		e.picker = C.CFTypeRef(evt.ViewController)
-		if e.savePool == nil {
-			e.savePool = &sync.Pool{New: func() any { return C.CFTypeRef(0) }}
-		}
-		if e.openPool == nil {
-			e.openPool = &sync.Pool{New: func() any { return C.CFTypeRef(0) }}
-		}
-	}
+func attachDriver(house *Explorer, config Config) {
+	house.driver = driver{}
+	house.driver.savePool = &sync.Pool{New: func() any { return C.CFTypeRef(0) }}
+	house.driver.openPool = &sync.Pool{New: func() any { return C.CFTypeRef(0) }}
+	configureDriver(&house.driver, config)
 }
 
-func (e *explorerPlugin) saveFile(name string, mime mimetype.MimeType) (io.WriteCloser, error) {
+func configureDriver(driver *driver, config Config) {
+	driver.mutex.Lock()
+	defer driver.mutex.Unlock()
+
+	driver.config = config
+}
+
+func (e *driver) saveFile(name string, mime mimetype.MimeType) (io.WriteCloser, error) {
 	if e.picker == 0 {
 		return nil, ErrNotAvailable
 	}
@@ -67,14 +68,16 @@ func (e *explorerPlugin) saveFile(name string, mime mimetype.MimeType) (io.Write
 	if err != nil {
 		return nil, nil
 	}
-	f.Close()
+	if err := f.Close(); err != nil {
+		return nil, err
+	}
 
 	name = "file://" + name
 	cname := C.CString(name)
 	defer C.free(unsafe.Pointer(cname))
 
-	res := make(chan result, 1)
-	hcallback := cgo.NewHandle(func(r result) { res <- r })
+	res := make(chan result[io.ReadWriteCloser], 1)
+	hcallback := cgo.NewHandle(func(r result[io.ReadWriteCloser]) { res <- r })
 	defer hcallback.Delete()
 
 	r := e.savePool.Get().(C.CFTypeRef)
@@ -82,9 +85,9 @@ func (e *explorerPlugin) saveFile(name string, mime mimetype.MimeType) (io.Write
 		e.savePool.Put(r)
 	}()
 
-	go e.window.Run(func() {
-		if r = C.saveFile(e.explorer.picker, cname, C.uintptr_t(hcallback), r); r == 0 {
-			res <- result{error: ErrNotAvailable}
+	go e.config.RunOnMain(func() {
+		if r = C.saveFile(e.picker, cname, C.uintptr_t(hcallback), r); r == 0 {
+			res <- result[io.ReadWriteCloser]{error: ErrNotAvailable}
 		}
 	})
 
@@ -92,10 +95,10 @@ func (e *explorerPlugin) saveFile(name string, mime mimetype.MimeType) (io.Write
 	if file.error != nil {
 		return nil, file.error
 	}
-	return file.file.(io.WriteCloser), nil
+	return file.file, nil
 }
 
-func (e *explorerPlugin) openFile(mimes []mimetype.MimeType) (io.ReadCloser, error) {
+func (e *driver) openFile(mimes []mimetype.MimeType) (io.ReadCloser, error) {
 	if e.picker == 0 {
 		return nil, ErrNotAvailable
 	}
@@ -111,8 +114,8 @@ func (e *explorerPlugin) openFile(mimes []mimetype.MimeType) (io.ReadCloser, err
 	cextensions := C.CString(s.String())
 	defer C.free(unsafe.Pointer(cextensions))
 
-	res := make(chan result, 1)
-	hcallback := cgo.NewHandle(func(r result) { res <- r })
+	res := make(chan result[io.ReadWriteCloser], 1)
+	hcallback := cgo.NewHandle(func(r result[io.ReadWriteCloser]) { res <- r })
 	defer hcallback.Delete()
 
 	r := e.openPool.Get().(C.CFTypeRef)
@@ -120,9 +123,9 @@ func (e *explorerPlugin) openFile(mimes []mimetype.MimeType) (io.ReadCloser, err
 		e.openPool.Put(r)
 	}()
 
-	go e.window.Run(func() {
-		if r = C.openFile(e.explorer.picker, cextensions, C.uintptr_t(hcallback), r); r == 0 {
-			res <- result{error: ErrNotAvailable}
+	go e.config.RunOnMain(func() {
+		if r = C.openFile(e.picker, cextensions, C.uintptr_t(hcallback), r); r == 0 {
+			res <- result[io.ReadWriteCloser]{error: ErrNotAvailable}
 		}
 	})
 
@@ -130,13 +133,13 @@ func (e *explorerPlugin) openFile(mimes []mimetype.MimeType) (io.ReadCloser, err
 	if file.error != nil {
 		return nil, file.error
 	}
-	return file.file.(io.ReadCloser), nil
+	return file.file, nil
 }
 
 //export pickerCallback
 func pickerCallback(u C.CFTypeRef, id C.uintptr_t) {
-	if fn, ok := cgo.Handle(id).Value().(func(result)); ok {
-		res := result{error: ErrUserDecline}
+	if fn, ok := cgo.Handle(id).Value().(func(result[io.ReadWriteCloser])); ok {
+		res := result[io.ReadWriteCloser]{error: ErrUserDecline}
 		if u != 0 {
 			res.file, res.error = newFile(u)
 		}

@@ -8,20 +8,39 @@ Opens the share dialog to share texts and websites.
 
 ## Usage
 
+## Freestanding
+
+- `share.NewShare`:
+  - Creates a instance of Share struct, given the config.
+- `share.Configure`:
+  - Updates the current Share with the given config.
+- `share.Text`:
+  - Shares text using the native share dialog.
+- `share.Website`:
+  - Shares a website using the native share dialog.
+
+## Gio
+
+## Non-Plugin:
+
+If you want to use it without plugin, read the Freestanding instructions. We provide some helper functions, such as NewConfigFromViewEvent and such.
+
+## Plugin:
+
 ### Operations:
 
 Operations must be added with `.Add(gtx.Ops)` method. The operation will be executed at the end of the frame.
 
-- `share.TextOp`:
+- `gioshare.TextOp`:
   - Shares text using the native share dialog.
-- `share.WebsiteOp`:
+- `gioshare.WebsiteOp`:
   - Shares a website using the native share dialog.
 
 ## Events:
 
 Events are response sent using the `Tag` and should be handled with `gtx.Events()`.
 
-- `webviewer.ErrorEvent`:
+- `gioshare.ErrorEvent`:
   - Sent to `Tag` when it's not possible to share.
 
 ## Features

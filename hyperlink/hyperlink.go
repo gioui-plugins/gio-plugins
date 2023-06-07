@@ -3,31 +3,7 @@ package hyperlink
 import (
 	"errors"
 	"net/url"
-	"reflect"
-
-	"gioui.org/app"
-	"gioui.org/io/system"
-	"gioui.org/op"
-	"github.com/gioui-plugins/gio-plugins/plugin"
-
-	"gioui.org/io/event"
 )
-
-var (
-	wantOps = []reflect.Type{
-		reflect.TypeOf(&OpenOp{}),
-	}
-	wantEvents = []reflect.Type{
-		reflect.TypeOf(app.ViewEvent{}),
-		reflect.TypeOf(system.StageEvent{}),
-	}
-)
-
-func init() {
-	plugin.Register(func(w *app.Window, handler *plugin.Plugin) plugin.Handler {
-		return &hyperlinkPlugin{window: w, plugin: handler}
-	})
-}
 
 var (
 	// ErrNotReady may occur when try to open a URL before the initialization is done.
@@ -42,64 +18,39 @@ var (
 	InsecureIgnoreScheme bool
 )
 
-type hyperlinkPlugin struct {
-	window *app.Window
-	plugin *plugin.Plugin
-
-	// hyperlink is OS-specific data
-	hyperlink
+// Hyperlink is the main struct, which holds the driver.
+type Hyperlink struct {
+	// driver holds OS-Specific content, it varies for each OS.
+	driver
 }
 
-// TypeOp implements plugin.Handler.
-func (h *hyperlinkPlugin) TypeOp() []reflect.Type {
-	return wantOps
+// NewHyperlink creates a new hyperlink.
+func NewHyperlink(config Config) *Hyperlink {
+	r := new(Hyperlink)
+	attachDriver(r, config)
+	return r
 }
 
-// TypeEvent implements plugin.Handler.
-func (h *hyperlinkPlugin) TypeEvent() []reflect.Type {
-	return wantEvents
+// Configure reconfigures the driver.
+func (h *Hyperlink) Configure(config Config) {
+	configureDriver(&h.driver, config)
 }
 
-// ListenOps implements plugin.Handler.
-func (h *hyperlinkPlugin) ListenOps(op interface{}) {
-	switch op := op.(type) {
-	case *OpenOp:
-		defer openOpPool.Release(op)
-
-		if op.URI == nil || op.URI.Scheme == "" || ((op.URI.Scheme != "http" && op.URI.Scheme != "https") && InsecureIgnoreScheme == false) {
-			h.plugin.SendEvent(op.Tag, event.Event(ErrorEvent{ErrInvalidURL}))
-			return
-		}
-
-		if err := h.open(op.URI); err != nil {
-			h.plugin.SendEvent(op.Tag, event.Event(ErrorEvent{err}))
-		}
+// Open opens the given URL.
+// It will return ErrInvalidURL if the URL doesn't use http or https.
+//
+// If you want to ignore the scheme, set InsecureIgnoreScheme to true, or use OpenUnsafe.
+func (h *Hyperlink) Open(uri *url.URL) error {
+	if uri == nil || uri.Scheme == "" || ((uri.Scheme != "http" && uri.Scheme != "https") && InsecureIgnoreScheme == false) {
+		return ErrInvalidURL
 	}
+	return h.driver.open(uri)
 }
 
-// ListenEvents implements plugin.Handler.
-func (h *hyperlinkPlugin) ListenEvents(evt event.Event) {
-	h.listenEvents(evt)
+// OpenUnsafe is the same as Open, but it doesn't validate the URL.
+//
+// That may crash or cause unexpected behavior if you use a non http/https URL,
+// so use it with caution.
+func (h *Hyperlink) OpenUnsafe(uri *url.URL) error {
+	return h.driver.open(uri)
 }
-
-// OpenOp is an operation that will open a URL.
-type OpenOp struct {
-	Tag event.Tag
-	URI *url.URL
-}
-
-var openOpPool = plugin.NewOpPool[OpenOp]()
-
-// Add adds an OpenOp to the queue.
-// It will open the given URL at the end of the frame.
-func (o OpenOp) Add(ops *op.Ops) {
-	openOpPool.WriteOp(ops, o)
-}
-
-// ErrorEvent is issued when an error occurs.
-type ErrorEvent struct {
-	error
-}
-
-// ImplementsEvent implements event.Event.
-func (e ErrorEvent) ImplementsEvent() {}

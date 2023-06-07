@@ -24,6 +24,7 @@ type File struct {
 
 var (
 	fileManagerOnce sync.Once
+
 	fileManager     jni.Class
 	fileMethodRead  jni.MethodID
 	fileMethodWrite jni.MethodID
@@ -46,7 +47,7 @@ func initFileManager(env jni.Env) error {
 	return nil
 }
 
-func newFile(env jni.Env, stream jni.Object) (*File, error) {
+func newFile(env jni.Env, stream jni.Object) (io.ReadWriteCloser, error) {
 	fileManagerOnce.Do(func() {
 		initFileManager(env)
 	})

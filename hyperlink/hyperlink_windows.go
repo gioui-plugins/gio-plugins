@@ -4,15 +4,16 @@
 package hyperlink
 
 import (
-	"gioui.org/io/event"
 	"golang.org/x/sys/windows"
 	"net/url"
 )
 
-type hyperlink struct{}
+type driver struct{}
 
-func (*hyperlinkPlugin) listenEvents(_ event.Event) {}
+func attachDriver(house *Hyperlink, config Config) {}
 
-func (*hyperlinkPlugin) open(u *url.URL) error {
+func configureDriver(driver *driver, config Config) {}
+
+func (*driver) open(u *url.URL) error {
 	return windows.ShellExecute(0, nil, windows.StringToUTF16Ptr(u.String()), nil, nil, windows.SW_SHOWNORMAL)
 }

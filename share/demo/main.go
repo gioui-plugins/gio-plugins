@@ -10,7 +10,7 @@ import (
 	"gioui.org/widget"
 	"gioui.org/widget/material"
 	"github.com/gioui-plugins/gio-plugins/plugin"
-	"github.com/gioui-plugins/gio-plugins/share"
+	"github.com/gioui-plugins/gio-plugins/share/gioshare"
 )
 
 var (
@@ -90,9 +90,9 @@ func main() {
 				if submit.Clicked() {
 					switch currentMode {
 					case modeText:
-						share.TextOp{Title: title.Text(), Text: desc.Text()}.Add(gtx.Ops)
+						gioshare.TextOp{Title: title.Text(), Text: desc.Text()}.Add(gtx.Ops)
 					case modeLink:
-						share.WebsiteOp{Title: title.Text(), Text: desc.Text(), Link: url.Text()}.Add(gtx.Ops)
+						gioshare.WebsiteOp{Title: title.Text(), Text: desc.Text(), Link: url.Text()}.Add(gtx.Ops)
 					}
 				}
 

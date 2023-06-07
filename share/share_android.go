@@ -8,25 +8,32 @@ package share
 import "C"
 import (
 	"gioui.org/app"
-	"gioui.org/io/event"
-	"gioui.org/io/system"
 	"git.wow.st/gmp/jni"
 )
 
-type share struct {
-	window *app.Window
-	view   uintptr
+type driver struct {
+	config Config
 
 	shareClass         jni.Class
 	shareMethodText    jni.MethodID
 	shareMethodWebsite jni.MethodID
 }
 
-func newShare(w *app.Window) share {
-	return share{window: w}
+func attachDriver(house *Share, config Config) {
+	house.driver = driver{}
+	configureDriver(&house.driver, config)
 }
 
-func (e *share) init() {
+func configureDriver(driver *driver, config Config) {
+	old := driver.config.View
+	driver.config = config
+	if old != driver.config.View {
+		driver.destroy()
+		driver.init()
+	}
+}
+
+func (e *driver) init() {
 	jni.Do(jni.JVMFor(app.JavaVM()), func(env jni.Env) error {
 		share, err := jni.LoadClass(env, jni.ClassLoaderFor(env, jni.Object(app.AppContext())), "com/inkeliz/share_android/share_android")
 		if err != nil {
@@ -41,7 +48,7 @@ func (e *share) init() {
 	})
 }
 
-func (e *share) destroy() {
+func (e *driver) destroy() {
 	if e.shareClass == 0 {
 		return
 	}
@@ -51,32 +58,22 @@ func (e *share) destroy() {
 	})
 }
 
-func (e *sharePlugin) listenEvents(evt event.Event) {
-	switch evt := evt.(type) {
-	case app.ViewEvent:
-		e.view = evt.View
-		e.init()
-	case system.DestroyEvent:
-
-	}
-}
-
-func (e *sharePlugin) shareText(op TextOp) error {
-	e.window.Run(func() {
+func (e *driver) shareText(title, text string) error {
+	e.config.RunOnMain(func() {
 		jni.Do(jni.JVMFor(app.JavaVM()), func(env jni.Env) error {
-			title, text := jni.JavaString(env, op.Title), jni.JavaString(env, op.Text)
-			return jni.CallStaticVoidMethod(env, e.shareClass, e.shareMethodText, jni.Value(e.view), jni.Value(title), jni.Value(text))
+			title, text := jni.JavaString(env, title), jni.JavaString(env, text)
+			return jni.CallStaticVoidMethod(env, e.shareClass, e.shareMethodText, jni.Value(e.config.View), jni.Value(title), jni.Value(text))
 		})
 	})
 
 	return nil
 }
 
-func (e *sharePlugin) shareWebsite(op WebsiteOp) error {
-	e.window.Run(func() {
+func (e *driver) shareWebsite(title, description, url string) error {
+	e.config.RunOnMain(func() {
 		jni.Do(jni.JVMFor(app.JavaVM()), func(env jni.Env) error {
-			title, text, link := jni.JavaString(env, op.Title), jni.JavaString(env, op.Text), jni.JavaString(env, op.Link)
-			return jni.CallStaticVoidMethod(env, e.shareClass, e.shareMethodWebsite, jni.Value(e.view), jni.Value(title), jni.Value(text), jni.Value(link))
+			title, text, link := jni.JavaString(env, title), jni.JavaString(env, description), jni.JavaString(env, url)
+			return jni.CallStaticVoidMethod(env, e.shareClass, e.shareMethodWebsite, jni.Value(e.config.View), jni.Value(title), jni.Value(text), jni.Value(link))
 		})
 	})
 	return nil

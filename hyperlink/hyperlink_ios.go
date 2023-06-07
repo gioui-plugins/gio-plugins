@@ -1,5 +1,4 @@
 //go:build ios
-// +build ios
 
 package hyperlink
 
@@ -15,14 +14,17 @@ void openLink(char *u) {
 import "C"
 
 import (
-	"gioui.org/io/event"
 	"net/url"
 	"unsafe"
 )
 
-func (*hyperlinkPlugin) listenEvents(_ event.Event) {}
+type driver struct{}
 
-func (*hyperlinkPlugin) open(u *url.URL) error {
+func attachDriver(house *Hyperlink, config Config) {}
+
+func configureDriver(driver *driver, config Config) {}
+
+func (*driver) open(u *url.URL) error {
 	u.RawQuery = u.Query().Encode()
 	cURL := C.CString(u.String())
 	C.openLink(cURL)

@@ -3,17 +3,17 @@
 package share
 
 import (
-	"gioui.org/app"
-	"gioui.org/io/event"
 	"github.com/gioui-plugins/gio-plugins/share/internal"
 	"github.com/go-ole/go-ole"
+	"sync"
 )
 
-type share struct {
-	window *app.Window
-	hwnd   uintptr
+type driver struct {
+	mutex  sync.Mutex
+	config Config
 
-	shareable Shareable
+	mode      uint8
+	shareable [3]string
 
 	// The definition of those field lives at share_windows_idl.go:
 	// It's  important to keep those values here to prevent the content to be freed
@@ -25,11 +25,17 @@ type share struct {
 	_IUriRuntimeClassFactory *internal.IUriRuntimeClassFactory
 }
 
-func newShare(w *app.Window) share {
-	return share{window: w}
+func attachDriver(house *Share, config Config) {
+	house.driver = driver{}
+	configureDriver(&house.driver, config)
+	house.driver.init()
 }
 
-func (e *sharePlugin) init() {
+func configureDriver(driver *driver, config Config) {
+	driver.config = config
+}
+
+func (e *driver) init() {
 	if err := ole.RoInitialize(1); err != nil {
 		return
 	}
@@ -46,7 +52,7 @@ func (e *sharePlugin) init() {
 		return
 	}
 
-	if err := e._IDataTransferManagerInterop.GetForWindow(e.hwnd, &e._IDataTransferManager); err != nil {
+	if err := e._IDataTransferManagerInterop.GetForWindow(e.config.HWND, &e._IDataTransferManager); err != nil {
 		return
 	}
 
@@ -74,16 +80,16 @@ func (e *sharePlugin) init() {
 			return ole.E_FAIL
 		}
 
-		switch s := e.shareable.(type) {
-		case TextOp:
-			dataProperty.SetTitle(s.Title)
-			dataPackage.SetText(s.Text)
-		case WebsiteOp:
-			dataProperty.SetTitle(s.Title)
-			dataPackage.SetText(s.Text)
+		switch e.mode {
+		case 0:
+			dataProperty.SetTitle(e.shareable[0])
+			dataPackage.SetText(e.shareable[1])
+		case 1:
+			dataProperty.SetTitle(e.shareable[0])
+			dataPackage.SetText(e.shareable[1])
 
 			var uri *internal.IUriRuntimeClass
-			if err := e._IUriRuntimeClassFactory.CreateUri(s.Link, &uri); err != nil {
+			if err := e._IUriRuntimeClassFactory.CreateUri(e.shareable[2], &uri); err != nil {
 				return ole.S_OK
 			}
 
@@ -96,7 +102,7 @@ func (e *sharePlugin) init() {
 
 	e._ITypedEventHandler = internal.NewTypedEventHandler(func(transfer *internal.IDataTransferManager, args *internal.IDataRequestedEventArgs) int {
 		var r int
-		e.window.Run(func() {
+		e.config.RunOnMain(func() {
 			r = callback(transfer, args)
 		})
 		return r
@@ -107,32 +113,29 @@ func (e *sharePlugin) init() {
 	}
 }
 
-func (e *sharePlugin) listenEvents(evt event.Event) {
-	switch evt := evt.(type) {
-	case app.ViewEvent:
-		e.hwnd = evt.HWND
-		if e.hwnd != 0 {
-			go e.window.Run(e.init)
-		}
-	}
-}
-
-func (e *sharePlugin) shareShareable(shareable Shareable) error {
-	// Mutex prevents changes of shareable data when Window is triggering the callback.
-	e.mutex.Lock()
-	e.shareable = shareable
-	e.mutex.Unlock()
-
-	go e.window.Run(func() {
-		e._IDataTransferManagerInterop.ShowShareUIWindow(e.hwnd)
+func (e *driver) shareShareable() error {
+	go e.config.RunOnMain(func() {
+		e._IDataTransferManagerInterop.ShowShareUIWindow(e.config.HWND)
 	})
 	return nil
 }
 
-func (e *sharePlugin) shareText(op TextOp) error {
-	return e.shareShareable(op)
+func (e *driver) shareText(title, text string) error {
+	// Mutex prevents changes of shareable data when Window is triggering the callback.
+	e.mutex.Lock()
+	e.shareable = [3]string{title, text, ""}
+	e.mode = 0
+	e.mutex.Unlock()
+
+	return e.shareShareable()
 }
 
-func (e *sharePlugin) shareWebsite(op WebsiteOp) error {
-	return e.shareShareable(op)
+func (e *driver) shareWebsite(title, description, url string) error {
+	// Mutex prevents changes of shareable data when Window is triggering the callback.
+	e.mutex.Lock()
+	e.shareable = [3]string{title, description, url}
+	e.mode = 1
+	e.mutex.Unlock()
+
+	return e.shareShareable()
 }

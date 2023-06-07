@@ -1,6 +1,8 @@
 package main
 
 import (
+	"gioui.org/font"
+	"github.com/gioui-plugins/gio-plugins/hyperlink/giohyperlink"
 	"image"
 	"image/color"
 	"log"
@@ -15,11 +17,9 @@ import (
 	"gioui.org/op"
 	"gioui.org/op/clip"
 	"gioui.org/op/paint"
-	"gioui.org/text"
 	"gioui.org/unit"
 	"gioui.org/widget"
 	"gioui.org/widget/material"
-	"github.com/gioui-plugins/gio-plugins/hyperlink"
 	"github.com/gioui-plugins/gio-plugins/plugin"
 )
 
@@ -63,7 +63,7 @@ func loop(w *app.Window) error {
 						continue
 					}
 
-					hyperlink.OpenOp{URI: u}.Add(gtx.Ops)
+					giohyperlink.OpenOp{URI: u}.Add(gtx.Ops)
 				}
 
 				render(gtx)
@@ -102,7 +102,7 @@ var (
 // Design
 var (
 	ButtonDesign          = &Button{Color: color.NRGBA{R: 255, G: 255, B: 255, A: 255}, TextSize: unit.Sp(16), Background: color.NRGBA{R: 135, G: 156, B: 251, A: 255}, BorderRadius: unit.Dp(4), Modifier: strings.ToUpper, Inset: layout.Inset{Top: unit.Dp(10), Right: unit.Dp(12), Bottom: unit.Dp(10), Left: unit.Dp(12)}}
-	InputDesign           = &Input{Font: text.Font{}, TextSize: unit.Sp(14), Color: color.NRGBA{R: 100, G: 130, B: 60, A: 255}, HintColor: color.NRGBA{R: 120, G: 120, B: 120, A: 255}}
+	InputDesign           = &Input{Font: font.Font{}, TextSize: unit.Sp(14), Color: color.NRGBA{R: 100, G: 130, B: 60, A: 255}, HintColor: color.NRGBA{R: 120, G: 120, B: 120, A: 255}}
 	InputBackgroundDesign = &Background{Color: color.NRGBA{R: 234, G: 236, B: 231, A: 255}, Inset: layout.UniformInset(unit.Dp(13)), BorderRadius: unit.Dp(10)}
 
 	MarginDesign = layout.Inset{Right: unit.Dp(30), Bottom: unit.Dp(6), Left: unit.Dp(30), Top: unit.Dp(6)}
@@ -111,7 +111,7 @@ var (
 var defaultMaterial = material.NewTheme(gofont.Collection())
 
 type Input struct {
-	Font      text.Font
+	Font      font.Font
 	TextSize  unit.Sp
 	Color     color.NRGBA
 	HintColor color.NRGBA
@@ -139,7 +139,7 @@ func (i *Input) Layout(gtx layout.Context, editor *widget.Editor, hint string, v
 
 type Button struct {
 	Color        color.NRGBA
-	Font         text.Font
+	Font         font.Font
 	TextSize     unit.Sp
 	Background   color.NRGBA
 	BorderRadius unit.Dp

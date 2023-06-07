@@ -4,35 +4,32 @@ package share
 
 import (
 	"syscall/js"
-
-	"gioui.org/app"
-	"gioui.org/io/event"
 )
 
-type share struct{}
+type driver struct{}
 
-func newShare(w *app.Window) share {
-	return share{}
+func attachDriver(house *Share, config Config) {
+	house.driver = driver{}
 }
 
-func (e *sharePlugin) listenEvents(_ event.Event) {}
+func configureDriver(driver *driver, config Config) {}
 
-func (e *sharePlugin) shareText(op TextOp) error {
+func (e *driver) shareText(title, text string) error {
 	obj := js.Global().Get("Object").New()
-	obj.Set("text", op.Text)
-	obj.Set("title", op.Title)
+	obj.Set("title", title)
+	obj.Set("text", text)
 	return e.showDialog(obj)
 }
 
-func (e *sharePlugin) shareWebsite(op WebsiteOp) error {
+func (e *driver) shareWebsite(title, description, url string) error {
 	obj := js.Global().Get("Object").New()
-	obj.Set("text", op.Text)
-	obj.Set("title", op.Title)
-	obj.Set("url", op.Link)
+	obj.Set("title", title)
+	obj.Set("text", description)
+	obj.Set("url", url)
 	return e.showDialog(obj)
 }
 
-func (e *sharePlugin) showDialog(obj js.Value) error {
+func (e *driver) showDialog(obj js.Value) error {
 	navigator := js.Global().Get("navigator")
 	if !navigator.Get("share").Truthy() {
 		return ErrNotAvailable
