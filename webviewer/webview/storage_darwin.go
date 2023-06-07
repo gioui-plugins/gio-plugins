@@ -9,6 +9,7 @@ package webview
 extern void getCookies(CFTypeRef config, uintptr_t handler, uintptr_t done);
 extern void addCookie(CFTypeRef config, uintptr_t done, char *name, char *value, char *domain, char *path, int64_t expires, uint64_t features);
 extern void removeCookie(CFTypeRef config, uintptr_t done, char *name, char *domain, char *path);
+extern void clearData(CFTypeRef config, uintptr_t done);
 
 */
 import "C"
@@ -93,6 +94,27 @@ func (s *cookieManager) RemoveCookie(c CookieData) error {
 
 	s.webview.scheduler.MustRun(func() {
 		C.removeCookie(s.driver.webviewConfig, C.uintptr_t(dr), name, domain, path)
+	})
+
+	return <-done
+}
+
+type cacheManager struct {
+	*webview
+}
+
+func newCacheManager(w *webview) *cacheManager {
+	r := &cacheManager{webview: w}
+	return r
+}
+
+func (s *cacheManager) ClearAll() (err error) {
+	done := make(chan error, 1)
+	dr := internal.NewHandle(done)
+	defer dr.Delete()
+
+	s.webview.scheduler.MustRun(func() {
+		C.clearData(s.driver.webviewConfig, C.uintptr_t(dr))
 	})
 
 	return <-done

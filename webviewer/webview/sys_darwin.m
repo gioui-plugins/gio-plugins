@@ -166,7 +166,6 @@ void addCookie(CFTypeRef config, uintptr_t done, char *name, char *value, char *
 }
 
 void removeCookie(CFTypeRef config, uintptr_t done, char *name, char *domain, char *path) {
-    // Copy the information to prevent be freed by the GC/C.free.
     NSString *nameString = @(name);
     NSString *domainString = @(domain);
     NSString *pathString = @(path);
@@ -187,6 +186,13 @@ void removeCookie(CFTypeRef config, uintptr_t done, char *name, char *domain, ch
 
             i++;
         }
+        reportDone(done, nil);
+    }];
+}
+
+void clearData(CFTypeRef config, uintptr_t done) {
+    WKWebViewConfiguration *configuration = (__bridge WKWebViewConfiguration *)config;
+    [[configuration websiteDataStore] removeDataOfTypes:[WKWebsiteDataStore allWebsiteDataTypes] modifiedSince:[NSDate distantPast] completionHandler:^{
         reportDone(done, nil);
     }];
 }

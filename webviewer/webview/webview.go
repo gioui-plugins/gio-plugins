@@ -60,4 +60,5 @@ const (
 	idMethodConfig
 	idMethodNavigate
 	idMethodClose
+	idMethodClearCache = 5
 )

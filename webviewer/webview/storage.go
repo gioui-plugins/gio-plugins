@@ -8,6 +8,7 @@ import (
 type DataManager interface {
 	CookieManager
 	StorageManager
+	CacheManager
 }
 
 // CookieManager can access and modify cookies from Webview.
@@ -24,7 +25,8 @@ type CookieManager interface {
 	RemoveCookie(c CookieData) error
 }
 
-// StorageManager can access and modify LocalStorage/SessionStorage and other storage devices from Webview.
+// StorageManager can access and modify LocalStorage, SessionStorage and
+// other storage devices from Webview.
 type StorageManager interface {
 	// LocalStorage returns the local storage for the current page.
 	LocalStorage(fn DataLooper[StorageData]) (err error)
@@ -39,6 +41,13 @@ type StorageManager interface {
 	AddSessionStorage(c StorageData) error
 	// RemoveSessionStorage removes a session storage item.
 	RemoveSessionStorage(c StorageData) error
+}
+
+// CacheManager can modify cache and all type of storage.
+type CacheManager interface {
+	// ClearAll deletes all cached data. That will delete: Cache, IndexedDB,
+	// Cookies, SessionStorage and LocalStorage.
+	ClearAll() error
 }
 
 // DataLooper receives one or more data chunks.

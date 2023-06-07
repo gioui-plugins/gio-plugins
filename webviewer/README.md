@@ -61,6 +61,11 @@ The operation will be executed at the end of the frame.
 - `webviewer.RemoveCookieOp{Tag: &something, Cookie: webviewer.Cookie{Name: "name"}}`:
     - Remove the cookie for the WebView.
 
+**Cache:**
+
+- `webviewer.ClearCacheOp{}`:
+  - Clear Cache, Cookies, LocalStorage, SessionStorage, WebSQL, IndexedDB of the current WebView.
+
 **Javascript:**
 
 - `webviewer.JavascriptOp{Javascript: "console.log(\"Hello World\")"}`:
@@ -111,7 +116,7 @@ We are capable of more than just displaying one webpage.
 
 | Features | Windows | Android | MacOS | iOS | WebAssembly |
 | -- | -- | -- | -- | -- | -- |
-| Basic Support |✔|✔|✔|✔|✔|
+| Basic Support |✔|✔|✔|✔|✔****|
 | Setup: Custom Proxy |✔***|✔***|❌|❌|❌|
 | Setup: Custom Certificate |✔***|✔***|❌|❌|❌|
 | Cookies: Read |✔|✔|✔*|✔|❌|
@@ -123,6 +128,7 @@ We are capable of more than just displaying one webpage.
 | SessionStorage: Write |✔|✔|✔|✔|❌|
 | SessionStorage: Read |✔|✔|✔|✔|❌|
 | SessionStorage: Delete |✔|✔|✔|✔|❌|
+| Cache: Delete |✔|✔|✔|✔|❌|
 | Javascript: Execute |✔|✔|✔|✔|❌|
 | Javascript: Install |✔|✔|✔|✔|❌|
 | Javascript: Callback |✔**|✔**|✔**|✔**|❌|
@@ -136,7 +142,8 @@ We are capable of more than just displaying one webpage.
   lack metadata.
 - ** = Only accepts a string as argument (other types are not supported and might be encoded as text).
 - *** = Must be defined before the WebView is created and is shared with all instances.
-
+- **** = Only websites that accepts iframe is supported. 
+ 
 # APIs
 
 Each operating system has uniqueAPI. For Windows 10+, we use WebView2. For Android 6+, we use WebView. For MacOS and

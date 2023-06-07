@@ -28,6 +28,7 @@ type driver struct {
 	controller                  *_ICoreWebView2Controller
 	webview2                    *_ICoreWebView2
 	webview22                   *_ICoreWebView22
+	webview213                  *_ICoreWebView213
 
 	callbackTitle *_ICoreWebView2DocumentTitleChangedEventHandler
 	callbackLoad  *_ICoreWebView2SourceChangedEventHandler
@@ -88,6 +89,7 @@ func (r *driver) attach(w *webview) error {
 				syscall.SyscallN(r.webview2.VTBL._IUnknownVTBL.Add, uintptr(unsafe.Pointer(r.webview2)))
 
 				syscall.SyscallN(r.webview2.VTBL._IUnknownVTBL.Query, uintptr(unsafe.Pointer(r.webview2)), uintptr(unsafe.Pointer(&_GUIDCoreWebView22)), uintptr(unsafe.Pointer(&r.webview22)))
+				syscall.SyscallN(r.webview2.VTBL._IUnknownVTBL.Query, uintptr(unsafe.Pointer(r.webview2)), uintptr(unsafe.Pointer(&_GUIDCoreWebView213)), uintptr(unsafe.Pointer(&r.webview213)))
 
 				// [Windows] Hook the events
 				syscall.SyscallN(r.webview2.VTBL.AddSourceChanged, uintptr(unsafe.Pointer(r.webview2)), uintptr(unsafe.Pointer(r.callbackLoad)))
