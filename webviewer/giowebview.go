@@ -352,8 +352,9 @@ func (o *RectOp) execute(_ *app.Window, p *webViewPlugin, e system.FrameEvent) {
 	p.mutex.Lock()
 	defer p.mutex.Unlock()
 
-	if p.active == nil {
-		return
+	if e.Metric.PxPerDp != p.config.PxPerDp {
+		p.config.PxPerDp = e.Metric.PxPerDp
+		p.active.Configure(p.config)
 	}
 
 	p.seem[p.activeIndex] = true
@@ -382,16 +383,11 @@ func (o NavigateOp) Add(op *op.Ops) {
 	poolNavigateOp.WriteOp(op, o)
 }
 
-func (o *NavigateOp) execute(_ *app.Window, p *webViewPlugin, e system.FrameEvent) {
+func (o *NavigateOp) execute(_ *app.Window, p *webViewPlugin, _ system.FrameEvent) {
 	defer poolNavigateOp.Release(o)
 
 	if p.active == nil {
 		return
-	}
-
-	if e.Metric.PxPerDp != p.config.PxPerDp {
-		p.config.PxPerDp = e.Metric.PxPerDp
-		p.active.Configure(p.config)
 	}
 
 	u, err := url.Parse(o.URL)

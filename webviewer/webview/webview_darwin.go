@@ -23,6 +23,7 @@ void webview_cf_release(CFTypeRef obj) {
 */
 import "C"
 import (
+	"math"
 	"net/url"
 	"unsafe"
 )
@@ -64,13 +65,28 @@ func (r *driver) resize(w *webview, pos [4]float32) {
 			w.visible = false
 		}
 	} else {
+		pp := r.config.PxPerDp
+		if pp == 0 {
+			pp = 1
+		}
+
+		posFloat := [4]float32{
+			pos[0] / pp, pos[1] / pp, pos[2] / pp, pos[3] / pp,
+		}
+
+		for i, v := range posFloat {
+			if math.IsNaN(float64(v)) || math.IsInf(float64(v), 0) {
+				posFloat[i] = 0
+			}
+		}
+
 		C.resize(
 			r.webviewObject,
 			C.CFTypeRef(r.config.View),
-			C.float(pos[0]/r.config.PxPerDp),
-			C.float(pos[1]/r.config.PxPerDp),
-			C.float(pos[2]/r.config.PxPerDp),
-			C.float(pos[3]/r.config.PxPerDp),
+			C.float(posFloat[0]),
+			C.float(posFloat[1]),
+			C.float(posFloat[2]),
+			C.float(posFloat[3]),
 		)
 		if !w.visible {
 			C.show(r.webviewObject)
