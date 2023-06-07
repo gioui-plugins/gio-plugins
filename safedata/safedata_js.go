@@ -1,6 +1,7 @@
 package safedata
 
 import (
+	"encoding/hex"
 	"sync"
 	"syscall/js"
 )
@@ -84,7 +85,7 @@ type driverCredentialsManagement struct{}
 func (d driverCredentialsManagement) setSecret(secret Secret) error {
 	obj := js.Global().Get("Object").New()
 	obj.Set("name", secret.Identifier)
-	obj.Set("password", secret.Data)
+	obj.Set("password", hex.EncodeToString(secret.Data))
 
 	res := make(chan error, 1)
 	success := js.FuncOf(func(this js.Value, args []js.Value) any {
@@ -128,8 +129,14 @@ func (d driverCredentialsManagement) getSecret(_ string, secret *Secret) error {
 			}
 		}
 
-		secret.Data = []byte(pass.String())
+		data, e := hex.DecodeString(pass.String())
+		if e != nil {
+			err <- e
+			return nil
+		}
+
 		secret.Identifier = name.String()
+		secret.Data = data
 
 		err <- nil
 		return nil
@@ -153,7 +160,7 @@ type driverLocalStorage struct {
 }
 
 func (d driverLocalStorage) setSecret(secret Secret) error {
-	_localstorage.Call("setItem", secret.Identifier, secret.Data)
+	_localstorage.Call("setItem", secret.Identifier, hex.EncodeToString(secret.Data))
 	return nil
 }
 
@@ -173,16 +180,15 @@ func (d driverLocalStorage) listSecret(looper Looper) error {
 	return nil
 }
 
-func (d driverLocalStorage) getSecret(identifier string, secret *Secret) error {
+func (d driverLocalStorage) getSecret(identifier string, secret *Secret) (err error) {
 	content := _localstorage.Call("getItem", d.keyFor(identifier))
 	if !content.Truthy() {
 		return ErrNotFound
 	}
 
 	secret.Identifier = identifier
-	secret.Data = []byte(content.String())
-
-	return nil
+	secret.Data, err = hex.DecodeString(content.String())
+	return err
 }
 
 func (d driverLocalStorage) removeSecret(identifier string) error {
