@@ -229,14 +229,23 @@ public class sys_android {
     }
 
     public void webview_addCookie(String domain, String cookie, long done) {
+        if (domain.isEmpty()) {
+            domain = webBrowser.getUrl();
+        }
+
         CookieManager cookieManager = CookieManager.getInstance();
         cookieManager.setCookie(domain, cookie, new ValueCallback<Boolean>() {
             @Override
             public void onReceiveValue(Boolean value) {
-                cookieManager.flush();
+                reportDone(done, "");
             }
         });
-        reportDone(done, "");
+    }
+
+    public void webview_addCookie_flush(long done) {
+     CookieManager cookieManager = CookieManager.getInstance();
+     cookieManager.flush();
+     reportDone(done, "");
     }
 
     public void webview_clearData(long done) {
@@ -250,6 +259,7 @@ public class sys_android {
         cookieManager.removeAllCookies(new ValueCallback<Boolean>() {
             @Override
             public void onReceiveValue(Boolean aBoolean) {
+                cookieManager.flush();
                 reportDone(done, "");
             }
         });

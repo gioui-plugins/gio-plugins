@@ -20,6 +20,9 @@ type CookieManager interface {
 	Cookies(fn DataLooper[CookieData]) (err error)
 	// AddCookie adds a cookie/local-storage item.
 	// The cookie must be a valid cookie string, without semi-colon, space, or comma.
+	//
+	// If the cookie doesn't have a domain, it may be set to the current page domain,
+	// or the browser default domain.
 	AddCookie(c CookieData) error
 	// RemoveCookie removes a cookie/local-storage item.
 	RemoveCookie(c CookieData) error

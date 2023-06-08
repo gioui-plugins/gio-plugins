@@ -110,7 +110,19 @@ func (s *cookieManager) AddCookie(c CookieData) error {
 		})
 	})
 
-	return nil
+	if err := <-done; err != nil {
+		return err
+	}
+
+	s.scheduler.MustRun(func() {
+		s.driver.callArgs("webview_addCookie_flush", "(J)V", func(env jni.Env) []jni.Value {
+			return []jni.Value{
+				jni.Value(int64(dr)),
+			}
+		})
+	})
+
+	return <-done
 }
 
 // RemoveCookie implements the CookieManager interface.
