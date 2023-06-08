@@ -28,6 +28,7 @@ var (
 		reflect.TypeOf(&NavigateOp{}),
 		reflect.TypeOf(&DestroyOp{}),
 		reflect.TypeOf(&SetCookieOp{}),
+		reflect.TypeOf(&SetCookieArrayOp{}),
 		reflect.TypeOf(&ListCookieOp{}),
 		reflect.TypeOf(&RemoveCookieOp{}),
 		reflect.TypeOf(&SetStorageOp{}),
@@ -409,6 +410,7 @@ func (o DestroyOp) Add(op *op.Ops) {
 
 // SetCookieOp sets given cookie in the webview.
 type SetCookieOp struct {
+	Tag    event.Tag
 	Cookie webview.CookieData
 }
 
@@ -430,6 +432,49 @@ func (o *SetCookieOp) execute(_ *app.Window, p *webViewPlugin, _ system.FrameEve
 	p.run(func() {
 		defer poolSetCookieOp.Release(o)
 		err := manager.AddCookie(o.Cookie)
+		if o.Tag != nil {
+			p.plugin.SendEvent(o.Tag, SetCookieEvent{Error: err})
+		}
+		if err != nil {
+			p.plugin.SendEvent(wvTag, ErrorEvent{error: err})
+		}
+	})
+}
+
+// SetCookieArrayOp sets the given list of cookies in the webview.
+type SetCookieArrayOp struct {
+	Tag    event.Tag
+	Cookie []webview.CookieData
+}
+
+var poolSetCookieArrayOp = plugin.NewOpPool[SetCookieArrayOp]()
+
+// Add adds a new SetCookieOp to the queue.
+func (o SetCookieArrayOp) Add(op *op.Ops) {
+	poolSetCookieArrayOp.WriteOp(op, o)
+}
+
+func (o *SetCookieArrayOp) execute(_ *app.Window, p *webViewPlugin, _ system.FrameEvent) {
+	manager := p.active.DataManager()
+	wvTag := p.activeTag
+
+	if p.active == nil {
+		return
+	}
+
+	p.run(func() {
+		defer poolSetCookieArrayOp.Release(o)
+
+		var err error
+		for _, c := range o.Cookie {
+			if err = manager.AddCookie(c); err != nil {
+				break
+			}
+		}
+
+		if o.Tag != nil {
+			p.plugin.SendEvent(o.Tag, SetCookieArrayEvent{Error: err})
+		}
 		if err != nil {
 			p.plugin.SendEvent(wvTag, ErrorEvent{error: err})
 		}
@@ -438,6 +483,7 @@ func (o *SetCookieOp) execute(_ *app.Window, p *webViewPlugin, _ system.FrameEve
 
 // RemoveCookieOp sets given cookie in the webview.
 type RemoveCookieOp struct {
+	Tag    event.Tag
 	Cookie webview.CookieData
 }
 
@@ -459,6 +505,9 @@ func (o *RemoveCookieOp) execute(_ *app.Window, p *webViewPlugin, _ system.Frame
 	p.run(func() {
 		defer poolRemoveCookieOp.Release(o)
 		err := manager.RemoveCookie(o.Cookie)
+		if o.Tag != nil {
+			p.plugin.SendEvent(o.Tag, RemoveCookieEvent{Error: err})
+		}
 		if err != nil {
 			p.plugin.SendEvent(wvTag, ErrorEvent{error: err})
 		}
@@ -522,6 +571,7 @@ const (
 
 // SetStorageOp sets given Storage in the webview.
 type SetStorageOp struct {
+	Tag     event.Tag
 	Local   StorageType
 	Content webview.StorageData
 }
@@ -546,6 +596,10 @@ func (o *SetStorageOp) execute(_ *app.Window, p *webViewPlugin, _ system.FrameEv
 		case StorageTypeSession:
 			err = manager.AddSessionStorage(o.Content)
 		}
+
+		if o.Tag != nil {
+			p.plugin.SendEvent(o.Tag, SetStorageEvent{Error: err})
+		}
 		if err != nil {
 			p.plugin.SendEvent(wvTag, ErrorEvent{error: err})
 		}
@@ -554,6 +608,7 @@ func (o *SetStorageOp) execute(_ *app.Window, p *webViewPlugin, _ system.FrameEv
 
 // RemoveStorageOp sets given Storage in the webview.
 type RemoveStorageOp struct {
+	Tag     event.Tag
 	Local   StorageType
 	Content webview.StorageData
 }
@@ -577,6 +632,10 @@ func (o *RemoveStorageOp) execute(_ *app.Window, p *webViewPlugin, _ system.Fram
 			err = manager.RemoveLocalStorage(o.Content)
 		case StorageTypeSession:
 			err = manager.AddSessionStorage(o.Content)
+		}
+
+		if o.Tag != nil {
+			p.plugin.SendEvent(o.Tag, RemoveStorageEvent{Error: err})
 		}
 		if err != nil {
 			p.plugin.SendEvent(wvTag, ErrorEvent{error: err})
@@ -638,7 +697,13 @@ func (o *ListStorageOp) execute(_ *app.Window, p *webViewPlugin, _ system.FrameE
 	})
 }
 
-type ClearCacheOp struct{}
+// ClearCacheOp clears the cache of the webview.
+//
+// The response in sent via ErrorEvent using the
+// webview as tag. Also, one
+type ClearCacheOp struct {
+	Tag event.Tag
+}
 
 var poolClearCacheOp = plugin.NewOpPool[ClearCacheOp]()
 
@@ -653,6 +718,9 @@ func (o *ClearCacheOp) execute(_ *app.Window, p *webViewPlugin, _ system.FrameEv
 	p.run(func() {
 		defer poolClearCacheOp.Release(o)
 		err := manager.ClearAll()
+		if o.Tag != nil {
+			p.plugin.SendEvent(o.Tag, ClearCacheEvent{Error: err})
+		}
 		if err != nil {
 			p.plugin.SendEvent(wvTag, ErrorEvent{error: err})
 		}
@@ -781,3 +849,51 @@ type ErrorEvent struct {
 
 // ImplementsEvent implements the event.Event interface.
 func (ErrorEvent) ImplementsEvent() {}
+
+// ClearCacheEvent is issued when clearing the storage is completed.
+type ClearCacheEvent struct {
+	Error error
+}
+
+// ImplementsEvent implements the event.Event interface.
+func (ClearCacheEvent) ImplementsEvent() {}
+
+// SetCookieEvent is issued when setting a cookie is completed.
+type SetCookieEvent struct {
+	Error error
+}
+
+// ImplementsEvent implements the event.Event interface.
+func (SetCookieEvent) ImplementsEvent() {}
+
+// SetCookieArrayEvent is issued when setting a cookie is completed.
+type SetCookieArrayEvent struct {
+	Error error
+}
+
+// ImplementsEvent implements the event.Event interface.
+func (SetCookieArrayEvent) ImplementsEvent() {}
+
+// RemoveCookieEvent is issued when removing a cookie is completed.
+type RemoveCookieEvent struct {
+	Error error
+}
+
+// ImplementsEvent implements the event.Event interface.
+func (RemoveCookieEvent) ImplementsEvent() {}
+
+// SetStorageEvent is issued when setting a storage is completed.
+type SetStorageEvent struct {
+	Error error
+}
+
+// ImplementsEvent implements the event.Event interface.
+func (SetStorageEvent) ImplementsEvent() {}
+
+// RemoveStorageEvent is issued when removing a storage is completed.
+type RemoveStorageEvent struct {
+	Error error
+}
+
+// ImplementsEvent implements the event.Event interface.
+func (RemoveStorageEvent) ImplementsEvent() {}
