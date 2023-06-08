@@ -36,9 +36,16 @@ type handlerFunc struct {
 	listenEvents func(evt event.Event)
 }
 
-func (p *handlerFunc) TypeOp() []reflect.Type       { return p.typeOp }
-func (p *handlerFunc) TypeEvent() []reflect.Type    { return p.typeEvent }
-func (p *handlerFunc) ListenOps(op interface{})     { p.listenOps(op) }
+// TypeOp implements Handler interface.
+func (p *handlerFunc) TypeOp() []reflect.Type { return p.typeOp }
+
+// TypeEvent implements Handler interface.
+func (p *handlerFunc) TypeEvent() []reflect.Type { return p.typeEvent }
+
+// ListenOps implements Handler interface.
+func (p *handlerFunc) ListenOps(op interface{}) { p.listenOps(op) }
+
+// ListenEvents implements Handler interface.
 func (p *handlerFunc) ListenEvents(evt event.Event) { p.listenEvents(evt) }
 
 // NewHandlerFunc returns a Handler that calls the given functions.
