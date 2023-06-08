@@ -3,6 +3,7 @@ package plugin
 import (
 	"reflect"
 	"sync"
+	"sync/atomic"
 	"unsafe"
 
 	"gioui.org/app"
@@ -17,14 +18,17 @@ type Plugin struct {
 	window *app.Window
 	queue  event.Queue
 
+	eventsMutex  sync.Mutex
 	eventsCustom map[event.Tag][]event.Event
 	eventsPool   []event.Event
 
 	redirectEvent map[reflect.Type][]int
 	redirectOp    map[reflect.Type][]int
 
+	visited map[uintptr]struct{}
+
 	plugins     []Handler
-	invalidated bool
+	invalidated atomic.Bool
 }
 
 func newHandler(w *app.Window) *Plugin {
@@ -32,8 +36,9 @@ func newHandler(w *app.Window) *Plugin {
 		window:        w,
 		eventsCustom:  make(map[event.Tag][]event.Event, 128),
 		plugins:       make([]Handler, len(registeredPlugins)),
-		redirectOp:    map[reflect.Type][]int{},
-		redirectEvent: map[reflect.Type][]int{},
+		redirectOp:    make(map[reflect.Type][]int, 128),
+		redirectEvent: make(map[reflect.Type][]int, 128),
+		visited:       make(map[uintptr]struct{}, 2048),
 	}
 	for index, pf := range registeredPlugins {
 		h.plugins[index] = pf(w, h)
@@ -57,6 +62,9 @@ func newHandler(w *app.Window) *Plugin {
 }
 
 func (l *Plugin) SendEvent(tag event.Tag, data event.Event) {
+	l.eventsMutex.Lock()
+	defer l.eventsMutex.Unlock()
+
 	if l.eventsCustom == nil {
 		l.eventsCustom = make(map[event.Tag][]event.Event, 128)
 	}
@@ -65,12 +73,15 @@ func (l *Plugin) SendEvent(tag event.Tag, data event.Event) {
 	}
 	l.eventsCustom[tag] = append(l.eventsCustom[tag], data)
 
-	if !l.invalidated {
+	if l.invalidated.Load() {
 		l.window.Invalidate()
 	}
 }
 
 func (l *Plugin) Events(t event.Tag) []event.Event {
+	l.eventsMutex.Lock()
+	defer l.eventsMutex.Unlock()
+
 	evtsGio := l.queue.Events(t)
 	evtsCustom, _ := l.eventsCustom[t]
 
@@ -102,6 +113,29 @@ type unsafeOps struct {
 	multipOp    bool
 }
 
+var (
+	internalOps = op.Ops{}.Internal
+	typeOps     = reflect.TypeOf(&internalOps)
+)
+
+func (l *Plugin) processFrameEvent(o *unsafeOps) {
+	if _, ok := l.visited[uintptr(unsafe.Pointer(o))]; ok {
+		return
+	}
+	l.visited[uintptr(unsafe.Pointer(o))] = struct{}{}
+
+	for i := range o.refs {
+		if reflect.TypeOf(o.refs[i]) == typeOps {
+			o2 := *(**unsafeOps)(unsafe.Add(unsafe.Pointer(&o.refs[i]), unsafe.Sizeof(uintptr(0))))
+			l.processFrameEvent(o2)
+		} else {
+			for _, index := range l.redirectOp[reflect.TypeOf(o.refs[i])] {
+				l.plugins[index].ListenOps(o.refs[i])
+			}
+		}
+	}
+}
+
 func Install(w *app.Window, evt event.Event) {
 	var h *Plugin
 	li, ok := handlers.Load(w)
@@ -119,7 +153,7 @@ func Install(w *app.Window, evt event.Event) {
 	switch evt.(type) {
 	case system.FrameEvent:
 		ref := *(**system.FrameEvent)(unsafe.Add(unsafe.Pointer(&evt), unsafe.Sizeof(uintptr(0))))
-		h.invalidated = false
+		h.invalidated.Store(false)
 
 		q := ref.Queue
 		h.queue = q
@@ -127,17 +161,16 @@ func Install(w *app.Window, evt event.Event) {
 
 		f := ref.Frame
 		ref.Frame = func(frame *op.Ops) {
-			ops := (*unsafeOps)(unsafe.Pointer(&frame.Internal))
 			f(frame)
 
-			for _, r := range ops.refs {
-				for _, index := range h.redirectOp[reflect.TypeOf(r)] {
-					h.plugins[index].ListenOps(r)
-				}
-			}
+			h.processFrameEvent((*unsafeOps)(unsafe.Pointer(&frame.Internal)))
 
 			for _, index := range h.redirectEvent[reflect.TypeOf(EndFrameEvent{})] {
 				h.plugins[index].ListenEvents(EndFrameEvent{})
+			}
+
+			for i := range h.visited {
+				delete(h.visited, i)
 			}
 		}
 	}
