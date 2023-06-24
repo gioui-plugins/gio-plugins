@@ -1,4 +1,4 @@
-//go:build !android && !js
+//go:build !android
 
 package giohyperlink
 
@@ -17,4 +17,6 @@ func NewConfigFromViewEvent(w *app.Window, evt app.ViewEvent) hyperlink.Config {
 
 func UpdateConfigFromViewEvent(config *hyperlink.Config, w *app.Window, evt app.ViewEvent) {}
 
-func UpdateConfigFromStageEvent(config *hyperlink.Config, _ *app.Window, evt system.StageEvent) {}
+func UpdateConfigFromStageEvent(config *hyperlink.Config, _ *app.Window, evt system.StageEvent) {
+	config.Blur = evt.Stage != system.StageRunning
+}
