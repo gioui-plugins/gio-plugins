@@ -2,6 +2,7 @@ package giohyperlink
 
 import (
 	"gioui.org/app"
+	"gioui.org/io/system"
 	"github.com/gioui-plugins/gio-plugins/hyperlink"
 )
 
@@ -18,3 +19,5 @@ func UpdateConfigFromViewEvent(config *hyperlink.Config, w *app.Window, evt app.
 	config.View = evt.View
 	config.RunOnMain = w.Run
 }
+
+func UpdateConfigFromStageEvent(config *hyperlink.Config, _ *app.Window, evt system.StageEvent) {}

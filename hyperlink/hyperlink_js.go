@@ -3,8 +3,6 @@
 package hyperlink
 
 import (
-	"gioui.org/io/event"
-	"gioui.org/io/system"
 	"net/url"
 	"syscall/js"
 )
@@ -12,6 +10,7 @@ import (
 var (
 	_document = js.Global().Get("document")
 	_body     = js.Global().Get("document").Get("body")
+	_actives  = make([]js.Value, 0, 32)
 )
 
 type driver struct{}
@@ -20,17 +19,12 @@ func attachDriver(house *Hyperlink, config Config) {
 	house.driver = driver{}
 }
 
-func configureDriver(driver *driver, config Config) {}
-
-func (*driver) listenEvents(event event.Event) {
-	if _, ok := event.(system.StageEvent); ok {
-		links := _body.Call("querySelectorAll", "a.hyperlink")
-		if !links.Truthy() {
-			return
+func configureDriver(driver *driver, config Config) {
+	if config.Blur {
+		for i := 0; i < len(_actives); i++ {
+			_body.Call("removeChild", _actives[i])
 		}
-		for i := 0; i < links.Length(); i++ {
-			_body.Call("removeChild", links.Index(0))
-		}
+		_actives = _actives[:0]
 	}
 }
 
@@ -55,8 +49,9 @@ func (*driver) open(u *url.URL) error {
 		a.Get("style").Set("height", "100vh")
 		a.Get("style").Set("position", "fixed")
 		a.Get("style").Set("top", "0")
-		a.Get("style").Set("z-index", "100")
+		a.Get("style").Set("z-index", "2147483647")
 		_body.Call("appendChild", a)
+		_actives = append(_actives, a)
 	}
 
 	return nil
