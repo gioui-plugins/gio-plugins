@@ -8,7 +8,7 @@ import (
 	"git.wow.st/gmp/jni"
 )
 
-//go:generate javac -source 8 -target 8 -bootclasspath $ANDROID_HOME/platforms/android-30/android.jar -d $TEMP/safedata/classes safedata_android.java
+//go:generate mkdir -p $TEMP/safedata/classes && javac -source 8 -target 8 -bootclasspath $ANDROID_HOME/platforms/android-30/android.jar -d $TEMP/safedata/classes safedata_android.java
 //go:generate jar cf safedata_android.jar -C $TEMP/safedata/classes .
 
 type driver struct {

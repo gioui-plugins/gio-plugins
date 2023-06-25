@@ -2,8 +2,8 @@
 
 package share
 
-//go:generate javac -source 8 -target 8  -bootclasspath $ANDROID_HOME/platforms/android-30/android.jar -d $TEMP/explorer/classes share_android.java
-//go:generate jar cf share_android.jar -C $TEMP/explorer/classes .
+//go:generate mkdir -p $TEMP/share/classes && javac -source 8 -target 8  -bootclasspath $ANDROID_HOME/platforms/android-30/android.jar -d $TEMP/share/classes share_android.java
+//go:generate jar cf share_android.jar -C $TEMP/share/classes .
 
 import "C"
 import (

@@ -1,6 +1,6 @@
 package webview
 
-//go:generate javac -source 8 -target 8 -bootclasspath $ANDROID_HOME/platforms/android-30/android.jar -d $TEMP/gowebview/classes sys_android.java
+//go:generate mkdir -p $TEMP/gowebview/classes && javac -source 8 -target 8 -bootclasspath $ANDROID_HOME/platforms/android-30/android.jar -d $TEMP/gowebview/classes sys_android.java
 //go:generate jar cf sys_android.jar -C $TEMP/gowebview/classes .
 
 import (
