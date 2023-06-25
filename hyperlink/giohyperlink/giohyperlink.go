@@ -86,6 +86,11 @@ func (h *hyperlinkPlugin) ListenEvents(evt event.Event) {
 		} else {
 			h.client.Configure(h.config)
 		}
+	case system.StageEvent:
+		UpdateConfigFromStageEvent(&h.config, h.window, evt)
+		if h.client != nil {
+			h.client.Configure(h.config)
+		}
 	}
 }
 
