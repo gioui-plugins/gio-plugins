@@ -73,8 +73,9 @@ func (l *Plugin) SendEvent(tag event.Tag, data event.Event) {
 	}
 	l.eventsCustom[tag] = append(l.eventsCustom[tag], data)
 
-	if l.invalidated.Load() {
+	if !l.invalidated.Load() {
 		l.window.Invalidate()
+		l.invalidated.Store(true)
 	}
 }
 

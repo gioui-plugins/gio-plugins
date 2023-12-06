@@ -65,63 +65,43 @@ from stealing the `id_token` and using it on your backend, since the `Nonce` mus
 
 Additionally, it's possible to combine other information into the `Nonce`, and use similarly to `State`.
 
-## Usage
+## Using as Gio-Plugin:
 
-This package can be used as standalone (with/without Gio) and also as plugin for Gio.
+### Setup:
 
-## Using as Standalone:
+Add your provider to the `gioauth.DefaultProviders` list. For example:
 
 ```go
-config := Config{
-App: "MyApp"
-// ...
-}
-
-sh := safedata.NewSafeData(config)
-
-secret := safedata.Secret{
-Identifier:  "AccessToken",
-Description: "AccessToken for MyApp",
-Data:        []byte{0xDE, 0xAD, 0xBE, 0xEF},
-}
-
-// Inserting/updating data:
-if err := sh.Set(secret); err != nil {
-// ...
-}
-
-// Retrieve data:
-myToken, err := sh.Get("AccessToken")
-if err != nil {
-// ...
-}
+	gioauth.DefaultProviders = []providers.Provider{
+		&google.Provider{
+			WebClientID:     "YOUR-CODE.apps.googleusercontent.com",
+			DesktopClientID: "YOUR-CODE.apps.googleusercontent.com",
+			RedirectURL:     "",
+		},
+		&apple.Provider{
+			ServiceIdentifier: "YOUR-APP",
+			RedirectURL:       "https://your-call-back.com/path/",
+		},
+	}
 ```
 
-Note: `safedata.Config` varies for each OS, and you should create `yourfile_{os}.go` for each
-supported OS. If you are using Gio, it's also possible to create one `safedata.Config`
-using `giosafedata.NewConfigFromViewEvent`.
-
-## Using as Gio-Plugin:
+You also need to use `gogio` to setup deeplinking, see above.
 
 ### Operations:
 
 Operations must be added with `.Add(gtx.Ops)` method. The operation will be executed at the end of the frame.
 
-- `giosafedata.WriteSecretOp`:
-    - Writes a Secret.
-- `giosafedata.ReadSecretOp`:
-    - Reads a Secret using the provided Identifier, the response is sent to the given Tag.
-- `giosafedata.DeleteSecretOp`:
-    - Deletes a Secret using the provided Identifier.
-- `giosafedata.ListSecretOp`:
-    - List all Secret which belongs to the current app.
+- `gioauth.RequestOp`:
+    - Requests login with Google/Apple.
+- `gioauth.ListenOp`:
+    - Listen to events.
 
 ## Events:
 
 Events are response sent using the `Tag` and should be handled with `gtx.Events()`.
 
-- `giosafedata.ErrorEvent`:
-    - Sent to `Tag` when it's not possible to write/read/list/delete.
+- `gioauth.AuthEvent`:
+    - Sent to `Tag` with the tokens received from the provider.
 - `giosafedata.SecretsEvent`:
     - Sent to `Tag` as response from `ReadSecretOp` or `ListSecretOp`.
 
@@ -134,38 +114,6 @@ Events are response sent using the `Tag` and should be handled with `gtx.Events(
 
 - ❌ = Not supported.
 - ✔ = Supported.
-
-## Security/Notes
-
-This package uses what is available on the OS to safely store
-credentials and any sensible data. However, not all OSes provides
-such function or have heavily limitations. That is the list of
-known issues/vulnerability:
-
-- [Darwin] You must sign your app.
-- [Darwin] Credentials are visible cross-application after user authorization.
-- [Android] Credentials may lose after app uninstall or update.
-- [Windows] Large data is split into multiple credentials, due to maximum size for each credential.
-- [Windows] Credential Storage have a very low capacity, preventing from storing large data or too many credentials.
-- [Windows] Credentials are visible cross-application, without restrictions.
-- [WebAssembly] Credentials are visible to any script in the page, which is vulnerable to XSS.
-- [WebAssembly] Credentials may lose after cache clear (Clear-Site-Data header or invoked by the end-user).
-
-- This package doesn't check the integrity of the data (you should add your own checksum).
-- Credentials can be modified or deleted externally (usually on device settings and similar).
-
-## Background
-
-Since it's a security-related package, I'm listing how it works behind the scenes.
-
-- [Android] It creates files on the folder specified by Config, that file is encrypted
-  using Android KeyStore. The IV/Nonce is stored into the file. It uses AES-CBC as encryption,
-  since we don't guarantee integrity on any OS.
-- [Darwin] It stores the data into Keychain, directly.
-- [Windows] It creates new credentials using WinCred, as Generic Credentials. Each credential
-  supports upto 512*5 bytes. If the data exceeds the maximum size, new credentials are created
-  using Blake2 derivation for names, starting from index 0, if the data is larger.
-- [WebAssembly] It stores the data into LocalStorage, directly.
 
 ## Requirements
 
