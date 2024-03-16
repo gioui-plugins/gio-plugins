@@ -9,78 +9,63 @@ import android.app.Fragment;
 import android.app.FragmentManager;
 import android.app.FragmentTransaction;
 import android.app.PendingIntent;
+
+import android.os.CancellationSignal;
+
 import java.util.ArrayList;
 import java.util.List;
-import com.google.android.gms.auth.api.identity.*;
-import com.google.android.gms.auth.api.signin.*;
-import com.google.android.gms.common.api.ApiException;
-import com.google.android.gms.common.api.Scope;
-import com.google.android.gms.tasks.Task;
-import com.google.android.gms.tasks.OnCompleteListener;
+import java.util.concurrent.Executors;
+
+import androidx.credentials.Credential;
+import androidx.credentials.CredentialManager;
+import androidx.credentials.CredentialManagerCallback;
+import androidx.credentials.CustomCredential;
+import androidx.credentials.GetCredentialRequest;
+import androidx.credentials.GetCredentialResponse;
+import androidx.credentials.PrepareGetCredentialResponse;
+import androidx.credentials.exceptions.GetCredentialException;
+
+import com.google.android.libraries.identity.googleid.GetGoogleIdOption;
+import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential;
+import com.google.android.libraries.identity.googleid.GetSignInWithGoogleOption;
+
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.net.Uri;
 import android.os.Bundle;
 import androidx.browser.customtabs.CustomTabsIntent;
+import androidx.browser.customtabs.CustomTabsServiceConnection;
+import androidx.browser.customtabs.CustomTabsClient;
+import android.content.ComponentName;
 
 public class auth_android {
-    final googleauth_android_fragment frag = new googleauth_android_fragment();
+    static private long LastHandler = 0;
+
+    static private CustomTabsServiceConnection connection = null;
+    static private CustomTabsClient client = null;
 
     // Functions defined on Golang.
     static public native void NativeAuthCallback(long handler, String idToken);
 
-    // Request code for Google Sign In.
-    static private final int REQUEST_CODE = 1_820_989;
-    static private long LastHandler;
-
-    private SignInClient oneTapClient;
-
-    public static class googleauth_android_fragment extends Fragment {
-        Context context;
-        SignInClient oneTapClient;
-
-        @Override public void onAttach(Context ctx) {
-            this.context = ctx;
-            super.onAttach(ctx);
-        }
-
-        @Override public void onActivityResult(int requestCode, int resultCode, Intent data) {
-            super.onActivityResult(requestCode, resultCode, data);
-
-            Activity activity = this.getActivity();
-            activity.runOnUiThread(new Runnable() {
-                public void run() {
-                    if(requestCode != REQUEST_CODE){
-                        return;
-                    }
-
-                    try {
-                        SignInCredential acc = oneTapClient.getSignInCredentialFromIntent(data);
-                        String idToken = acc.getGoogleIdToken();
-
-                        NativeAuthCallback(LastHandler, idToken);
-                    } catch (Exception e) {
-                        Log.wtf("auth_android", e);
-                    }
-                }
-            });
-
-        }
-    }
-
     public void openGeneral(View view, String url, long handler) {
+        if (connection == null) {
+            connection = new CustomTabsServiceConnection() {
+                @Override
+                public void onCustomTabsServiceConnected(ComponentName componentName, CustomTabsClient customTabsClient) {
+                    client = customTabsClient;
+                }
+
+                @Override
+                public void onServiceDisconnected(ComponentName name) {
+                    client = null;
+                }
+            };
+
+            CustomTabsClient.bindCustomTabsService(view.getContext().getApplicationContext(), "com.android.chrome", connection);
+        }
+
         CustomTabsIntent.Builder builder = new CustomTabsIntent.Builder();
         CustomTabsIntent customTabsIntent = builder.build();
-
-        PackageManager packageManager = view.getContext().getPackageManager();
-        List<ResolveInfo> resolvedActivityList = packageManager.queryIntentActivities(customTabsIntent.intent, PackageManager.MATCH_DEFAULT_ONLY);
-
-        for (ResolveInfo info : resolvedActivityList) {
-            if (info.activityInfo.packageName.toLowerCase().contains("com.android.chrome")) {
-                customTabsIntent.intent.setPackage("com.android.chrome");
-                break;
-            }
-        }
 
         ((Activity) view.getContext()).runOnUiThread(new Runnable() {
             public void run() {
@@ -96,57 +81,57 @@ public class auth_android {
             return;
         }
 
-        ((Activity) view.getContext()).runOnUiThread(new Runnable() {
-            public void run() {
-                Context context = view.getContext();
-                registerFrag(context, view);
+        CredentialManager credentialManager = CredentialManager.create(view.getContext());
+        CancellationSignal cancellationSignal = new CancellationSignal();
 
-                oneTapClient.signOut().addOnCompleteListener((Activity) view.getContext(), new OnCompleteListener<Void>() {
-                    @Override
-                    public void onComplete(Task<Void> task) {
-                        GetSignInIntentRequest request = GetSignInIntentRequest.builder().setServerClientId(clientID).setNonce(nonce).build();
+        GetSignInWithGoogleOption googleIdOption = new GetSignInWithGoogleOption.Builder(clientID).setNonce(nonce).build();
 
-                        oneTapClient.getSignInIntent(request).addOnCompleteListener((Activity) view.getContext(), new OnCompleteListener<PendingIntent>() {
-                            @Override
-                            public void onComplete(Task<PendingIntent> task) {
-                                try {
-                                    PendingIntent res = task.getResult(ApiException.class);
-                                    try {
-                                        frag.startIntentSenderForResult(res.getIntentSender(), REQUEST_CODE, null, 0, 0, 0, null);
-                                    } catch (Exception e) {
-                                        Log.wtf("auth_android", e);
-                                    }
-                                } catch (ApiException e) {
-                                    Log.wtf("auth_android", e);
-                                }
-                            }
-                        });
-                    }
-                });
+        GetCredentialRequest request = new GetCredentialRequest.Builder().addCredentialOption(googleIdOption).build();
+
+        credentialManager.getCredentialAsync(
+          ((Activity) view.getContext()),
+          request,
+          cancellationSignal,
+          Executors.newSingleThreadExecutor(),
+          new CredentialManagerCallback<GetCredentialResponse, GetCredentialException>() {
+            @Override
+            public void onResult(GetCredentialResponse result) {
+              handleSignIn(result);
             }
-        });
+
+            @Override
+            public void onError(GetCredentialException e) {
+              handleFailure(e);
+            }
+          }
+        );
     }
 
-    private void registerFrag(Context context, View view) {
-        final Context ctx = view.getContext();
-        final FragmentManager fm;
+    public void handleSignIn(GetCredentialResponse result) {
+      // Handle the successfully returned credential.
+      Credential credential = result.getCredential();
 
-        try {
-            fm = (FragmentManager) ctx.getClass().getMethod("getFragmentManager").invoke(ctx);
-        } catch (Exception e) {
-            e.printStackTrace();
-            return;
+      if (credential instanceof CustomCredential) {
+        if (GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL.equals(credential.getType())) {
+          try {
+            GoogleIdTokenCredential googleIdTokenCredential = GoogleIdTokenCredential.createFrom(((CustomCredential) credential).getData());
+            NativeAuthCallback(LastHandler, googleIdTokenCredential.getIdToken());
+          } catch (Exception e) {
+            Log.e("gioplugins_auth", "Received an invalid Google ID token response", e);
+          }
+        } else {
+          // Catch any unrecognized custom credential type here.
+          Log.e("gioplugins_auth", "Unexpected type of credential");
         }
+      } else {
+        // Catch any unrecognized credential type here.
+        Log.e("gioplugins_auth", "Unexpected type of credential");
+      }
+    }
 
-        if (fm.findFragmentByTag("googleauth_android_fragment") != null) {
-            return; // Already exists;
-        }
-
-        oneTapClient = Identity.getSignInClient(context);
-        frag.oneTapClient = oneTapClient;
-
-        FragmentTransaction ft = fm.beginTransaction();
-        ft.add(frag, "googleauth_android_fragment");
-        ft.commitNow();
+    public void handleFailure(GetCredentialException e) {
+      // Handle the error.
+      Log.e("gioplugins_auth", "Error getting credential", e);
+      NativeAuthCallback(LastHandler, "");
     }
 }

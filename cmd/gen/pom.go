@@ -11,7 +11,7 @@ import (
 )
 
 func main() {
-	cmd := exec.Command("mvn", "dependency:copy-dependencies", "-DoutputDirectory=target")
+	cmd := exec.Command("mvn", "dependency:copy-dependencies", "-U", "-DoutputDirectory=target")
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	if err := cmd.Run(); err != nil {

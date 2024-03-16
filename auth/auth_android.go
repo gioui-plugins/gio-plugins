@@ -148,5 +148,10 @@ func Java_com_inkeliz_auth_1android_auth_1android_NativeAuthCallback(env *C.JNIE
 	if !ok {
 		panic("auth: invalid handler")
 	}
-	driver.send(r)
+
+	if r.IDToken == "" {
+		driver.send(ErrorEvent{Error: fmt.Errorf("auth: empty id token")})
+	} else {
+		driver.send(r)
+	}
 }

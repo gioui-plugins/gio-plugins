@@ -1,8 +1,8 @@
-//go:build !windows && !darwin && !windows && !ios && !android
+//go:build !windows && !darwin && !windows && !ios && !android && !js
 
 package auth
 
-// Config is the configuration for a GoogleAuth.
+// Config is the configuration for Auth.
 //
 // Each OS contains their own settings and options,
 // check each config_* file for more details.
