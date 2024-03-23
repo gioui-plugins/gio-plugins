@@ -3,21 +3,49 @@
 package webview
 
 import (
+	"os"
+	"path/filepath"
 	"unsafe"
 
-	"github.com/jchv/go-winloader"
 	"golang.org/x/sys/windows"
 )
 
 var (
-	_CreateCoreWebView2EnvironmentWithOptions winloader.Proc
+	_CreateCoreWebView2EnvironmentWithOptions *windows.Proc
 	_Ole32                                    = windows.NewLazySystemDLL("ole32.dll")
 	_Ole32CoTaskMemAlloc                      = _Ole32.NewProc("CoTaskMemAlloc")
 )
 
 func init() {
-	dll, _ := winloader.LoadFromMemory(dllFile)
-	_CreateCoreWebView2EnvironmentWithOptions = dll.Proc("CreateCoreWebView2EnvironmentWithOptions")
+	// current app name
+	appName := "gio-webview2-"
+	if len(os.Args) > 0 {
+		appName = filepath.Base(os.Args[0])
+	}
+
+	dllPath := filepath.Join(os.TempDir(), appName+"webview2loader.dll")
+	dst, err := os.Create(dllPath)
+	if err != nil {
+		panic(err)
+	}
+
+	if _, err := dst.Write(dllFile); err != nil {
+		panic(err)
+	}
+
+	if err := dst.Close(); err != nil {
+		panic(err)
+	}
+
+	dll, err := windows.LoadDLL(dllPath)
+	if err != nil {
+		panic(err)
+	}
+
+	_CreateCoreWebView2EnvironmentWithOptions, err = dll.FindProc("CreateCoreWebView2EnvironmentWithOptions")
+	if err != nil {
+		panic(err)
+	}
 }
 
 var (
