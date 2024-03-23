@@ -29,7 +29,7 @@ import (
 )
 
 var (
-	GlobalShaper = text.NewShaper(gofont.Collection())
+	GlobalShaper = text.NewShaper(text.WithCollection(gofont.Collection()))
 	DefaultURL   = "https://google.com"
 
 	IconAdd, _            = widget.NewIcon(icons.ContentAdd)
