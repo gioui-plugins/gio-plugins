@@ -11,14 +11,14 @@
 @import WebKit;
 
 @interface callbackHandler : NSObject<WKScriptMessageHandler>
-@property (nonatomic, assign) uintptr_t handler;
+@property (nonatomic, assign) uintptr_t webviewerHandler;
 @end
 
 @implementation callbackHandler
-    uintptr_t handler;
+    uintptr_t webviewerHandler;
 
     - (void)userContentController:(WKUserContentController *)userContentController didReceiveScriptMessage:(WKScriptMessage *)message {
-        javascriptManagerCallback(_handler, (char *)[[message body] UTF8String]);
+        javascriptManagerCallback(self.webviewerHandler, (char *)[[message body] UTF8String]);
     }
 @end
 
@@ -114,7 +114,6 @@ void run(CFTypeRef web, CFTypeRef windowRef) {
 }
 
 void getCookies(CFTypeRef config, uintptr_t handler, uintptr_t done) {
-    NSISO8601DateFormatter *dateFormatting = [[NSISO8601DateFormatter alloc] init];
     WKWebViewConfiguration *configuration = (__bridge WKWebViewConfiguration *)config;
     [[[configuration websiteDataStore] httpCookieStore] getAllCookies: ^(NSArray<NSHTTPCookie *> * array) {
         int i = 0;
@@ -157,7 +156,7 @@ void addCookie(CFTypeRef config, uintptr_t done, char *name, char *value, char *
         NSHTTPCookieDomain: @(domain),
         NSHTTPCookiePath: @(path),
         NSHTTPCookieExpires: [NSDate dateWithTimeIntervalSince1970:expires],
-        NSHTTPCookieSecure: ((features) == 2 ? @("true") : @("false")),
+        NSHTTPCookieSecure: ((features & 2) == 2 ? @("true") : @("false")),
     }];
 
     [[[configuration websiteDataStore] httpCookieStore] setCookie:cookie completionHandler: ^(void) {
@@ -221,7 +220,7 @@ void addCallbackJavascript(CFTypeRef config, char *name, uintptr_t handler) {
     WKUserContentController *controller = [configuration userContentController];
 
     callbackHandler *scriptMessageHandler = [callbackHandler alloc];
-    scriptMessageHandler.handler = handler;
+    scriptMessageHandler.webviewerHandler = handler;
 
     [controller addScriptMessageHandler:scriptMessageHandler name:@(name)];
 }

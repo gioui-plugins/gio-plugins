@@ -117,7 +117,7 @@ func (r *driver) attach(w *webview) error {
 			pathPtr = uintptr(unsafe.Pointer(&r.dir[0]))
 		}
 
-		hr, _, _ := _CreateCoreWebView2EnvironmentWithOptions.Call(0, uint64(pathPtr), 0, uint64(uintptr(unsafe.Pointer(r.environmentCompletedHandler))))
+		hr, _, _ := _CreateCoreWebView2EnvironmentWithOptions.Call(0, pathPtr, 0, uintptr(unsafe.Pointer(r.environmentCompletedHandler)))
 		if hr != 0 {
 			cerr <- ErrInvalidOptionChange
 			return
