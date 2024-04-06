@@ -3,23 +3,21 @@ package main
 import (
 	"embed"
 	"flag"
+	"fmt"
 	"image"
 	"image/color"
 	"math"
 	"net/http"
 	"net/url"
 	"os"
+	"sync"
 	"time"
-
-	"gioui.org/io/event"
-
-	"gioui.org/font"
-
-	"golang.org/x/exp/shiny/materialdesign/icons"
 
 	"gioui.org/app"
 	"gioui.org/f32"
+	"gioui.org/font"
 	"gioui.org/font/gofont"
+	"gioui.org/io/event"
 	"gioui.org/io/pointer"
 	"gioui.org/layout"
 	"gioui.org/op"
@@ -27,10 +25,10 @@ import (
 	"gioui.org/op/paint"
 	"gioui.org/text"
 	"gioui.org/widget"
-
 	"github.com/gioui-plugins/gio-plugins/plugin"
 	"github.com/gioui-plugins/gio-plugins/webviewer"
 	"github.com/gioui-plugins/gio-plugins/webviewer/webview"
+	"golang.org/x/exp/shiny/materialdesign/icons"
 
 	_ "gioui.org/app/permission/bluetooth"
 	_ "gioui.org/app/permission/camera"
@@ -81,6 +79,8 @@ func main() {
 	browsers := NewBrowser()
 	browsers.add()
 
+	once := sync.Once{}
+
 	go func() {
 		// first := true
 		ops := new(op.Ops)
@@ -91,7 +91,9 @@ func main() {
 				os.Exit(0)
 				return
 			case app.FrameEvent:
-				plugin.Install(window, evt)
+				once.Do(func() {
+					plugin.Install(window, evt)
+				})
 				gtx := app.NewContext(ops, evt)
 				browsers.Layout(gtx)
 				evt.Frame(ops)
@@ -260,14 +262,13 @@ func (b *Browsers) Layout(gtx layout.Context) layout.Dimensions {
 				submited = true
 			case widget.ChangeEvent:
 			case widget.EditorEvent:
-
+			default:
+				if submited {
+					w := webviewer.WebViewOp{Tag: b.Tags[i]}.Push(gtx.Ops)
+					webviewer.NavigateOp{URL: t.Text()}.Add(gtx.Ops)
+					w.Pop(gtx.Ops)
+				}
 			}
-		}
-
-		if submited {
-			w := webviewer.WebViewOp{Tag: b.Tags[i]}.Push(gtx.Ops)
-			webviewer.NavigateOp{URL: t.Text()}.Add(gtx.Ops)
-			w.Pop(gtx.Ops)
 		}
 	}
 
@@ -297,11 +298,11 @@ func (b *Browsers) Layout(gtx layout.Context) layout.Dimensions {
 			case webviewer.NavigationEvent:
 				b.Address[i].SetText(evt.URL)
 			case webviewer.CookiesEvent:
-				// fmt.Println(evt.Cookies)
+				fmt.Println(evt.Cookies)
 			case webviewer.StorageEvent:
-				// fmt.Println(evt.Storage)
+				fmt.Println(evt.Storage)
 			case webviewer.MessageEvent:
-				// fmt.Println(evt.Message)
+				fmt.Println(evt.Message)
 			}
 		}
 	}
