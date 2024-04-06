@@ -15,7 +15,7 @@ import (
 
 var (
 	wantEvents = []reflect.Type{
-		//reflect.TypeOf(app.ViewEvent{}),
+		// reflect.TypeOf(app.ViewEvent{}),
 		reflect.TypeOf(app.DestroyEvent{}),
 		reflect.TypeOf(app.FrameEvent{}),
 	}

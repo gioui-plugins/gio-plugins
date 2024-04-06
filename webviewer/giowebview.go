@@ -39,7 +39,7 @@ var (
 		reflect.TypeOf(&MessageReceiverOp{}),
 	}
 	wantEvent = []reflect.Type{
-		//reflect.TypeOf(app.ViewEvent{}),//todo
+		// reflect.TypeOf(app.ViewEvent{}),//todo
 		reflect.TypeOf(app.FrameEvent{}),
 		reflect.TypeOf(app.DestroyEvent{}),
 		reflect.TypeOf(plugin.EndFrameEvent{}),

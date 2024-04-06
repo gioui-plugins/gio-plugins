@@ -7,6 +7,5 @@ import (
 
 // NewConfigFromViewEvent creates a webview.Config based on app.ViewEvent.
 func NewConfigFromViewEvent(w *app.Window, evt app.ViewEvent) webview.Config {
-
 	return webview.Config{HWND: evt.(app.Win32ViewEvent).HWND, RunOnMain: w.Run}
 }

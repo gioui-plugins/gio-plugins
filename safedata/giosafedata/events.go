@@ -7,7 +7,7 @@ import (
 )
 
 var wantEvents = []reflect.Type{
-	//reflect.TypeOf(app.ViewEvent{}),
+	// reflect.TypeOf(app.ViewEvent{}),
 }
 
 // ErrorEvent is issued when an error occurs.

@@ -9,8 +9,7 @@ import (
 	"path"
 )
 
-//http://localhost:8080/web/index.html
-
+// http://localhost:8080/web/index.html
 func main2() {
 	mux := http.DefaultServeMux
 	mux.Handle("/web/", AssetHandler("/web/", Assets, "./resources"))

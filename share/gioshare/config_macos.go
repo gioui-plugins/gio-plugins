@@ -4,7 +4,7 @@ package gioshare
 
 import (
 	"gioui.org/app"
-"github.com/gioui-plugins/gio-plugins/share"
+	"github.com/gioui-plugins/gio-plugins/share"
 )
 
 // NewConfigFromViewEvent creates a share.Config based on app.ViewEvent.

@@ -24,7 +24,7 @@ var (
 		// reflect.TypeOf(&SaveDirectoryOp{}),
 	}
 	wantEvents = []reflect.Type{
-		//reflect.TypeOf(app.ViewEvent{}),
+		// reflect.TypeOf(app.ViewEvent{}),
 	}
 )
 

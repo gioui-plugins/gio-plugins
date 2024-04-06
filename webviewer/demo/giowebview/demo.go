@@ -3,7 +3,6 @@ package main
 import (
 	"embed"
 	"flag"
-	"gioui.org/io/event"
 	"image"
 	"image/color"
 	"math"
@@ -11,6 +10,8 @@ import (
 	"net/url"
 	"os"
 	"time"
+
+	"gioui.org/io/event"
 
 	"gioui.org/font"
 
@@ -42,7 +43,7 @@ import (
 var Assets embed.FS
 
 var (
-	GlobalShaper = text.NewShaper(text.WithCollection(gofont.Collection())) //todo
+	GlobalShaper = text.NewShaper(text.WithCollection(gofont.Collection())) // todo
 	DefaultURL   = "http://localhost:8080/web/index.html"
 
 	IconAdd, _            = widget.NewIcon(icons.ContentAdd)
@@ -55,7 +56,6 @@ var (
 )
 
 func main() {
-
 	mux := http.DefaultServeMux
 	mux.Handle("/web/", AssetHandler("/web/", Assets, "./resources"))
 	go http.ListenAndServe(":8080", mux)
@@ -96,7 +96,7 @@ func main() {
 				browsers.Layout(gtx)
 				evt.Frame(ops)
 			case app.Win32ViewEvent:
-				//todo set dark theme(implemented) and dropFile
+				// todo set dark theme(implemented) and dropFile
 			}
 		}
 	}()
@@ -251,7 +251,7 @@ func (b *Browsers) Layout(gtx layout.Context) layout.Dimensions {
 			if !ok {
 				if t.Text() == "" {
 					submited = true
-					t.SetText(DefaultURL) //todo bug
+					t.SetText(DefaultURL) // todo bug
 				}
 				continue
 			}
@@ -485,7 +485,7 @@ func (l *Loading) Layout(gtx layout.Context) layout.Dimensions {
 	defer clip.Stroke{Path: path.End(), Width: width}.Op().Push(gtx.Ops).Pop()
 	paint.ColorOp{Color: color.NRGBA{R: 255, G: 255, B: 255, A: 255}}.Add(gtx.Ops)
 	paint.PaintOp{}.Add(gtx.Ops)
-	//op.InvalidateOp{}.Add(gtx.Ops)//todo
+	// op.InvalidateOp{}.Add(gtx.Ops)//todo
 
 	return layout.Dimensions{Size: gtx.Constraints.Max}
 }

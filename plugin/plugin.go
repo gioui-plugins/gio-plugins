@@ -155,9 +155,9 @@ func Install(w *app.Window, evt event.Event) {
 		ref := *(**app.FrameEvent)(unsafe.Add(unsafe.Pointer(&evt), unsafe.Sizeof(uintptr(0))))
 		h.invalidated.Store(false)
 
-		//q := ref.Queue
-		//h.queue = q
-		//ref.Queue = h
+		// q := ref.Queue
+		// h.queue = q
+		// ref.Queue = h
 
 		f := ref.Frame
 		ref.Frame = func(frame *op.Ops) {

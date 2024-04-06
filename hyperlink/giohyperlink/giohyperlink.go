@@ -19,8 +19,8 @@ var (
 		reflect.TypeOf(&OpenOp{}),
 	}
 	wantEvents = []reflect.Type{
-		//reflect.TypeOf(app.ViewEvent{}),
-		//reflect.TypeOf(app.StageEvent{}),
+		// reflect.TypeOf(app.ViewEvent{}),
+		// reflect.TypeOf(app.StageEvent{}),
 	}
 )
 
@@ -84,7 +84,7 @@ func (h *hyperlinkPlugin) ListenEvents(evt event.Event) {
 		} else {
 			h.client.Configure(h.config)
 		}
-		//case app.StageEvent://todo
+		// case app.StageEvent://todo
 		//	UpdateConfigFromStageEvent(&h.config, h.window, evt)
 		//	if h.client != nil {
 		//		h.client.Configure(h.config)

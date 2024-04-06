@@ -1,9 +1,10 @@
 package pingpong
 
 import (
-	"gioui.org/io/event"
 	"os"
 	"testing"
+
+	"gioui.org/io/event"
 
 	"gioui.org/app"
 

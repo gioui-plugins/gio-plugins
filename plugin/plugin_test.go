@@ -1,11 +1,12 @@
 package plugin
 
 import (
-	"gioui.org/io/input"
 	"image"
 	"reflect"
 	"testing"
 	"time"
+
+	"gioui.org/io/input"
 
 	"gioui.org/app"
 	"gioui.org/io/event"

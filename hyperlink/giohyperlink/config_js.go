@@ -4,7 +4,7 @@ package giohyperlink
 
 import (
 	"gioui.org/app"
-"github.com/gioui-plugins/gio-plugins/hyperlink"
+	"github.com/gioui-plugins/gio-plugins/hyperlink"
 )
 
 // NewConfigFromViewEvent creates a share.Config based on app.ViewEvent.

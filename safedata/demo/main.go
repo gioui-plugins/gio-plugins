@@ -47,7 +47,7 @@ func main() {
 				paint.ColorOp{Color: color.NRGBA{0, 0, 0, 255}}.Add(gtx.Ops)
 				widget.Label{}.Layout(gtx, shaper, font.Font{}, 12, txt, op.CallOp{})
 
-				//op.InvalidateOp{}.Add(gtx.Ops)
+				// op.InvalidateOp{}.Add(gtx.Ops)
 				evt.Frame(ops)
 				mutex.Unlock()
 			case app.DestroyEvent:

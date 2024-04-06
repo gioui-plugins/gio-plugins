@@ -16,7 +16,7 @@ var (
 	ErrNotAvailable = errors.New("current OS not supported")
 )
 
-type driver struct { //todo need rewrite method
+type driver struct { // todo need rewrite method
 }
 
 func (d driver) openFile(mimes []mimetype.MimeType) (io.ReadCloser, error) {
@@ -39,7 +39,6 @@ func NewExplorer(config Config) *Explorer {
 }
 
 func attachDriver(house *Explorer, config Config) {
-
 }
 
 func (e *Explorer) Configure(config Config) {
@@ -47,7 +46,6 @@ func (e *Explorer) Configure(config Config) {
 }
 
 func configureDriver(d *driver, config Config) {
-
 }
 
 func (e *Explorer) OpenFile(mimes []mimetype.MimeType) (io.ReadCloser, error) {

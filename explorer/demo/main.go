@@ -1,13 +1,14 @@
 package main
 
 import (
-	"gioui.org/io/event"
 	"image"
 	"image/color"
 	_ "image/gif"
 	_ "image/jpeg"
 	"image/png"
 	_ "image/png"
+
+	"gioui.org/io/event"
 
 	"gioui.org/font"
 
@@ -63,7 +64,6 @@ func main() {
 				gtx := app.NewContext(ops, e)
 				p.Layout(gtx)
 				e.Frame(ops)
-
 			}
 		}
 	}()
