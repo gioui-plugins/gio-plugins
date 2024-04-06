@@ -13,6 +13,7 @@ extern uint8_t getSecretAt(CFTypeRef array, uint32_t index, char ** retId, char 
 extern uint8_t removeSecret(char * identifier);
 */
 import "C"
+
 import (
 	"runtime"
 	"strings"
@@ -57,9 +58,7 @@ func (d driver) setSecret(secret Secret) error {
 }
 
 func (d driver) listSecret(looper Looper) error {
-	var (
-		count C.uint32_t
-	)
+	var count C.uint32_t
 	ref := C.getSecret(nil, &count)
 	if ref == 0 || count == 0 {
 		return ErrNotFound
@@ -86,9 +85,7 @@ func (d driver) getSecret(identifier string, secret *Secret) error {
 	id := C.CString(d.keyFor(identifier))
 	defer C.free(unsafe.Pointer(id))
 
-	var (
-		count C.uint32_t
-	)
+	var count C.uint32_t
 	ref := C.getSecret(id, &count)
 	if ref == 0 || count == 0 {
 		return ErrNotFound

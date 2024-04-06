@@ -1,9 +1,7 @@
 package mimetype
 
-var (
-	// Any is a mime type that matches any mime type.
-	Any = MimeType{Extension: "*", Type: "*", Subtype: "*"}
-)
+// Any is a mime type that matches any mime type.
+var Any = MimeType{Extension: "*", Type: "*", Subtype: "*"}
 
 var (
 	// TextAny is a mime type that matches any text mime type.

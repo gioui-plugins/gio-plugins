@@ -1,8 +1,7 @@
 package main
 
 import (
-	"gioui.org/font"
-	"github.com/gioui-plugins/gio-plugins/explorer/gioexplorer"
+	"gioui.org/io/event"
 	"image"
 	"image/color"
 	_ "image/gif"
@@ -10,22 +9,27 @@ import (
 	"image/png"
 	_ "image/png"
 
+	"gioui.org/font"
+
+	"github.com/gioui-plugins/gio-plugins/explorer/gioexplorer"
+
 	"gioui.org/app"
-	"gioui.org/font/gofont"
-	"gioui.org/io/system"
 	"gioui.org/layout"
 	"gioui.org/op"
 	"gioui.org/op/clip"
 	"gioui.org/op/paint"
 	"gioui.org/text"
 	"gioui.org/widget"
+	_ "golang.org/x/image/webp"
+
 	"github.com/gioui-plugins/gio-plugins/explorer/mimetype"
 	"github.com/gioui-plugins/gio-plugins/plugin"
-	_ "golang.org/x/image/webp"
 )
 
-var _Sharper = text.NewShaper(gofont.Collection())
-var _ImageResult = make(chan img)
+var (
+	_Sharper     = text.NewShaper()
+	_ImageResult = make(chan img)
+)
 
 type img struct {
 	widget widget.Image
@@ -33,7 +37,8 @@ type img struct {
 }
 
 func main() {
-	w := app.NewWindow(app.Size(500, 500))
+	w := new(app.Window)
+	w.Option(app.Size(500, 500))
 	ops := new(op.Ops)
 	p := new(Page)
 	p.tag = new(int)
@@ -46,15 +51,19 @@ func main() {
 				p.raw = img.image
 				p.loading = false
 				w.Invalidate()
-			case evt := <-w.Events():
-				plugin.Install(w, evt)
+			}
+		}
+	}()
 
-				switch evt := evt.(type) {
-				case system.FrameEvent:
-					gtx := layout.NewContext(ops, evt)
-					p.Layout(gtx)
-					evt.Frame(ops)
-				}
+	go func() {
+		for {
+			switch e := w.Event().(type) {
+			case app.FrameEvent:
+				plugin.Install(w, e)
+				gtx := app.NewContext(ops, e)
+				p.Layout(gtx)
+				e.Frame(ops)
+
 			}
 		}
 	}()
@@ -83,22 +92,31 @@ var _FileTypes = []mimetype.MimeType{
 }
 
 func (p *Page) Layout(gtx layout.Context) layout.Dimensions {
-
-	if p.uploadClickable.Clicked() {
+	if p.uploadClickable.Clicked(gtx) {
 		gioexplorer.OpenFileOp{Tag: p.tag, Mimetype: _FileTypes}.Add(gtx.Ops)
 		p.error = ""
 		p.cancel = false
 	}
 
-	if p.saveClickable.Clicked() {
+	if p.saveClickable.Clicked(gtx) {
 		gioexplorer.SaveFileOp{Tag: p.tag, Mimetype: _FileTypes[0], Filename: "image.png"}.Add(gtx.Ops)
 		p.error = ""
 		p.cancel = false
 	}
+	events := []event.Filter{
+		gioexplorer.SaveFileEvent{},
+		gioexplorer.OpenFileEvent{},
+		gioexplorer.ErrorEvent{},
+		gioexplorer.CancelEvent{},
+	}
 
-	for _, evt := range gtx.Events(p.tag) {
-		if p.loading {
+	for {
+		if p.loading { //?
 			continue
+		}
+		evt, b := gtx.Event(events...)
+		if !b {
+			break
 		}
 		switch evt := evt.(type) {
 		case gioexplorer.SaveFileEvent:
@@ -127,6 +145,7 @@ func (p *Page) Layout(gtx layout.Context) layout.Dimensions {
 		case gioexplorer.CancelEvent:
 			p.cancel = true
 		}
+
 	}
 
 	return layout.Flex{Axis: layout.Vertical}.Layout(gtx,

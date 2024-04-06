@@ -26,6 +26,7 @@ static CFTypeRef shareWebsite(CFTypeRef viewController, char * link) {
 
 */
 import "C"
+
 import (
 	"sync"
 	"unsafe"

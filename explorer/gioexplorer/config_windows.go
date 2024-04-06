@@ -13,6 +13,6 @@ func NewConfigFromViewEvent(w *app.Window, evt app.ViewEvent) explorer.Config {
 }
 
 func UpdateConfigFromViewEvent(config *explorer.Config, w *app.Window, evt app.ViewEvent) {
-	config.HWND = evt.HWND
+	config.HWND = evt.(app.Win32ViewEvent).HWND
 	config.RunOnMain = w.Run
 }

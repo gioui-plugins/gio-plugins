@@ -2,10 +2,11 @@ package explorer
 
 import (
 	"errors"
-	"github.com/gioui-plugins/gio-plugins/explorer/mimetype"
 	"io"
 	"strings"
 	"sync"
+
+	"github.com/gioui-plugins/gio-plugins/explorer/mimetype"
 )
 
 var (
@@ -14,6 +15,17 @@ var (
 	// ErrNotAvailable is return when the current OS isn't supported.
 	ErrNotAvailable = errors.New("current OS not supported")
 )
+
+type driver struct { //todo need rewrite method
+}
+
+func (d driver) openFile(mimes []mimetype.MimeType) (io.ReadCloser, error) {
+	return nil, nil
+}
+
+func (d driver) saveFile(name string, mime mimetype.MimeType) (io.WriteCloser, error) {
+	return nil, nil
+}
 
 type Explorer struct {
 	// driver holds OS-Specific content, it varies for each OS.
@@ -26,8 +38,16 @@ func NewExplorer(config Config) *Explorer {
 	return house
 }
 
+func attachDriver(house *Explorer, config Config) {
+
+}
+
 func (e *Explorer) Configure(config Config) {
 	configureDriver(&e.driver, config)
+}
+
+func configureDriver(d *driver, config Config) {
+
 }
 
 func (e *Explorer) OpenFile(mimes []mimetype.MimeType) (io.ReadCloser, error) {

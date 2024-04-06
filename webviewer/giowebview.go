@@ -16,7 +16,6 @@ import (
 	"gioui.org/app"
 	"gioui.org/f32"
 	"gioui.org/io/event"
-	"gioui.org/io/system"
 	"gioui.org/op"
 )
 
@@ -40,9 +39,9 @@ var (
 		reflect.TypeOf(&MessageReceiverOp{}),
 	}
 	wantEvent = []reflect.Type{
-		reflect.TypeOf(app.ViewEvent{}),
-		reflect.TypeOf(system.FrameEvent{}),
-		reflect.TypeOf(system.DestroyEvent{}),
+		//reflect.TypeOf(app.ViewEvent{}),//todo
+		reflect.TypeOf(app.FrameEvent{}),
+		reflect.TypeOf(app.DestroyEvent{}),
 		reflect.TypeOf(plugin.EndFrameEvent{}),
 	}
 )
@@ -92,7 +91,7 @@ type webViewPlugin struct {
 	activeTag   event.Tag
 	active      webview.WebView
 
-	frame system.FrameEvent
+	frame app.FrameEvent
 
 	config    webview.Config
 	viewEvent app.ViewEvent
@@ -112,7 +111,7 @@ func (p *webViewPlugin) TypeEvent() []reflect.Type {
 func (p *webViewPlugin) ListenOps(op interface{}) {
 	switch v := op.(type) {
 	case interface {
-		execute(w *app.Window, p *webViewPlugin, _ system.FrameEvent)
+		execute(w *app.Window, p *webViewPlugin, _ app.FrameEvent)
 	}:
 		v.execute(p.window, p, p.frame)
 	default:
@@ -126,7 +125,7 @@ func (p *webViewPlugin) ListenEvents(evt event.Event) {
 	case app.ViewEvent:
 		p.viewEvent = evt
 
-	case system.FrameEvent:
+	case app.FrameEvent:
 		p.frame = evt
 
 		// Reset the seen map.
@@ -134,7 +133,7 @@ func (p *webViewPlugin) ListenEvents(evt event.Event) {
 			p.seem[s] = false
 		}
 
-	case system.DestroyEvent:
+	case app.DestroyEvent:
 		p.mutex.Lock()
 		defer p.mutex.Unlock()
 
@@ -228,7 +227,7 @@ func (o WebViewOp) Pop(op *op.Ops) {
 	poolWebViewOp.WriteOp(op, *(*webViewOp)(unsafe.Pointer(&o)))
 }
 
-func (o *webViewOp) execute(w *app.Window, p *webViewPlugin, _ system.FrameEvent) {
+func (o *webViewOp) execute(w *app.Window, p *webViewPlugin, _ app.FrameEvent) {
 	defer poolWebViewOp.Release(o)
 
 	p.mutex.Lock()
@@ -297,7 +296,7 @@ func (o OffsetOp) Add(op *op.Ops) {
 	poolOffsetOp.WriteOp(op, o)
 }
 
-func (o *OffsetOp) execute(_ *app.Window, p *webViewPlugin, _ system.FrameEvent) {
+func (o *OffsetOp) execute(_ *app.Window, p *webViewPlugin, _ app.FrameEvent) {
 	defer poolOffsetOp.Release(o)
 	if p.active == nil {
 		return
@@ -343,7 +342,7 @@ func (o RectOp) Add(op *op.Ops) {
 	poolRectOp.WriteOp(op, o)
 }
 
-func (o *RectOp) execute(_ *app.Window, p *webViewPlugin, e system.FrameEvent) {
+func (o *RectOp) execute(_ *app.Window, p *webViewPlugin, e app.FrameEvent) {
 	defer poolRectOp.Release(o)
 
 	if p.active == nil {
@@ -384,7 +383,7 @@ func (o NavigateOp) Add(op *op.Ops) {
 	poolNavigateOp.WriteOp(op, o)
 }
 
-func (o *NavigateOp) execute(_ *app.Window, p *webViewPlugin, _ system.FrameEvent) {
+func (o *NavigateOp) execute(_ *app.Window, p *webViewPlugin, _ app.FrameEvent) {
 	defer poolNavigateOp.Release(o)
 
 	if p.active == nil {
@@ -421,7 +420,7 @@ func (o SetCookieOp) Add(op *op.Ops) {
 	poolSetCookieOp.WriteOp(op, o)
 }
 
-func (o *SetCookieOp) execute(_ *app.Window, p *webViewPlugin, _ system.FrameEvent) {
+func (o *SetCookieOp) execute(_ *app.Window, p *webViewPlugin, _ app.FrameEvent) {
 	manager := p.active.DataManager()
 	wvTag := p.activeTag
 
@@ -454,7 +453,7 @@ func (o SetCookieArrayOp) Add(op *op.Ops) {
 	poolSetCookieArrayOp.WriteOp(op, o)
 }
 
-func (o *SetCookieArrayOp) execute(_ *app.Window, p *webViewPlugin, _ system.FrameEvent) {
+func (o *SetCookieArrayOp) execute(_ *app.Window, p *webViewPlugin, _ app.FrameEvent) {
 	manager := p.active.DataManager()
 	wvTag := p.activeTag
 
@@ -494,7 +493,7 @@ func (o RemoveCookieOp) Add(op *op.Ops) {
 	poolRemoveCookieOp.WriteOp(op, o)
 }
 
-func (o *RemoveCookieOp) execute(_ *app.Window, p *webViewPlugin, _ system.FrameEvent) {
+func (o *RemoveCookieOp) execute(_ *app.Window, p *webViewPlugin, _ app.FrameEvent) {
 	manager := p.active.DataManager()
 	wvTag := p.activeTag
 
@@ -529,6 +528,9 @@ type CookiesEvent struct {
 	Cookies []webview.CookieData
 }
 
+func (c CookiesEvent) ImplementsFilter() {
+}
+
 // ImplementsEvent the event.Event interface.
 func (c CookiesEvent) ImplementsEvent() {}
 
@@ -539,7 +541,7 @@ func (o ListCookieOp) Add(op *op.Ops) {
 	poolListCookieOp.WriteOp(op, o)
 }
 
-func (o *ListCookieOp) execute(_ *app.Window, p *webViewPlugin, _ system.FrameEvent) {
+func (o *ListCookieOp) execute(_ *app.Window, p *webViewPlugin, _ app.FrameEvent) {
 	manager := p.active.DataManager()
 	wvTag := p.activeTag
 
@@ -583,7 +585,7 @@ func (o SetStorageOp) Add(op *op.Ops) {
 	poolSetStorageOp.WriteOp(op, o)
 }
 
-func (o *SetStorageOp) execute(_ *app.Window, p *webViewPlugin, _ system.FrameEvent) {
+func (o *SetStorageOp) execute(_ *app.Window, p *webViewPlugin, _ app.FrameEvent) {
 	manager := p.active.DataManager()
 	wvTag := p.activeTag
 
@@ -620,7 +622,7 @@ func (o RemoveStorageOp) Add(op *op.Ops) {
 	poolRemoveStorageOp.WriteOp(op, o)
 }
 
-func (o *RemoveStorageOp) execute(_ *app.Window, p *webViewPlugin, _ system.FrameEvent) {
+func (o *RemoveStorageOp) execute(_ *app.Window, p *webViewPlugin, _ app.FrameEvent) {
 	manager := p.active.DataManager()
 	wvTag := p.activeTag
 
@@ -660,6 +662,9 @@ type StorageEvent struct {
 	Storage []webview.StorageData
 }
 
+func (c StorageEvent) ImplementsFilter() {
+}
+
 // ImplementsEvent the event.Event interface.
 func (c StorageEvent) ImplementsEvent() {}
 
@@ -670,7 +675,7 @@ func (o ListStorageOp) Add(op *op.Ops) {
 	poolListStorageOp.WriteOp(op, o)
 }
 
-func (o *ListStorageOp) execute(_ *app.Window, p *webViewPlugin, _ system.FrameEvent) {
+func (o *ListStorageOp) execute(_ *app.Window, p *webViewPlugin, _ app.FrameEvent) {
 	manager := p.active.DataManager()
 	wvTag := p.activeTag
 
@@ -711,7 +716,7 @@ func (o ClearCacheOp) Add(op *op.Ops) {
 	poolClearCacheOp.WriteOp(op, o)
 }
 
-func (o *ClearCacheOp) execute(_ *app.Window, p *webViewPlugin, _ system.FrameEvent) {
+func (o *ClearCacheOp) execute(_ *app.Window, p *webViewPlugin, _ app.FrameEvent) {
 	manager := p.active.DataManager()
 	wvTag := p.activeTag
 
@@ -739,7 +744,7 @@ func (o ExecuteJavascriptOp) Add(op *op.Ops) {
 	poolExecuteJavascriptOp.WriteOp(op, o)
 }
 
-func (o *ExecuteJavascriptOp) execute(_ *app.Window, p *webViewPlugin, _ system.FrameEvent) {
+func (o *ExecuteJavascriptOp) execute(_ *app.Window, p *webViewPlugin, _ app.FrameEvent) {
 	manager := p.active.JavascriptManager()
 	wvTag := p.activeTag
 
@@ -766,7 +771,7 @@ func (o InstallJavascriptOp) Add(op *op.Ops) {
 	poolInstallJavascriptOp.WriteOp(op, o)
 }
 
-func (o *InstallJavascriptOp) execute(_ *app.Window, p *webViewPlugin, _ system.FrameEvent) {
+func (o *InstallJavascriptOp) execute(_ *app.Window, p *webViewPlugin, _ app.FrameEvent) {
 	manager := p.active.JavascriptManager()
 	wvTag := p.activeTag
 
@@ -804,7 +809,7 @@ func (o MessageReceiverOp) Add(op *op.Ops) {
 	poolMessageReceiverOp.WriteOp(op, o)
 }
 
-func (o *MessageReceiverOp) execute(_ *app.Window, p *webViewPlugin, _ system.FrameEvent) {
+func (o *MessageReceiverOp) execute(_ *app.Window, p *webViewPlugin, _ app.FrameEvent) {
 	manager := p.active.JavascriptManager()
 	wvTag := p.activeTag
 	tag := o.Tag
@@ -814,7 +819,6 @@ func (o *MessageReceiverOp) execute(_ *app.Window, p *webViewPlugin, _ system.Fr
 		err := manager.AddCallback(o.Name, func(msg string) {
 			p.plugin.SendEvent(tag, MessageEvent{Message: msg})
 		})
-
 		if err != nil {
 			p.plugin.SendEvent(wvTag, ErrorEvent{error: err})
 		}
@@ -827,17 +831,26 @@ type MessageEvent struct {
 	Message string
 }
 
+func (c MessageEvent) ImplementsFilter() {
+}
+
 // ImplementsEvent the event.Event interface.
 func (c MessageEvent) ImplementsEvent() {}
 
 // NavigationEvent is issued when the webview change the URL.
 type NavigationEvent webview.NavigationEvent
 
+func (e NavigationEvent) ImplementsFilter() {
+}
+
 // ImplementsEvent the event.Event interface.
 func (NavigationEvent) ImplementsEvent() {}
 
 // TitleEvent is issued when the webview change the title.
 type TitleEvent webview.TitleEvent
+
+func (e TitleEvent) ImplementsFilter() {
+}
 
 // ImplementsEvent the event.Event interface.
 func (TitleEvent) ImplementsEvent() {}

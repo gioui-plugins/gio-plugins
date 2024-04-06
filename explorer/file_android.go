@@ -79,7 +79,6 @@ func newFile(env jni.Env, stream jni.Object) (io.ReadWriteCloser, error) {
 	f.libObject = jni.NewGlobalRef(env, obj)
 
 	return f, nil
-
 }
 
 func (f *File) Read(b []byte) (n int, err error) {

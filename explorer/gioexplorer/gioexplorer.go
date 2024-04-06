@@ -2,11 +2,12 @@ package gioexplorer
 
 import (
 	"errors"
-	"github.com/gioui-plugins/gio-plugins/explorer"
 	"io"
 	"reflect"
 	"strings"
 	"sync"
+
+	"github.com/gioui-plugins/gio-plugins/explorer"
 
 	"gioui.org/app"
 	"gioui.org/io/event"
@@ -23,7 +24,7 @@ var (
 		// reflect.TypeOf(&SaveDirectoryOp{}),
 	}
 	wantEvents = []reflect.Type{
-		reflect.TypeOf(app.ViewEvent{}),
+		//reflect.TypeOf(app.ViewEvent{}),
 	}
 )
 
@@ -161,9 +162,15 @@ type OpenFileEvent struct {
 	File io.ReadCloser
 }
 
+func (e OpenFileEvent) ImplementsFilter() {
+}
+
 // SaveFileEvent is sent as response to SaveFileOp.
 type SaveFileEvent struct {
 	File io.WriteCloser
+}
+
+func (e SaveFileEvent) ImplementsFilter() {
 }
 
 // ErrorEvent is issued when error occurs.
@@ -171,8 +178,14 @@ type ErrorEvent struct {
 	error
 }
 
+func (e ErrorEvent) ImplementsFilter() {
+}
+
 // CancelEvent is sent when the user cancels the file selector.
 type CancelEvent struct{}
+
+func (e CancelEvent) ImplementsFilter() {
+}
 
 func (OpenFileEvent) ImplementsEvent() {}
 func (SaveFileEvent) ImplementsEvent() {}

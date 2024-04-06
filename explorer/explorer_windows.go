@@ -64,6 +64,9 @@ type (
 
 type explorer struct{}
 
+type explorerPlugin struct {
+}
+
 func (e *explorerPlugin) listenEvents(evt event.Event) {
 	// NO-OP
 }

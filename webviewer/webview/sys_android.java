@@ -289,10 +289,10 @@ public class sys_android {
 
         Context app = webBrowser.getContext().getApplicationContext();
 
-        System.setProperty("http.proxyHost", host);
-        System.setProperty("http.proxyPort", port);
-        System.setProperty("https.proxyHost", host);
-        System.setProperty("https.proxyPort", port);
+        app.setProperty("http.proxyHost", host);
+        app.setProperty("http.proxyPort", port);
+        app.setProperty("https.proxyHost", host);
+        app.setProperty("https.proxyPort", port);
 
         try {
             Field apk = app.getClass().getDeclaredField("mLoadedApk");

@@ -15,10 +15,10 @@ extern void saveFile(CFTypeRef viewRef, char * name, uintptr_t id);
 extern void openFile(CFTypeRef viewRef, char * ext, uintptr_t id);
 */
 import "C"
+
 import (
 	"io"
 	"net/url"
-
 	"os"
 	"runtime"
 	"runtime/cgo"
@@ -62,7 +62,6 @@ func (e *driver) saveFile(name string, mime mimetype.MimeType) (io.WriteCloser, 
 	}
 	runtime.KeepAlive(callback)
 	return r.file.(io.WriteCloser), r.error
-
 }
 
 func (e *driver) openFile(mimes []mimetype.MimeType) (io.ReadCloser, error) {

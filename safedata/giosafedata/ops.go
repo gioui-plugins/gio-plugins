@@ -9,14 +9,12 @@ import (
 	"github.com/gioui-plugins/gio-plugins/safedata"
 )
 
-var (
-	wantOps = []reflect.Type{
-		reflect.TypeOf(&WriteSecretOp{}),
-		reflect.TypeOf(&ReadSecretOp{}),
-		reflect.TypeOf(&DeleteSecretOp{}),
-		reflect.TypeOf(&ListSecretOp{}),
-	}
-)
+var wantOps = []reflect.Type{
+	reflect.TypeOf(&WriteSecretOp{}),
+	reflect.TypeOf(&ReadSecretOp{}),
+	reflect.TypeOf(&DeleteSecretOp{}),
+	reflect.TypeOf(&ListSecretOp{}),
+}
 
 type internalOp interface {
 	execute(plugin *safedataPlugin)

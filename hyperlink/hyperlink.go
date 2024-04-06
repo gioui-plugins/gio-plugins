@@ -12,11 +12,9 @@ var (
 	ErrInvalidURL = errors.New("given url is invalid")
 )
 
-var (
-	// InsecureIgnoreScheme will remove any attempt to validate the URL
-	// It's "false" by default. Set it to "true" if you are using a custom scheme (like "myapp://").
-	InsecureIgnoreScheme bool
-)
+// InsecureIgnoreScheme will remove any attempt to validate the URL
+// It's "false" by default. Set it to "true" if you are using a custom scheme (like "myapp://").
+var InsecureIgnoreScheme bool
 
 // Hyperlink is the main struct, which holds the driver.
 type Hyperlink struct {

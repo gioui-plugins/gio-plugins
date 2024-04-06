@@ -1,17 +1,17 @@
 package plugin
 
 import (
-	"gioui.org/app"
-	"gioui.org/io/event"
-	"gioui.org/io/router"
-	"gioui.org/io/system"
-	"gioui.org/layout"
-	"gioui.org/op"
-	"gioui.org/unit"
+	"gioui.org/io/input"
 	"image"
 	"reflect"
 	"testing"
 	"time"
+
+	"gioui.org/app"
+	"gioui.org/io/event"
+
+	"gioui.org/op"
+	"gioui.org/unit"
 )
 
 type testingOp struct {
@@ -43,7 +43,7 @@ func (t *testingPlugin) TypeOp() []reflect.Type {
 }
 
 func (t *testingPlugin) TypeEvent() []reflect.Type {
-	return []reflect.Type{reflect.TypeOf(system.FrameEvent{})}
+	return []reflect.Type{reflect.TypeOf(app.FrameEvent{})}
 }
 
 func (t *testingPlugin) ListenOps(op interface{}) {
@@ -54,26 +54,26 @@ func (t *testingPlugin) ListenOps(op interface{}) {
 }
 
 func (t *testingPlugin) ListenEvents(evt event.Event) {
-	if _, ok := evt.(system.FrameEvent); ok {
+	if _, ok := evt.(app.FrameEvent); ok {
 		t.ackListenEvent = true
 		t.p.SendEvent(event.Tag(0), testingEvent{data: "test"})
 	}
 }
 
 func TestInstall(t *testing.T) {
-	window := app.NewWindow()
+	window := new(app.Window)
 
 	frameCalled := false
 
-	evt := event.Event(system.FrameEvent{
+	evt := event.Event(app.FrameEvent{
 		Now:    time.Now(),
 		Metric: unit.Metric{},
 		Size:   image.Point{},
-		Insets: system.Insets{},
+		Insets: app.Insets{},
 		Frame: func(frame *op.Ops) {
 			frameCalled = true
 		},
-		Queue: &router.Router{},
+		Source: input.Source{},
 	})
 
 	h := &testingPlugin{}
@@ -86,9 +86,9 @@ func TestInstall(t *testing.T) {
 
 	ops := new(op.Ops)
 
-	gtx := layout.NewContext(ops, evt.(system.FrameEvent))
+	gtx := app.NewContext(ops, evt.(app.FrameEvent))
 	testingOp{data: "test"}.Add(ops)
-	evt.(system.FrameEvent).Frame(gtx.Ops)
+	evt.(app.FrameEvent).Frame(gtx.Ops)
 
 	if !frameCalled {
 		t.Error("frame not called")

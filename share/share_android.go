@@ -6,6 +6,7 @@ package share
 //go:generate jar cf share_android.jar -C $TEMP/share/classes .
 
 import "C"
+
 import (
 	"gioui.org/app"
 	"git.wow.st/gmp/jni"

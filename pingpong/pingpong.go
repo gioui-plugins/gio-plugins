@@ -48,4 +48,7 @@ type PongEvent struct {
 	Text string
 }
 
+func (p PongEvent) ImplementsFilter() {
+}
+
 func (p PongEvent) ImplementsEvent() {}

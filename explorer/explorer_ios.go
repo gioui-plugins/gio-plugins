@@ -21,6 +21,7 @@ extern CFTypeRef saveFile(CFTypeRef view, char * name, uintptr_t callback, CFTyp
 extern CFTypeRef openFile(CFTypeRef view, char * ext, uintptr_t callback, CFTypeRef pooled);
 */
 import "C"
+
 import (
 	"io"
 	"os"

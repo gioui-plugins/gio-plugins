@@ -2,8 +2,7 @@ package giohyperlink
 
 import (
 	"gioui.org/app"
-	"gioui.org/io/system"
-	"github.com/gioui-plugins/gio-plugins/hyperlink"
+"github.com/gioui-plugins/gio-plugins/hyperlink"
 )
 
 // NewConfigFromViewEvent creates a share.Config based on app.ViewEvent.
@@ -20,4 +19,4 @@ func UpdateConfigFromViewEvent(config *hyperlink.Config, w *app.Window, evt app.
 	config.RunOnMain = w.Run
 }
 
-func UpdateConfigFromStageEvent(config *hyperlink.Config, _ *app.Window, evt system.StageEvent) {}
+func UpdateConfigFromStageEvent(config *hyperlink.Config, _ *app.Window, evt app.StageEvent) {}

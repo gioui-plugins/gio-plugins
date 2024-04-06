@@ -6,7 +6,6 @@ import (
 
 	"gioui.org/app"
 	"gioui.org/io/event"
-	"gioui.org/io/pointer"
 	"gioui.org/op"
 	"gioui.org/op/clip"
 )
@@ -69,7 +68,8 @@ func NewHandlerFunc(ops []reflect.Type, events []reflect.Type, listenOp func(op 
 // WriteOp writes the given op into the op.Ops queue.
 func WriteOp(op *op.Ops, c any) {
 	defer clip.Rect{}.Push(op).Pop()
-	pointer.InputOp{Tag: c}.Add(op)
+	//pointer.InputOp{Tag: c}.Add(op)
+
 }
 
 // OpPool is a pool of specific type of op.

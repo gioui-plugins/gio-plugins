@@ -4,8 +4,7 @@ package gioshare
 
 import (
 	"gioui.org/app"
-	"gioui.org/io/system"
-	"github.com/gioui-plugins/gio-plugins/share"
+"github.com/gioui-plugins/gio-plugins/share"
 )
 
 // NewConfigFromViewEvent creates a share.Config based on app.ViewEvent.
@@ -21,7 +20,7 @@ func UpdateConfigFromViewEvent(config *share.Config, w *app.Window, evt app.View
 	config.RunOnMain = w.Run
 }
 
-func UpdateConfigFromFrameEvent(config *share.Config, w *app.Window, evt system.FrameEvent) {
+func UpdateConfigFromFrameEvent(config *share.Config, w *app.Window, evt app.FrameEvent) {
 	config.PxPerDp = evt.Metric.PxPerDp
 	config.Size = [2]float32{float32(evt.Size.X), float32(evt.Size.Y)}
 }

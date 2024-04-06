@@ -141,7 +141,6 @@ func TestSafeData_ListRemoveAll(t *testing.T) {
 			}
 			return true
 		})
-
 		if err != nil {
 			t.Error(err)
 		}
@@ -156,7 +155,6 @@ func TestSafeData_ListRemoveAll(t *testing.T) {
 			t.Error("not deleted")
 		}
 	}
-
 }
 
 func genRandomSecret(n int) Secret {

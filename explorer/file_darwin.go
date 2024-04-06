@@ -19,6 +19,7 @@ extern char* getError(CFTypeRef file);
 
 */
 import "C"
+
 import (
 	"errors"
 	"io"

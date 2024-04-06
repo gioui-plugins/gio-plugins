@@ -4,8 +4,9 @@
 package hyperlink
 
 import (
-	"golang.org/x/sys/windows"
 	"net/url"
+
+	"golang.org/x/sys/windows"
 )
 
 type driver struct{}

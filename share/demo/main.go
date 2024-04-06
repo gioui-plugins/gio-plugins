@@ -2,13 +2,12 @@ package main
 
 import (
 	"gioui.org/app"
-	"gioui.org/font/gofont"
-	"gioui.org/io/system"
 	"gioui.org/layout"
 	"gioui.org/op"
 	"gioui.org/unit"
 	"gioui.org/widget"
 	"gioui.org/widget/material"
+
 	"github.com/gioui-plugins/gio-plugins/plugin"
 	"github.com/gioui-plugins/gio-plugins/share/gioshare"
 )
@@ -36,7 +35,7 @@ var (
 )
 
 func main() {
-	theme := material.NewTheme(gofont.Collection())
+	theme := material.NewTheme()
 	list.Axis = layout.Vertical
 
 	if header == nil {
@@ -68,18 +67,19 @@ func main() {
 	title.SetText("Example Title")
 	desc.SetText("Example Text")
 
-	w := app.NewWindow(app.Size(500, 500))
+	w := new(app.Window)
+	w.Option(app.Size(500, 500))
 	ops := new(op.Ops)
 
 	go func() {
-		for e := range w.Events() {
-			plugin.Install(w, e)
+		for {
+			switch e := w.Event().(type) {
+			case app.FrameEvent:
+				plugin.Install(w, e)
 
-			switch e := e.(type) {
-			case system.FrameEvent:
-				gtx := layout.NewContext(ops, e)
+				gtx := app.NewContext(ops, e)
 
-				if isURL.Changed() {
+				if isURL.Pressed() {
 					if currentMode == modeText {
 						currentMode = modeLink
 					} else {
@@ -87,7 +87,7 @@ func main() {
 					}
 				}
 
-				if submit.Clicked() {
+				if submit.Clicked(gtx) {
 					switch currentMode {
 					case modeText:
 						gioshare.TextOp{Title: title.Text(), Text: desc.Text()}.Add(gtx.Ops)
@@ -118,7 +118,6 @@ func main() {
 						}
 						return layout.Dimensions{}
 					})
-
 				})
 
 				e.Frame(gtx.Ops)

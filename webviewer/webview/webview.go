@@ -44,7 +44,7 @@ type internalWebView interface {
 	close(w *webview)
 }
 
-// Point is a point in the coordinate system.
+// Point is a point in the coordinate app.
 type Point struct {
 	X, Y float32
 }

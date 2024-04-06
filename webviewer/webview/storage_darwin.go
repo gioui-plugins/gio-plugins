@@ -13,6 +13,7 @@ extern void clearData(CFTypeRef config, uintptr_t done);
 
 */
 import "C"
+
 import (
 	"time"
 	"unsafe"

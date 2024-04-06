@@ -2,13 +2,11 @@ package safedata
 
 import "errors"
 
-var (
-	// DefaultAppName is the unique name to identify the app,
-	// you should change it, or provide one name using Config.
-	//
-	// The DefaultAppName is used when Config.App is empty.
-	DefaultAppName = "safedata"
-)
+// DefaultAppName is the unique name to identify the app,
+// you should change it, or provide one name using Config.
+//
+// The DefaultAppName is used when Config.App is empty.
+var DefaultAppName = "safedata"
 
 var (
 	// ErrNotFound is returned when there's no credentials

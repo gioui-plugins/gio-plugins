@@ -1,0 +1,10 @@
+<link rel="stylesheet" href="https://unpkg.com/mdui@2/mdui.css">
+<script src="https://unpkg.com/mdui@2/mdui.global.js"></script>
+
+<mdui-button class="btn">click me</mdui-button>
+
+<script>
+    document.querySelector('.btn').addEventListener('click', () => {
+        mdui.snackbar({ message: 'cliced button' });
+    });
+</script>

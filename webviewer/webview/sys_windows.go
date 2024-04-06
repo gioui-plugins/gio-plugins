@@ -48,10 +48,8 @@ func init() {
 	}
 }
 
-var (
-	// referenceHolder prevents GC from releasing the COM object.
-	referenceHolder = make(map[unsafe.Pointer]struct{}, 64)
-)
+// referenceHolder prevents GC from releasing the COM object.
+var referenceHolder = make(map[unsafe.Pointer]struct{}, 64)
 
 type (
 	// _IUnknownVTBL implements IUnknown
@@ -648,32 +646,30 @@ type (
 	}
 )
 
-var (
-	_CoreWebView2FrameWebMessageReceivedEventHandlerVTBL = &_ICoreWebView2FrameWebMessageReceivedEventHandlerVTBL{
-		_IUnknownVTBL: _IUnknownVTBL{
-			Query: windows.NewCallback(func(this *_ICoreWebView2FrameWebMessageReceivedEventHandler, _, o uintptr) uintptr {
-				return 0
-			}),
-			Add: windows.NewCallback(func(this *_ICoreWebView2FrameWebMessageReceivedEventHandler) uintptr {
-				this.Counter += 1
-				return this.Counter
-			}),
-			Release: windows.NewCallback(func(this *_ICoreWebView2FrameWebMessageReceivedEventHandler) uintptr {
-				this.Counter -= 1
-				if this.Counter == 0 {
-					*this = _ICoreWebView2FrameWebMessageReceivedEventHandler{}
-				}
-				return this.Counter + 1
-			}),
-		},
-		Invoke: windows.NewCallback(func(this *_ICoreWebView2FrameWebMessageReceivedEventHandler, frame uintptr, args *_ICoreWebView2WebMessageReceivedEventArgs) uintptr {
-			if this == nil {
-				return 0
-			}
-			return this.Invoke(this, frame, args)
+var _CoreWebView2FrameWebMessageReceivedEventHandlerVTBL = &_ICoreWebView2FrameWebMessageReceivedEventHandlerVTBL{
+	_IUnknownVTBL: _IUnknownVTBL{
+		Query: windows.NewCallback(func(this *_ICoreWebView2FrameWebMessageReceivedEventHandler, _, o uintptr) uintptr {
+			return 0
 		}),
-	}
-)
+		Add: windows.NewCallback(func(this *_ICoreWebView2FrameWebMessageReceivedEventHandler) uintptr {
+			this.Counter += 1
+			return this.Counter
+		}),
+		Release: windows.NewCallback(func(this *_ICoreWebView2FrameWebMessageReceivedEventHandler) uintptr {
+			this.Counter -= 1
+			if this.Counter == 0 {
+				*this = _ICoreWebView2FrameWebMessageReceivedEventHandler{}
+			}
+			return this.Counter + 1
+		}),
+	},
+	Invoke: windows.NewCallback(func(this *_ICoreWebView2FrameWebMessageReceivedEventHandler, frame uintptr, args *_ICoreWebView2WebMessageReceivedEventArgs) uintptr {
+		if this == nil {
+			return 0
+		}
+		return this.Invoke(this, frame, args)
+	}),
+}
 
 type (
 	_ICoreWebView2WebMessageReceivedEventArgs struct {

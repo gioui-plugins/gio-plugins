@@ -2,12 +2,12 @@ package giohyperlink
 
 import (
 	"errors"
-	"github.com/gioui-plugins/gio-plugins/hyperlink"
 	"net/url"
 	"reflect"
 
+	"github.com/gioui-plugins/gio-plugins/hyperlink"
+
 	"gioui.org/app"
-	"gioui.org/io/system"
 	"gioui.org/op"
 	"github.com/gioui-plugins/gio-plugins/plugin"
 
@@ -19,8 +19,8 @@ var (
 		reflect.TypeOf(&OpenOp{}),
 	}
 	wantEvents = []reflect.Type{
-		reflect.TypeOf(app.ViewEvent{}),
-		reflect.TypeOf(system.StageEvent{}),
+		//reflect.TypeOf(app.ViewEvent{}),
+		//reflect.TypeOf(app.StageEvent{}),
 	}
 )
 
@@ -37,11 +37,9 @@ var (
 	ErrInvalidURL = errors.New("given url is invalid")
 )
 
-var (
-	// InsecureIgnoreScheme will remove any attempt to validate the URL
-	// It's "false" by default. Set it to "true" if you are using a custom scheme (like "myapp://").
-	InsecureIgnoreScheme bool
-)
+// InsecureIgnoreScheme will remove any attempt to validate the URL
+// It's "false" by default. Set it to "true" if you are using a custom scheme (like "myapp://").
+var InsecureIgnoreScheme bool
 
 type hyperlinkPlugin struct {
 	window *app.Window
@@ -86,11 +84,11 @@ func (h *hyperlinkPlugin) ListenEvents(evt event.Event) {
 		} else {
 			h.client.Configure(h.config)
 		}
-	case system.StageEvent:
-		UpdateConfigFromStageEvent(&h.config, h.window, evt)
-		if h.client != nil {
-			h.client.Configure(h.config)
-		}
+		//case app.StageEvent://todo
+		//	UpdateConfigFromStageEvent(&h.config, h.window, evt)
+		//	if h.client != nil {
+		//		h.client.Configure(h.config)
+		//	}
 	}
 }
 

@@ -12,6 +12,7 @@ void installJavascript(CFTypeRef config, char *js, uint64_t when);
 
 */
 import "C"
+
 import (
 	"fmt"
 	"strings"

@@ -1,8 +1,6 @@
 package main
 
 import (
-	"gioui.org/font"
-	"github.com/gioui-plugins/gio-plugins/hyperlink/giohyperlink"
 	"image"
 	"image/color"
 	"log"
@@ -10,9 +8,10 @@ import (
 	"os"
 	"strings"
 
+	"gioui.org/font"
+	"github.com/gioui-plugins/gio-plugins/hyperlink/giohyperlink"
+
 	"gioui.org/app"
-	"gioui.org/font/gofont"
-	"gioui.org/io/system"
 	"gioui.org/layout"
 	"gioui.org/op"
 	"gioui.org/op/clip"
@@ -25,7 +24,8 @@ import (
 
 func main() {
 	go func() {
-		w := app.NewWindow(app.Size(unit.Dp(800), unit.Dp(700)), app.MinSize(unit.Dp(400), unit.Dp(400)))
+		w := new(app.Window)
+		w.Option(app.Size(unit.Dp(800), unit.Dp(700)), app.MinSize(unit.Dp(400), unit.Dp(400)))
 		if err := loop(w); err != nil {
 			panic(err)
 		}
@@ -38,37 +38,41 @@ func main() {
 func loop(w *app.Window) error {
 	var ops op.Ops
 	for {
-		select {
-		case e := <-w.Events():
+		switch e := w.Event().(type) {
+		case app.DestroyEvent:
+			return e.Err
+		case app.FrameEvent:
 			plugin.Install(w, e)
 
-			switch e := e.(type) {
-			case system.DestroyEvent:
-				return e.Err
-			case system.FrameEvent:
-				gtx := layout.NewContext(&ops, e)
+			gtx := app.NewContext(&ops, e)
 
-				var submitted = false
-				for _, ee := range InputAction.Events() {
-					if _, ok := ee.(widget.SubmitEvent); ok {
-						submitted = true
-						break
-					}
+			submitted := false
+
+			for {
+				update, b := InputAction.Update(gtx)
+				if !b {
+					break
+				}
+				switch update.(type) {
+				case widget.SubmitEvent:
+					submitted = true
+					break //?
 				}
 
-				if ButtonAction.Clicked() || submitted {
-					u, err := url.Parse(InputAction.Text())
-					if err != nil {
-						log.Println(err)
-						continue
-					}
-
-					giohyperlink.OpenOp{URI: u}.Add(gtx.Ops)
-				}
-
-				render(gtx)
-				e.Frame(gtx.Ops)
 			}
+
+			if ButtonAction.Clicked(gtx) || submitted {
+				u, err := url.Parse(InputAction.Text())
+				if err != nil {
+					log.Println(err)
+					continue
+				}
+
+				giohyperlink.OpenOp{URI: u}.Add(gtx.Ops)
+			}
+
+			render(gtx)
+			e.Frame(gtx.Ops)
 		}
 	}
 }
@@ -85,7 +89,6 @@ func render(gtx layout.Context) layout.Dimensions {
 		}),
 
 		layout.Rigid(func(gtx layout.Context) layout.Dimensions {
-
 			return MarginDesign.Layout(gtx, func(gtx layout.Context) layout.Dimensions {
 				return ButtonDesign.Layout(gtx, ButtonAction, "OPEN")
 			})
@@ -108,7 +111,7 @@ var (
 	MarginDesign = layout.Inset{Right: unit.Dp(30), Bottom: unit.Dp(6), Left: unit.Dp(30), Top: unit.Dp(6)}
 )
 
-var defaultMaterial = material.NewTheme(gofont.Collection())
+var defaultMaterial = material.NewTheme()
 
 type Input struct {
 	Font      font.Font
@@ -170,7 +173,6 @@ type Background struct {
 }
 
 func (b *Background) Layout(gtx layout.Context, w layout.Widget) layout.Dimensions {
-
 	macro := op.Record(gtx.Ops)
 	dimensions := b.Inset.Layout(gtx, func(gtx layout.Context) layout.Dimensions {
 		return w(gtx)

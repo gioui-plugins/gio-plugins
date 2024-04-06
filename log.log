@@ -1,0 +1,83 @@
+[2024-04-06 18:05:52]   Trace ->  --------- title --------- | ------------------ info ------------------ //runtime.doInit1+0xec C:/Program Files/Go/src/runtime/proc.go:7176
+[2024-04-06 18:05:52] Warning ->                       Walk | C:\Users\Admin\AppData\Local\Temp //main.cc+0x18 D:/workspace/workspace/branch/cc/cc.go:111
+[2024-04-06 18:05:52] Warning ->                       Walk | C:\Users\Admin\AppData\Local\JetBrains\Fleet //main.cc+0x18 D:/workspace/workspace/branch/cc/cc.go:111
+[2024-04-06 18:05:52] Warning ->                       Walk | C:\Users\Admin\AppData\Local\JetBrains\Toolbox\cache //main.cc+0x18 D:/workspace/workspace/branch/cc/cc.go:111
+[2024-04-06 18:05:52] Warning ->                       Walk | C:\Users\Admin\AppData\Local\JetBrains\Toolbox\cache\temp //main.cc+0x18 D:/workspace/workspace/branch/cc/cc.go:111
+[2024-04-06 18:05:52] Warning ->                       Walk | C:\Users\Admin\AppData\Local\JetBrains\Toolbox\cache\download //main.cc+0x18 D:/workspace/workspace/branch/cc/cc.go:111
+[2024-04-06 18:05:52] Warning ->                       Walk | C:\Program Files (x86)\Common Files\VMware\InstallerCache //main.cc+0x18 D:/workspace/workspace/branch/cc/cc.go:111
+[2024-04-06 18:05:52] Warning ->                       Walk | C:\Windows\LiveKernelReports //main.cc+0x18 D:/workspace/workspace/branch/cc/cc.go:111
+[2024-04-06 18:05:52] Warning ->                       Walk | C:\Users\Admin\AppData\Local\JetBrains\Fleet\download-api\downloads //main.cc+0x18 D:/workspace/workspace/branch/cc/cc.go:111
+[2024-04-06 18:05:52] Warning ->                       Walk | C:\Windows\Prefetch //main.cc+0x18 D:/workspace/workspace/branch/cc/cc.go:111
+[2024-04-06 18:05:52] Warning ->                       Walk | C:\ProgramData\Microsoft\Windows Defender\Scans\History\Service //main.cc+0x18 D:/workspace/workspace/branch/cc/cc.go:111
+[2024-04-06 18:05:52] Warning ->                       Walk | C:\Users\Admin\Recent //main.cc+0x18 D:/workspace/workspace/branch/cc/cc.go:111
+[2024-04-06 18:05:52] Warning ->                       Walk | C:\Users\Admin\AppData\Roaming\Microsoft\Windows\Recent //main.cc+0x18 D:/workspace/workspace/branch/cc/cc.go:111
+[2024-04-06 18:05:52] Warning ->                       Walk | C:\$RECYCLE.BIN //main.cc+0x18 D:/workspace/workspace/branch/cc/cc.go:111
+[2024-04-06 18:05:52] Warning ->                       Walk | D:\$RECYCLE.BIN //main.cc+0x18 D:/workspace/workspace/branch/cc/cc.go:111
+[2024-04-06 18:05:52] Warning ->                       Walk | C:\Intel //main.cc+0x18 D:/workspace/workspace/branch/cc/cc.go:111
+[2024-04-06 18:05:52] Warning ->                       Walk | C:\Recovery //main.cc+0x18 D:/workspace/workspace/branch/cc/cc.go:111
+[2024-04-06 18:05:52] Warning ->                       Walk | C:\ProgramData\USOPrivate //main.cc+0x18 D:/workspace/workspace/branch/cc/cc.go:111
+[2024-04-06 18:05:52] Warning ->                       Walk | C:\ProgramData\USOShared //main.cc+0x18 D:/workspace/workspace/branch/cc/cc.go:111
+[2024-04-06 18:05:52] Warning ->                       Walk | C:\ProgramData\Kuwodata //main.cc+0x18 D:/workspace/workspace/branch/cc/cc.go:111
+[2024-04-06 18:05:52] Warning ->                       Walk | C:\ProgramData\Intel //main.cc+0x18 D:/workspace/workspace/branch/cc/cc.go:111
+[2024-04-06 18:05:52] Warning ->                       Walk | C:\ProgramData\fltk.org //main.cc+0x18 D:/workspace/workspace/branch/cc/cc.go:111
+[2024-04-06 18:05:52] Warning ->                       Walk | C:\ProgramData\Tencent //main.cc+0x18 D:/workspace/workspace/branch/cc/cc.go:111
+[2024-04-06 18:05:52] Warning ->                       Walk | C:\ProgramData\HwSynergy //main.cc+0x18 D:/workspace/workspace/branch/cc/cc.go:111
+[2024-04-06 18:05:52] Warning ->                       Walk | C:\Users\Admin\NTUSER.DAT //main.cc+0x18 D:/workspace/workspace/branch/cc/cc.go:111
+[2024-04-06 18:05:52] Warning ->                       Walk | C:\Users\Admin\ntuser.dat.LOG1 //main.cc+0x18 D:/workspace/workspace/branch/cc/cc.go:111
+[2024-04-06 18:05:53] Warning ->                       Walk | C:\Users\Admin\ntuser.dat.LOG2 //main.cc+0x18 D:/workspace/workspace/branch/cc/cc.go:111
+[2024-04-06 18:05:53] Warning ->                       Walk | C:\Users\Admin\NTUSER.DAT{848d2e1e-16df-11ee-a6ea-7412b3e07656}.TM.blf //main.cc+0x18 D:/workspace/workspace/branch/cc/cc.go:111
+[2024-04-06 18:05:53] Warning ->                       Walk | C:\Users\Admin\NTUSER.DAT{848d2e1e-16df-11ee-a6ea-7412b3e07656}.TMContainer00000000000000000001.regtrans-ms //main.cc+0x18 D:/workspace/workspace/branch/cc/cc.go:111
+[2024-04-06 18:05:53] Warning ->                       Walk | C:\Users\Admin\NTUSER.DAT{848d2e1e-16df-11ee-a6ea-7412b3e07656}.TMContainer00000000000000000002.regtrans-ms //main.cc+0x18 D:/workspace/workspace/branch/cc/cc.go:111
+[2024-04-06 18:05:53] Warning ->                       Walk | C:\Users\Admin\ntuser.ini //main.cc+0x18 D:/workspace/workspace/branch/cc/cc.go:111
+[2024-04-06 18:05:53] Warning ->                       Walk | C:\Users\Admin\source //main.cc+0x18 D:/workspace/workspace/branch/cc/cc.go:111
+[2024-04-06 18:05:53] Warning ->                       Walk | C:\Users\Admin\.nuget //main.cc+0x18 D:/workspace/workspace/branch/cc/cc.go:111
+[2024-04-06 18:05:53] Warning ->                       Walk | C:\Users\Admin\.dotnet //main.cc+0x18 D:/workspace/workspace/branch/cc/cc.go:111
+[2024-04-06 18:05:53] Warning ->                       Walk | C:\Users\Admin\.dlv //main.cc+0x18 D:/workspace/workspace/branch/cc/cc.go:111
+[2024-04-06 18:05:53] Warning ->                       Walk | C:\Users\Admin\Saved Games //main.cc+0x18 D:/workspace/workspace/branch/cc/cc.go:111
+[2024-04-06 18:05:53] Warning ->                       Walk | C:\Users\Admin\AppData\LocalLow\Intel\ShaderCache //main.cc+0x18 D:/workspace/workspace/branch/cc/cc.go:111
+[2024-04-06 18:05:53] Warning ->                       Walk | C:\Users\Admin\AppData\LocalLow\Thunder Network //main.cc+0x18 D:/workspace/workspace/branch/cc/cc.go:111
+[2024-04-06 18:05:53] Warning ->                       Walk | C:\Users\Admin\AppData\Roaming\NuGet //main.cc+0x18 D:/workspace/workspace/branch/cc/cc.go:111
+[2024-04-06 18:05:53] Warning ->                       Walk | C:\Users\Admin\AppData\Roaming\fyne //main.cc+0x18 D:/workspace/workspace/branch/cc/cc.go:111
+[2024-04-06 18:05:53] Warning ->                       Walk | C:\Users\Admin\AppData\Roaming\vnc //main.cc+0x18 D:/workspace/workspace/branch/cc/cc.go:111
+[2024-04-06 18:05:53] Warning ->                       Walk | C:\Users\Admin\AppData\Roaming\Hex-Rays //main.cc+0x18 D:/workspace/workspace/branch/cc/cc.go:111
+[2024-04-06 18:05:53] Warning ->                       Walk | C:\Users\Admin\AppData\Roaming\Visual Studio Setup //main.cc+0x18 D:/workspace/workspace/branch/cc/cc.go:111
+[2024-04-06 18:05:53] Warning ->                       Walk | C:\Users\Admin\AppData\Roaming\xmp //main.cc+0x18 D:/workspace/workspace/branch/cc/cc.go:111
+[2024-04-06 18:05:53] Warning ->                       Walk | C:\Users\Admin\AppData\Local\.IdentityService //main.cc+0x18 D:/workspace/workspace/branch/cc/cc.go:111
+[2024-04-06 18:05:53] Warning ->                       Walk | C:\Users\Admin\AppData\Local\Caphyon //main.cc+0x18 D:/workspace/workspace/branch/cc/cc.go:111
+[2024-04-06 18:05:53] Warning ->                       Walk | C:\Users\Admin\AppData\Local\cargo-make //main.cc+0x18 D:/workspace/workspace/branch/cc/cc.go:111
+[2024-04-06 18:05:53] Warning ->                       Walk | C:\Users\Admin\AppData\Local\CEF //main.cc+0x18 D:/workspace/workspace/branch/cc/cc.go:111
+[2024-04-06 18:05:53] Warning ->                       Walk | C:\Users\Admin\AppData\Local\ChromeExtensionCache //main.cc+0x18 D:/workspace/workspace/branch/cc/cc.go:111
+[2024-04-06 18:05:53] Warning ->                       Walk | C:\Users\Admin\AppData\Local\ConnectedDevicesPlatform //main.cc+0x18 D:/workspace/workspace/branch/cc/cc.go:111
+[2024-04-06 18:05:53] Warning ->                       Walk | C:\Users\Admin\AppData\Local\CrashDumps //main.cc+0x18 D:/workspace/workspace/branch/cc/cc.go:111
+[2024-04-06 18:05:53] Warning ->                       Walk | C:\Users\Admin\AppData\Local\D3DSCache //main.cc+0x18 D:/workspace/workspace/branch/cc/cc.go:111
+[2024-04-06 18:05:53] Warning ->                       Walk | C:\Users\Admin\AppData\Local\DBG //main.cc+0x18 D:/workspace/workspace/branch/cc/cc.go:111
+[2024-04-06 18:05:53] Warning ->                       Walk | C:\Users\Admin\AppData\Local\dg //main.cc+0x18 D:/workspace/workspace/branch/cc/cc.go:111
+[2024-04-06 18:05:53] Warning ->                       Walk | C:\Users\Admin\AppData\Local\Ghidra //main.cc+0x18 D:/workspace/workspace/branch/cc/cc.go:111
+[2024-04-06 18:05:53] Warning ->                       Walk | C:\Users\Admin\AppData\Local\gif123 //main.cc+0x18 D:/workspace/workspace/branch/cc/cc.go:111
+[2024-04-06 18:05:53] Warning ->                       Walk | C:\Users\Admin\AppData\Local\IdentityNexusIntegration //main.cc+0x18 D:/workspace/workspace/branch/cc/cc.go:111
+[2024-04-06 18:05:53] Warning ->                       Walk | C:\Users\Admin\AppData\Local\kwmusic //main.cc+0x18 D:/workspace/workspace/branch/cc/cc.go:111
+[2024-04-06 18:05:53] Warning ->                       Walk | C:\Users\Admin\AppData\Local\main.kts.compiled.cache //main.cc+0x18 D:/workspace/workspace/branch/cc/cc.go:111
+[2024-04-06 18:05:53] Warning ->                       Walk | C:\Users\Admin\AppData\Local\Microsoft\Azure DevOps //main.cc+0x18 D:/workspace/workspace/branch/cc/cc.go:111
+[2024-04-06 18:05:53] Warning ->                       Walk | C:\Users\Admin\AppData\Local\Microsoft\GameDVR //main.cc+0x18 D:/workspace/workspace/branch/cc/cc.go:111
+[2024-04-06 18:05:53] Warning ->                       Walk | C:\Users\Admin\AppData\Local\Microsoft SDKs //main.cc+0x18 D:/workspace/workspace/branch/cc/cc.go:111
+[2024-04-06 18:05:53] Warning ->                       Walk | C:\Users\Admin\AppData\Local\NuGet //main.cc+0x18 D:/workspace/workspace/branch/cc/cc.go:111
+[2024-04-06 18:05:53] Warning ->                       Walk | C:\Users\Admin\AppData\Local\Package Cache //main.cc+0x18 D:/workspace/workspace/branch/cc/cc.go:111
+[2024-04-06 18:05:53] Warning ->                       Walk | C:\Users\Admin\AppData\Local\Packages //main.cc+0x18 D:/workspace/workspace/branch/cc/cc.go:111
+[2024-04-06 18:05:53] Warning ->                       Walk | C:\Users\Admin\AppData\Local\PlaceholderTileLogoFolder //main.cc+0x18 D:/workspace/workspace/branch/cc/cc.go:111
+[2024-04-06 18:05:53] Warning ->                       Walk | C:\Users\Admin\AppData\Local\Programs\Common //main.cc+0x18 D:/workspace/workspace/branch/cc/cc.go:111
+[2024-04-06 18:05:53] Warning ->                       Walk | C:\Users\Admin\AppData\Local\pypa //main.cc+0x18 D:/workspace/workspace/branch/cc/cc.go:111
+[2024-04-06 18:05:53] Warning ->                       Walk | C:\Users\Admin\AppData\Local\RealVNC //main.cc+0x18 D:/workspace/workspace/branch/cc/cc.go:111
+[2024-04-06 18:05:53] Warning ->                       Walk | C:\Users\Admin\AppData\Local\ServiceHub //main.cc+0x18 D:/workspace/workspace/branch/cc/cc.go:111
+[2024-04-06 18:05:53] Warning ->                       Walk | C:\Users\Admin\AppData\Local\SourceServer //main.cc+0x18 D:/workspace/workspace/branch/cc/cc.go:111
+[2024-04-06 18:05:53] Warning ->                       Walk | C:\Users\Admin\AppData\Local\StartAllBack //main.cc+0x18 D:/workspace/workspace/branch/cc/cc.go:111
+[2024-04-06 18:05:53] Warning ->                       Walk | C:\Users\Admin\AppData\Local\Temp //main.cc+0x18 D:/workspace/workspace/branch/cc/cc.go:111
+[2024-04-06 18:05:53] Warning ->                       Walk | C:\Users\Admin\AppData\Local\unison //main.cc+0x18 D:/workspace/workspace/branch/cc/cc.go:111
+[2024-04-06 18:05:53] Warning ->                       Walk | C:\Users\Admin\AppData\Local\VMware //main.cc+0x18 D:/workspace/workspace/branch/cc/cc.go:111
+[2024-04-06 18:05:53] Warning ->                       Walk | C:\Users\Admin\AppData\Local\Xamarin //main.cc+0x18 D:/workspace/workspace/branch/cc/cc.go:111
+[2024-04-06 18:05:53] Warning ->                       Walk | C:\Users\Admin\AppData\Local\IconCache.db //main.cc+0x18 D:/workspace/workspace/branch/cc/cc.go:111
+[2024-04-06 18:05:53] Warning ->                       Walk | C:\Program Files (x86)\MyDrivers //main.cc+0x18 D:/workspace/workspace/branch/cc/cc.go:111
+[2024-04-06 18:05:53] Warning ->                       Walk | C:\Program Files (x86)\sys //main.cc+0x18 D:/workspace/workspace/branch/cc/cc.go:111
+[2024-04-06 18:05:53] Warning ->                       Walk | C:\XmpCache //main.cc+0x18 D:/workspace/workspace/branch/cc/cc.go:111
+[2024-04-06 18:05:53] Warning ->                       Walk | C:\ProgramData\kingsoft //main.cc+0x18 D:/workspace/workspace/branch/cc/cc.go:111
+[2024-04-06 18:05:53] Warning ->                       Walk | C:\ProgramData\Packages //main.cc+0x18 D:/workspace/workspace/branch/cc/cc.go:111
+[2024-04-06 18:05:53] Warning ->                       Walk | C:\ProgramData\ssh //main.cc+0x18 D:/workspace/workspace/branch/cc/cc.go:111

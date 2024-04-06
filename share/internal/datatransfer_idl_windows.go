@@ -50,9 +50,7 @@ func (i *IDataTransferManagerInterop) ShowShareUIWindow(hwnd uintptr) error {
 	IDataTransferManager: http://definitelytyped.org/docs/winrt--winrt/interfaces/windows.applicationmodel.datatransfer.idatatransfermanager.html
 */
 
-var (
-	IDataTransferManagerGUID = ole.NewGUID("A5CAEE9B-8708-49D1-8D36-67D25A8DA00C") // GUID from WinSDK 10, see https://www.magnumdb.com/search?q=IDataTransferManager.
-)
+var IDataTransferManagerGUID = ole.NewGUID("A5CAEE9B-8708-49D1-8D36-67D25A8DA00C") // GUID from WinSDK 10, see https://www.magnumdb.com/search?q=IDataTransferManager.
 
 type (
 	IDataTransferManager struct {
@@ -76,9 +74,7 @@ func (i *IDataTransferManager) AddDataRequested(r *ITypedEventHandler) (err erro
 	IDataRequestedEventArgs: http://definitelytyped.org/docs/microsoft-live-connect--microsoft-live-connect/interfaces/windows.applicationmodel.datatransfer.idatarequestedeventargs.html
 */
 
-var (
-	IDataRequestedEventArgsGUID = ole.NewGUID("CB8BA807-6AC5-43C9-8AC5-9BA232163182")
-)
+var IDataRequestedEventArgsGUID = ole.NewGUID("CB8BA807-6AC5-43C9-8AC5-9BA232163182")
 
 type (
 	IDataRequestedEventArgs struct {
@@ -98,9 +94,7 @@ func (i *IDataRequestedEventArgs) GetRequest(r **IDataRequest) error {
 	IDataRequest: http://definitelytyped.org/docs/winrt--winrt/interfaces/windows.applicationmodel.datatransfer.idatarequest.html
 */
 
-var (
-	IDataRequestGUID = ole.NewGUID("4341AE3B-FC12-4E53-8C02-AC714C415A27")
-)
+var IDataRequestGUID = ole.NewGUID("4341AE3B-FC12-4E53-8C02-AC714C415A27")
 
 type (
 	IDataRequest struct {
@@ -199,9 +193,7 @@ func (i *IDataPackage2) SetWebLink(uri *IUriRuntimeClass) error {
 	IDataPackagePropertySet: http://definitelytyped.org/docs/winrt--winrt/interfaces/windows.applicationmodel.datatransfer.idatapackagepropertyset.html
 */
 
-var (
-	IDataPackagePropertySetGUID = ole.NewGUID("CD1C93EB-4C4C-443A-A8D3-F5C241E91689")
-)
+var IDataPackagePropertySetGUID = ole.NewGUID("CD1C93EB-4C4C-443A-A8D3-F5C241E91689")
 
 type IDataPackagePropertySet struct {
 	VTBL *IDataPackagePropertySetVTBL
@@ -235,9 +227,7 @@ func (i *IDataPackagePropertySet) SetTitle(s string) error {
 	ITypedEventHandler<ABI::Windows::ApplicationModel::DataTransfer::DataTransferManager*, ABI::Windows::ApplicationModel::DataTransfer::DataRequestedEventArgs*>: https://docs.microsoft.com/en-us/previous-versions/hh438424(v=vs.85)
 */
 
-var (
-	ITypedEventHandlerDataTransferManagerDataRequestedEventArgsGUID = ole.NewGUID("ec6f9cc8-46d0-5e0e-b4d2-7d7773ae37a0")
-)
+var ITypedEventHandlerDataTransferManagerDataRequestedEventArgsGUID = ole.NewGUID("ec6f9cc8-46d0-5e0e-b4d2-7d7773ae37a0")
 
 /*
 	ITypedEventHandler: https://docs.microsoft.com/en-us/previous-versions/hh438424(v=vs.85)

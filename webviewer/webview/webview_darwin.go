@@ -22,6 +22,7 @@ void webview_cf_release(CFTypeRef obj) {
 
 */
 import "C"
+
 import (
 	"math"
 	"net/url"

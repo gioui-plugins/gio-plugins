@@ -49,7 +49,6 @@ func (r *driver) attach(w *webview) (err error) {
 					jni.Value(uintptr(w.handle)),
 				}
 			})
-
 			if err != nil {
 				return err
 			}

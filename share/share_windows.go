@@ -3,9 +3,10 @@
 package share
 
 import (
+	"sync"
+
 	"github.com/gioui-plugins/gio-plugins/share/internal"
 	"github.com/go-ole/go-ole"
-	"sync"
 )
 
 type driver struct {

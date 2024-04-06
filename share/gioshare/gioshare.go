@@ -2,22 +2,22 @@ package gioshare
 
 import (
 	"errors"
-	"github.com/gioui-plugins/gio-plugins/share"
 	"reflect"
 	"sync"
 
+	"github.com/gioui-plugins/gio-plugins/share"
+
 	"gioui.org/app"
 	"gioui.org/io/event"
-	"gioui.org/io/system"
 	"gioui.org/op"
 	"github.com/gioui-plugins/gio-plugins/plugin"
 )
 
 var (
 	wantEvents = []reflect.Type{
-		reflect.TypeOf(app.ViewEvent{}),
-		reflect.TypeOf(system.DestroyEvent{}),
-		reflect.TypeOf(system.FrameEvent{}),
+		//reflect.TypeOf(app.ViewEvent{}),
+		reflect.TypeOf(app.DestroyEvent{}),
+		reflect.TypeOf(app.FrameEvent{}),
 	}
 	wantOp = []reflect.Type{
 		reflect.TypeOf(new(WebsiteOp)),
@@ -54,7 +54,7 @@ func (e *sharePlugin) ListenEvents(evt event.Event) {
 		return
 	}
 	switch evt := evt.(type) {
-	case system.FrameEvent:
+	case app.FrameEvent:
 		UpdateConfigFromFrameEvent(&e.config, e.window, evt)
 		if e.client != nil {
 			e.client.Configure(e.config)

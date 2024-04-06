@@ -7,6 +7,7 @@ package explorer
 #include <stdlib.h>
 */
 import "C"
+
 import (
 	"errors"
 	"io"
@@ -119,7 +120,6 @@ func (e *driver) saveFile(filename string, mime mimetype.MimeType) (io.WriteClos
 				jni.Value(cgo.NewHandle(callback)),
 			)
 		})
-
 		if err != nil {
 			res <- result[io.WriteCloser]{error: err}
 		}
