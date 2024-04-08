@@ -39,7 +39,7 @@ var (
 		reflect.TypeOf(&MessageReceiverOp{}),
 	}
 	wantEvent = []reflect.Type{
-		// reflect.TypeOf(app.ViewEvent{}),//todo
+		//reflect.TypeOf(app.ViewEvent{}),
 		reflect.TypeOf(app.FrameEvent{}),
 		reflect.TypeOf(app.DestroyEvent{}),
 		reflect.TypeOf(plugin.EndFrameEvent{}),
@@ -528,11 +528,11 @@ type CookiesEvent struct {
 	Cookies []webview.CookieData
 }
 
-func (c CookiesEvent) ImplementsFilter() {
+func (c CookiesEvent) ImplementsEvent() {
 }
 
-// ImplementsEvent the event.Event interface.
-func (c CookiesEvent) ImplementsEvent() {}
+func (c CookiesEvent) ImplementsFilter() {
+}
 
 var poolListCookieOp = plugin.NewOpPool[ListCookieOp]()
 
@@ -662,11 +662,11 @@ type StorageEvent struct {
 	Storage []webview.StorageData
 }
 
-func (c StorageEvent) ImplementsFilter() {
+func (c StorageEvent) ImplementsEvent() {
 }
 
-// ImplementsEvent the event.Event interface.
-func (c StorageEvent) ImplementsEvent() {}
+func (c StorageEvent) ImplementsFilter() {
+}
 
 var poolListStorageOp = plugin.NewOpPool[ListStorageOp]()
 
@@ -819,6 +819,7 @@ func (o *MessageReceiverOp) execute(_ *app.Window, p *webViewPlugin, _ app.Frame
 		err := manager.AddCallback(o.Name, func(msg string) {
 			p.plugin.SendEvent(tag, MessageEvent{Message: msg})
 		})
+
 		if err != nil {
 			p.plugin.SendEvent(wvTag, ErrorEvent{error: err})
 		}
@@ -831,29 +832,29 @@ type MessageEvent struct {
 	Message string
 }
 
-func (c MessageEvent) ImplementsFilter() {
+func (c MessageEvent) ImplementsEvent() {
 }
 
-// ImplementsEvent the event.Event interface.
-func (c MessageEvent) ImplementsEvent() {}
+func (c MessageEvent) ImplementsFilter() {
+}
 
 // NavigationEvent is issued when the webview change the URL.
 type NavigationEvent webview.NavigationEvent
 
-func (e NavigationEvent) ImplementsFilter() {
+func (e NavigationEvent) ImplementsEvent() {
 }
 
-// ImplementsEvent the event.Event interface.
-func (NavigationEvent) ImplementsEvent() {}
+func (e NavigationEvent) ImplementsFilter() {
+}
 
 // TitleEvent is issued when the webview change the title.
 type TitleEvent webview.TitleEvent
 
-func (e TitleEvent) ImplementsFilter() {
+func (e TitleEvent) ImplementsEvent() {
 }
 
-// ImplementsEvent the event.Event interface.
-func (TitleEvent) ImplementsEvent() {}
+func (e TitleEvent) ImplementsFilter() {
+}
 
 // ErrorEvent is issued when the webview encounters an error.
 type ErrorEvent struct {

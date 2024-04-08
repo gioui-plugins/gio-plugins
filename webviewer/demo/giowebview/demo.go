@@ -1,23 +1,21 @@
 package main
 
 import (
-	"embed"
 	"flag"
-	"fmt"
+	"gioui.org/font"
+	"github.com/gioui-plugins/gio-plugins/plugin"
 	"image"
 	"image/color"
 	"math"
-	"net/http"
 	"net/url"
 	"os"
-	"sync"
 	"time"
+
+	"golang.org/x/exp/shiny/materialdesign/icons"
 
 	"gioui.org/app"
 	"gioui.org/f32"
-	"gioui.org/font"
 	"gioui.org/font/gofont"
-	"gioui.org/io/event"
 	"gioui.org/io/pointer"
 	"gioui.org/layout"
 	"gioui.org/op"
@@ -25,24 +23,13 @@ import (
 	"gioui.org/op/paint"
 	"gioui.org/text"
 	"gioui.org/widget"
-	"github.com/gioui-plugins/gio-plugins/plugin"
 	"github.com/gioui-plugins/gio-plugins/webviewer"
 	"github.com/gioui-plugins/gio-plugins/webviewer/webview"
-	"golang.org/x/exp/shiny/materialdesign/icons"
-
-	_ "gioui.org/app/permission/bluetooth"
-	_ "gioui.org/app/permission/camera"
-	_ "gioui.org/app/permission/networkstate"
-	_ "gioui.org/app/permission/storage"
-	_ "gioui.org/app/permission/wakelock"
 )
 
-//go:embed resources/*
-var Assets embed.FS
-
 var (
-	GlobalShaper = text.NewShaper(text.WithCollection(gofont.Collection())) // todo
-	DefaultURL   = "http://localhost:8080/web/index.html"
+	GlobalShaper = text.NewShaper(text.WithCollection(gofont.Collection()))
+	DefaultURL   = "https://google.com"
 
 	IconAdd, _            = widget.NewIcon(icons.ContentAdd)
 	IconClose, _          = widget.NewIcon(icons.NavigationClose)
@@ -54,9 +41,7 @@ var (
 )
 
 func main() {
-	mux := http.DefaultServeMux
-	mux.Handle("/web/", AssetHandler("/web/", Assets, "./resources"))
-	go http.ListenAndServe(":8080", mux)
+	DefaultURL = "https://www.baidu.com"
 
 	proxy := flag.String("proxy", "", "proxy")
 	if proxy != nil && *proxy != "" {
@@ -70,35 +55,25 @@ func main() {
 	}
 	flag.Parse()
 
-	err := webview.SetDebug(true)
-	if err != nil {
-		panic(err.Error())
-	}
+	webview.SetDebug(true)
 	window := new(app.Window)
 
 	browsers := NewBrowser()
 	browsers.add()
 
-	once := sync.Once{}
-
 	go func() {
-		// first := true
 		ops := new(op.Ops)
-
+		// first := true
 		for {
 			switch evt := window.Event().(type) {
 			case app.DestroyEvent:
 				os.Exit(0)
 				return
 			case app.FrameEvent:
-				once.Do(func() {
-					plugin.Install(window, evt)
-				})
+				plugin.Install(window, evt)
 				gtx := app.NewContext(ops, evt)
 				browsers.Layout(gtx)
 				evt.Frame(ops)
-			case app.Win32ViewEvent:
-				// todo set dark theme(implemented) and dropFile
 			}
 		}
 	}()
@@ -248,27 +223,24 @@ func (b *Browsers) Layout(gtx layout.Context) layout.Dimensions {
 
 	for i, t := range b.Address {
 		submited := i == submittedIndex
-		for {
-			update, ok := t.Update(gtx)
-			if !ok {
-				if t.Text() == "" {
-					submited = true
-					t.SetText(DefaultURL) // todo bug
-				}
-				continue
-			}
-			switch update.(type) {
-			case widget.SubmitEvent:
-				submited = true
-			case widget.ChangeEvent:
-			case widget.EditorEvent:
-			default:
-				if submited {
-					w := webviewer.WebViewOp{Tag: b.Tags[i]}.Push(gtx.Ops)
-					webviewer.NavigateOp{URL: t.Text()}.Add(gtx.Ops)
-					w.Pop(gtx.Ops)
-				}
-			}
+		//if !t.Focused() && t.Text() == "" {//todo
+		if t.Text() == "" {
+			submited = true
+			t.SetText(DefaultURL)
+		}
+
+		//for _, evt := range t.Events() {
+		//	switch evt.(type) {
+		//	case widget.SubmitEvent:
+		//		submited = true
+		//	}
+		//}
+
+		submited = true //test
+		if submited {
+			w := webviewer.WebViewOp{Tag: b.Tags[i]}.Push(gtx.Ops)
+			webviewer.NavigateOp{URL: t.Text()}.Add(gtx.Ops)
+			w.Pop(gtx.Ops)
 		}
 	}
 
@@ -278,31 +250,30 @@ func (b *Browsers) Layout(gtx layout.Context) layout.Dimensions {
 		}
 	}
 
-	filters := []event.Filter{
-		webviewer.TitleEvent{},
-		webviewer.NavigationEvent{},
-		webviewer.CookiesEvent{},
-		webviewer.StorageEvent{},
-		webviewer.MessageEvent{},
-	}
-
 	for i := range b.Tags {
+
 		for {
-			evt, ok := gtx.Event(filters...)
+			e, ok := gtx.Event(
+				webviewer.TitleEvent{},
+				webviewer.NavigationEvent{},
+				webviewer.CookiesEvent{},
+				webviewer.StorageEvent{},
+				webviewer.MessageEvent{},
+			)
 			if !ok {
-				continue
+				break
 			}
-			switch evt := evt.(type) {
+			switch evt := e.(type) {
 			case webviewer.TitleEvent:
 				b.Titles[i] = evt.Title
 			case webviewer.NavigationEvent:
 				b.Address[i].SetText(evt.URL)
 			case webviewer.CookiesEvent:
-				fmt.Println(evt.Cookies)
+				// fmt.Println(evt.Cookies)
 			case webviewer.StorageEvent:
-				fmt.Println(evt.Storage)
+				// fmt.Println(evt.Storage)
 			case webviewer.MessageEvent:
-				fmt.Println(evt.Message)
+				// fmt.Println(evt.Message)
 			}
 		}
 	}
@@ -486,7 +457,8 @@ func (l *Loading) Layout(gtx layout.Context) layout.Dimensions {
 	defer clip.Stroke{Path: path.End(), Width: width}.Op().Push(gtx.Ops).Pop()
 	paint.ColorOp{Color: color.NRGBA{R: 255, G: 255, B: 255, A: 255}}.Add(gtx.Ops)
 	paint.PaintOp{}.Add(gtx.Ops)
-	// op.InvalidateOp{}.Add(gtx.Ops)//todo
+	op.TransformOp{}.Add(gtx.Ops)
+	//op.InvalidateCmd{}.Add(gtx.Ops)//todo
 
 	return layout.Dimensions{Size: gtx.Constraints.Max}
 }

@@ -1,27 +1,22 @@
 module demo_webviewer
 
-go 1.19
-
+go 1.22.1
 
 require (
-	gioui.org v0.1.1-0.20230801070910-edbf872b44af
-
-	golang.org/x/exp/shiny v0.0.0-20230425010034-47ecfdc1ba53
+	gioui.org v0.5.1-0.20240329172903-1802761c9328
+	git.wow.st/gmp/jni v0.0.0-20210610011705-34026c7e22d0
+	github.com/go-ole/go-ole v1.3.0
+	github.com/inkeliz/go_inkwasm v0.0.0-20220912074516-049d3472c98a
+	golang.org/x/crypto v0.0.0-20210921155107-089bfa567519
+	golang.org/x/sys v0.7.0
 )
 
 require (
-	gioui.org/cmd v0.0.0-20230502182008-0a86898b4184 // indirect
-	gioui.org/cpu v0.0.0-20220412190645-f1e9e8c3b1f7 // indirect
-	gioui.org/shader v1.0.6 // indirect
-	git.wow.st/gmp/jni v0.0.0-20210610011705-34026c7e22d0 // indirect
-	github.com/akavel/rsrc v0.10.1 // indirect
-	github.com/inkeliz/go_inkwasm v0.0.0-20220912074516-049d3472c98a // indirect
-	github.com/jchv/go-winloader v0.0.0-20210711035445-715c2860da7e // indirect
+	gioui.org/cpu v0.0.0-20210817075930-8d6a761490d2 // indirect
+	gioui.org/shader v1.0.8 // indirect
+	github.com/go-text/typesetting v0.1.1 // indirect
 	golang.org/x/exp v0.0.0-20221012211006-4de253d81b95 // indirect
+	golang.org/x/exp/shiny v0.0.0-20220827204233-334a2380cb91 // indirect
 	golang.org/x/image v0.5.0 // indirect
-	golang.org/x/mod v0.6.0-dev.0.20220419223038-86c51ed26bb4 // indirect
-	golang.org/x/sync v0.0.0-20220722155255-886fb9371eb4 // indirect
-	golang.org/x/sys v0.0.0-20220919091848-fb04ddd9f9c8 // indirect
-	golang.org/x/text v0.7.0 // indirect
-	golang.org/x/tools v0.1.12 // indirect
+	golang.org/x/text v0.9.0 // indirect
 )

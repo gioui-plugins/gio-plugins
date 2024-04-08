@@ -1,6 +1,7 @@
 package plugin
 
 import (
+	"gioui.org/io/input"
 	"reflect"
 	"sync"
 	"sync/atomic"
@@ -15,7 +16,7 @@ var handlers = new(sync.Map) // map[app.Window]handler
 
 type Plugin struct {
 	window *app.Window
-	queue  event.Tag
+	queue  input.Source
 
 	eventsMutex  sync.Mutex
 	eventsCustom map[event.Tag][]event.Event
@@ -77,33 +78,38 @@ func (l *Plugin) SendEvent(tag event.Tag, data event.Event) {
 	}
 }
 
-//func (l *Plugin) Events(t event.Tag,gtx layout.Context) []event.Event {
-//	l.eventsMutex.Lock()
-//	defer l.eventsMutex.Unlock()
-//
-//	evtsGio := l.queue.Events(t)
-//	event.Op(gtx.Ops,t)
-//	evtsCustom, _ := l.eventsCustom[t]
-//
-//	switch {
-//	case len(evtsGio) > 0 && len(evtsCustom) > 0:
-//		l.eventsPool = l.eventsPool[:0]
-//
-//		l.eventsPool = append(l.eventsPool, evtsGio...)
-//		l.eventsPool = append(l.eventsPool, evtsCustom...)
-//
-//		l.eventsCustom[t] = l.eventsCustom[t][:0]
-//
-//		return l.eventsPool
-//	case len(evtsGio) > 0:
-//		return evtsGio
-//	case len(evtsCustom) > 0:
-//		l.eventsCustom[t] = l.eventsCustom[t][:0]
-//		return evtsCustom
-//	default:
-//		return nil
-//	}
-//}
+func (l *Plugin) Events(t event.Tag) {
+	l.eventsMutex.Lock()
+	defer l.eventsMutex.Unlock()
+
+	for {
+		_, ok := l.queue.Event(EndFrameEvent{})
+		if !ok {
+			break
+		}
+		//evtsCustom, _ := l.eventsCustom[t]
+		//
+		//switch {
+		//case len(evtsGio) > 0 && len(evtsCustom) > 0:
+		//	l.eventsPool = l.eventsPool[:0]
+		//
+		//	l.eventsPool = append(l.eventsPool, evtsGio...)
+		//	l.eventsPool = append(l.eventsPool, evtsCustom...)
+		//
+		//	l.eventsCustom[t] = l.eventsCustom[t][:0]
+		//
+		//	return l.eventsPool
+		//case len(evtsGio) > 0:
+		//	return evtsGio
+		//case len(evtsCustom) > 0:
+		//	l.eventsCustom[t] = l.eventsCustom[t][:0]
+		//	return evtsCustom
+		//default:
+		//	return nil
+		//}
+	}
+
+}
 
 type unsafeOps struct {
 	version     int
@@ -155,9 +161,9 @@ func Install(w *app.Window, evt event.Event) {
 		ref := *(**app.FrameEvent)(unsafe.Add(unsafe.Pointer(&evt), unsafe.Sizeof(uintptr(0))))
 		h.invalidated.Store(false)
 
-		// q := ref.Queue
-		// h.queue = q
-		// ref.Queue = h
+		//q := ref.Queue
+		//h.queue = q
+		//ref.Queue = h
 
 		f := ref.Frame
 		ref.Frame = func(frame *op.Ops) {
@@ -166,7 +172,7 @@ func Install(w *app.Window, evt event.Event) {
 			h.processFrameEvent((*unsafeOps)(unsafe.Pointer(&frame.Internal)))
 
 			for _, index := range h.redirectEvent[reflect.TypeOf(EndFrameEvent{})] {
-				h.plugins[index].ListenEvents(EndFrameEvent{})
+				h.plugins[index].ListenEvents(evt)
 			}
 
 			for i := range h.visited {
@@ -178,4 +184,8 @@ func Install(w *app.Window, evt event.Event) {
 
 type EndFrameEvent struct{}
 
-func (EndFrameEvent) ImplementsEvent() {}
+func (e EndFrameEvent) ImplementsEvent() {
+}
+
+func (e EndFrameEvent) ImplementsFilter() {
+}
