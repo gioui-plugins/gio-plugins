@@ -6,5 +6,5 @@ use (
 	./hyperlink/demo
 	./safedata/demo
 	./share/demo
-	./webviewer/demo/giowebview
+	./webviewer/demo
 )
