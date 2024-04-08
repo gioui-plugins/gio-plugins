@@ -1,15 +1,16 @@
 package plugin
 
 import (
+	"image"
+	"reflect"
+	"testing"
+	"time"
+
 	"gioui.org/app"
 	"gioui.org/io/event"
 	"gioui.org/io/input"
 	"gioui.org/op"
 	"gioui.org/unit"
-	"image"
-	"reflect"
-	"testing"
-	"time"
 )
 
 type testingOp struct {

@@ -6,11 +6,9 @@ import (
 	"github.com/gioui-plugins/gio-plugins/safedata"
 )
 
-var (
-	wantEvents = []reflect.Type{
-		//reflect.TypeOf(app.ViewEvent{}),
-	}
-)
+var wantEvents = []reflect.Type{
+	// reflect.TypeOf(app.ViewEvent{}),
+}
 
 // ErrorEvent is issued when an error occurs.
 type ErrorEvent struct {

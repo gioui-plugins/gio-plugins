@@ -116,7 +116,6 @@ func main() {
 						}
 						return layout.Dimensions{}
 					})
-
 				})
 
 				e.Frame(gtx.Ops)

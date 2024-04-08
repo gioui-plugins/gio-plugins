@@ -1,11 +1,12 @@
 package plugin
 
 import (
-	"gioui.org/io/input"
 	"reflect"
 	"sync"
 	"sync/atomic"
 	"unsafe"
+
+	"gioui.org/io/input"
 
 	"gioui.org/app"
 	"gioui.org/io/event"
@@ -108,7 +109,6 @@ func (l *Plugin) Events(t event.Tag) {
 		//	return nil
 		//}
 	}
-
 }
 
 type unsafeOps struct {
@@ -161,9 +161,9 @@ func Install(w *app.Window, evt event.Event) {
 		ref := *(**app.FrameEvent)(unsafe.Add(unsafe.Pointer(&evt), unsafe.Sizeof(uintptr(0))))
 		h.invalidated.Store(false)
 
-		//q := ref.Queue
-		//h.queue = q
-		//ref.Queue = h
+		// q := ref.Queue
+		// h.queue = q
+		// ref.Queue = h
 
 		f := ref.Frame
 		ref.Frame = func(frame *op.Ops) {

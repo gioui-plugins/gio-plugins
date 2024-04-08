@@ -2,14 +2,15 @@ package main
 
 import (
 	"flag"
-	"gioui.org/font"
-	"github.com/gioui-plugins/gio-plugins/plugin"
 	"image"
 	"image/color"
 	"math"
 	"net/url"
 	"os"
 	"time"
+
+	"gioui.org/font"
+	"github.com/gioui-plugins/gio-plugins/plugin"
 
 	"golang.org/x/exp/shiny/materialdesign/icons"
 
@@ -223,7 +224,7 @@ func (b *Browsers) Layout(gtx layout.Context) layout.Dimensions {
 
 	for i, t := range b.Address {
 		submited := i == submittedIndex
-		//if !t.Focused() && t.Text() == "" {//todo
+		// if !t.Focused() && t.Text() == "" {//todo
 		if t.Text() == "" {
 			submited = true
 			t.SetText(DefaultURL)
@@ -236,7 +237,7 @@ func (b *Browsers) Layout(gtx layout.Context) layout.Dimensions {
 		//	}
 		//}
 
-		submited = true //test
+		submited = true // test
 		if submited {
 			w := webviewer.WebViewOp{Tag: b.Tags[i]}.Push(gtx.Ops)
 			webviewer.NavigateOp{URL: t.Text()}.Add(gtx.Ops)
@@ -251,7 +252,6 @@ func (b *Browsers) Layout(gtx layout.Context) layout.Dimensions {
 	}
 
 	for i := range b.Tags {
-
 		for {
 			e, ok := gtx.Event(
 				webviewer.TitleEvent{},
@@ -458,7 +458,7 @@ func (l *Loading) Layout(gtx layout.Context) layout.Dimensions {
 	paint.ColorOp{Color: color.NRGBA{R: 255, G: 255, B: 255, A: 255}}.Add(gtx.Ops)
 	paint.PaintOp{}.Add(gtx.Ops)
 	op.TransformOp{}.Add(gtx.Ops)
-	//op.InvalidateCmd{}.Add(gtx.Ops)//todo
+	// op.InvalidateCmd{}.Add(gtx.Ops)//todo
 
 	return layout.Dimensions{Size: gtx.Constraints.Max}
 }

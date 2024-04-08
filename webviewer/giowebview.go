@@ -39,7 +39,7 @@ var (
 		reflect.TypeOf(&MessageReceiverOp{}),
 	}
 	wantEvent = []reflect.Type{
-		//reflect.TypeOf(app.ViewEvent{}),
+		// reflect.TypeOf(app.ViewEvent{}),
 		reflect.TypeOf(app.FrameEvent{}),
 		reflect.TypeOf(app.DestroyEvent{}),
 		reflect.TypeOf(plugin.EndFrameEvent{}),
@@ -819,7 +819,6 @@ func (o *MessageReceiverOp) execute(_ *app.Window, p *webViewPlugin, _ app.Frame
 		err := manager.AddCallback(o.Name, func(msg string) {
 			p.plugin.SendEvent(tag, MessageEvent{Message: msg})
 		})
-
 		if err != nil {
 			p.plugin.SendEvent(wvTag, ErrorEvent{error: err})
 		}

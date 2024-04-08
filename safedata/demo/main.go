@@ -2,11 +2,12 @@ package main
 
 import (
 	"fmt"
-	"gioui.org/font"
-	"gioui.org/op/paint"
 	"image/color"
 	"os"
 	"sync"
+
+	"gioui.org/font"
+	"gioui.org/op/paint"
 
 	"gioui.org/app"
 	"gioui.org/op"
@@ -24,7 +25,7 @@ func main() {
 
 	window := new(app.Window)
 
-	shaper := text.NewShaper() //todo set fount
+	shaper := text.NewShaper() // todo set fount
 
 	mutex := new(sync.Mutex)
 	txt := ""
@@ -45,7 +46,7 @@ func main() {
 				paint.ColorOp{Color: color.NRGBA{0, 0, 0, 255}}.Add(gtx.Ops)
 				widget.Label{}.Layout(gtx, shaper, font.Font{}, 12, txt, op.CallOp{})
 
-				//op.InvalidateOp{}.Add(gtx.Ops)//todo
+				// op.InvalidateOp{}.Add(gtx.Ops)//todo
 				op.InvalidateCmd{}.ImplementsCommand()
 				evt.Frame(ops)
 				mutex.Unlock()
@@ -66,7 +67,6 @@ func main() {
 				Description: "some secret",
 				Data:        []byte("my-secret-data"),
 			})
-
 			if err != nil {
 				mutex.Lock()
 				txt = string("ERR ON ADD->" + err.Error())
