@@ -7,7 +7,6 @@ import (
 	"gioui.org/unit"
 	"gioui.org/widget"
 	"gioui.org/widget/material"
-
 	"github.com/gioui-plugins/gio-plugins/plugin"
 	"github.com/gioui-plugins/gio-plugins/share/gioshare"
 )
@@ -66,7 +65,6 @@ func main() {
 	url.SetText("https://google.com")
 	title.SetText("Example Title")
 	desc.SetText("Example Text")
-
 	w := new(app.Window)
 	w.Option(app.Size(500, 500))
 	ops := new(op.Ops)
@@ -118,6 +116,7 @@ func main() {
 						}
 						return layout.Dimensions{}
 					})
+
 				})
 
 				e.Frame(gtx.Ops)

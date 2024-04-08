@@ -2,10 +2,9 @@ package gioshare
 
 import (
 	"errors"
+	"github.com/gioui-plugins/gio-plugins/share"
 	"reflect"
 	"sync"
-
-	"github.com/gioui-plugins/gio-plugins/share"
 
 	"gioui.org/app"
 	"gioui.org/io/event"
@@ -15,7 +14,7 @@ import (
 
 var (
 	wantEvents = []reflect.Type{
-		// reflect.TypeOf(app.ViewEvent{}),
+		//reflect.TypeOf(app.ViewEvent{}),
 		reflect.TypeOf(app.DestroyEvent{}),
 		reflect.TypeOf(app.FrameEvent{}),
 	}
