@@ -1,47 +1,61 @@
 package pingpong
 
 import (
+	"fmt"
+	"github.com/gioui-plugins/gio-plugins/plugin/gioplugins"
 	"os"
 	"testing"
 
 	"gioui.org/app"
-	"gioui.org/io/system"
-	"gioui.org/layout"
 	"gioui.org/op"
-	"github.com/gioui-plugins/gio-plugins/plugin"
 )
 
 func TestMain(m *testing.M) {
-	w := app.NewWindow()
+	w := &app.Window{}
 	done := make(chan struct{})
 
 	go func() {
 		ops := new(op.Ops)
 		first := true
-		found := false
 
-		for evt := range w.Events() {
-			plugin.Install(w, evt)
+		for {
+			evt := gioplugins.Event(w)
 
 			switch evt := evt.(type) {
-			case system.FrameEvent:
-				gtx := layout.NewContext(ops, evt)
-				PingOp{Tag: &w, Text: "Ping"}.Add(gtx.Ops)
+			case app.FrameEvent:
+				gtx := app.NewContext(ops, evt)
 
-				if !first {
-					first = true
-				}
+				// By Op
+				PingOp{Tag: w, Text: "Ping"}.Add(gtx.Ops)
 
-				for _, e := range gtx.Events(&w) {
-					if _, ok := e.(PongEvent); ok {
-						found = true
+				// By Command
+				gtx.Execute(PingCmd{Tag: w, Text: "Ping"})
+
+				founds := 0
+				for {
+					evt, ok := gtx.Event(Filter{Target: w})
+					if !ok {
+						break
+					}
+
+					if _, ok := evt.(PongEvent); ok {
+						founds++
 					}
 				}
 
-				if !first && !found {
-					panic("failed to receive pong")
-				} else {
-					done <- struct{}{}
+				if !first {
+					if founds != 2 {
+						panic("failed to receive pong")
+					}
+
+					if founds == 2 {
+						done <- struct{}{}
+						return
+					}
+				}
+
+				if first {
+					first = false
 				}
 
 				evt.Frame(gtx.Ops)
@@ -53,5 +67,7 @@ func TestMain(m *testing.M) {
 		<-done
 		os.Exit(0)
 	}()
+
+	fmt.Println("TestMain")
 	app.Main()
 }

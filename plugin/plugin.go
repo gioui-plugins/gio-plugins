@@ -1,60 +1,73 @@
 package plugin
 
 import (
+	"gioui.org/app"
+	"gioui.org/io/event"
+	"gioui.org/io/input"
+	"gioui.org/op"
 	"reflect"
 	"sync"
 	"sync/atomic"
 	"unsafe"
-
-	"gioui.org/app"
-	"gioui.org/io/event"
-	"gioui.org/io/system"
-	"gioui.org/op"
 )
-
-var handlers = new(sync.Map) // map[app.Window]handler
 
 type Plugin struct {
 	window *app.Window
-	queue  event.Queue
 
-	eventsMutex  sync.Mutex
-	eventsCustom map[event.Tag][]event.Event
-	eventsPool   []event.Event
+	eventsCustomNextMutex    sync.Mutex
+	eventsCustomCurrentMutex sync.Mutex
 
-	redirectEvent map[reflect.Type][]int
-	redirectOp    map[reflect.Type][]int
+	// double buffered events
+	eventsCustomNext    map[event.Tag][]event.Event
+	eventsCustomCurrent map[event.Tag][]event.Event
+
+	eventsPool []event.Event
+
+	RedirectEvent    map[reflect.Type][]int
+	RedirectOp       map[reflect.Type][]int
+	RedirectCommands map[reflect.Type][]int
 
 	visited map[uintptr]struct{}
 
-	plugins     []Handler
-	invalidated atomic.Bool
+	Plugins     []Handler
+	Invalidated atomic.Bool
+
+	OriginalFrame  func(ops *op.Ops)
+	OriginalSource input.Source
 }
 
-func newHandler(w *app.Window) *Plugin {
+func NewPlugin(w *app.Window) *Plugin {
 	h := &Plugin{
-		window:        w,
-		eventsCustom:  make(map[event.Tag][]event.Event, 128),
-		plugins:       make([]Handler, len(registeredPlugins)),
-		redirectOp:    make(map[reflect.Type][]int, 128),
-		redirectEvent: make(map[reflect.Type][]int, 128),
-		visited:       make(map[uintptr]struct{}, 2048),
+		window:           w,
+		Plugins:          make([]Handler, len(registeredPlugins)),
+		visited:          make(map[uintptr]struct{}, 128),
+		RedirectOp:       make(map[reflect.Type][]int, 128),
+		RedirectCommands: make(map[reflect.Type][]int, 128),
+		RedirectEvent:    make(map[reflect.Type][]int, 128),
 	}
-	for index, pf := range registeredPlugins {
-		h.plugins[index] = pf(w, h)
 
-		for _, redirOp := range h.plugins[index].TypeOp() {
-			if h.redirectOp[redirOp] == nil {
-				h.redirectOp[redirOp] = make([]int, 0, 4)
+	for index, pf := range registeredPlugins {
+		h.Plugins[index] = pf(w, h)
+
+		for _, redirOp := range h.Plugins[index].TypeOp() {
+			if h.RedirectOp[redirOp] == nil {
+				h.RedirectOp[redirOp] = make([]int, 0, 4)
 			}
-			h.redirectOp[redirOp] = append(h.redirectOp[redirOp], index)
+			h.RedirectOp[redirOp] = append(h.RedirectOp[redirOp], index)
 		}
 
-		for _, redirEvent := range h.plugins[index].TypeEvent() {
-			if h.redirectEvent[redirEvent] == nil {
-				h.redirectEvent[redirEvent] = make([]int, 0, 4)
+		for _, redirCmd := range h.Plugins[index].TypeCommand() {
+			if h.RedirectCommands[redirCmd] == nil {
+				h.RedirectCommands[redirCmd] = make([]int, 0, 4)
 			}
-			h.redirectEvent[redirEvent] = append(h.redirectEvent[redirEvent], index)
+			h.RedirectCommands[redirCmd] = append(h.RedirectCommands[redirCmd], index)
+		}
+
+		for _, redirEvent := range h.Plugins[index].TypeEvent() {
+			if h.RedirectEvent[redirEvent] == nil {
+				h.RedirectEvent[redirEvent] = make([]int, 0, 4)
+			}
+			h.RedirectEvent[redirEvent] = append(h.RedirectEvent[redirEvent], index)
 		}
 	}
 
@@ -62,55 +75,130 @@ func newHandler(w *app.Window) *Plugin {
 }
 
 func (l *Plugin) SendEvent(tag event.Tag, data event.Event) {
-	l.eventsMutex.Lock()
-	defer l.eventsMutex.Unlock()
+	l.eventsCustomNextMutex.Lock()
+	defer l.eventsCustomNextMutex.Unlock()
 
-	if l.eventsCustom == nil {
-		l.eventsCustom = make(map[event.Tag][]event.Event, 128)
+	if l.eventsCustomNext == nil {
+		l.eventsCustomNext = make(map[event.Tag][]event.Event, 128)
 	}
-	if l.eventsCustom[tag] == nil {
-		l.eventsCustom[tag] = make([]event.Event, 0, 128)
-	}
-	l.eventsCustom[tag] = append(l.eventsCustom[tag], data)
 
-	if l.invalidated.Load() {
+	if l.eventsCustomNext[tag] == nil {
+		l.eventsCustomNext[tag] = make([]event.Event, 0, 128)
+	}
+
+	l.eventsCustomNext[tag] = append(l.eventsCustomNext[tag], data)
+
+	if !l.Invalidated.Load() {
 		l.window.Invalidate()
+		l.Invalidated.Store(true)
 	}
 }
 
-func (l *Plugin) Events(t event.Tag) []event.Event {
-	l.eventsMutex.Lock()
-	defer l.eventsMutex.Unlock()
-
-	evtsGio := l.queue.Events(t)
-	evtsCustom, _ := l.eventsCustom[t]
-
-	switch {
-	case len(evtsGio) > 0 && len(evtsCustom) > 0:
-		l.eventsPool = l.eventsPool[:0]
-
-		l.eventsPool = append(l.eventsPool, evtsGio...)
-		l.eventsPool = append(l.eventsPool, evtsCustom...)
-
-		l.eventsCustom[t] = l.eventsCustom[t][:0]
-
-		return l.eventsPool
-	case len(evtsGio) > 0:
-		return evtsGio
-	case len(evtsCustom) > 0:
-		l.eventsCustom[t] = l.eventsCustom[t][:0]
-		return evtsCustom
-	default:
-		return nil
+/*
+func (l *Plugin) Event(t ...event.Filter) (event.Event, bool) {
+	if l == nil {
+		return nil, false
 	}
+
+	if evt, ok := l.event(t...); ok {
+		return evt, true
+	}
+
+	return l.OriginalSource.Event(t...)
+}
+*/
+
+func (l *Plugin) Event(filters ...event.Filter) (event.Event, bool) {
+	l.eventsCustomCurrentMutex.Lock()
+	defer l.eventsCustomCurrentMutex.Unlock()
+
+	for _, filter := range filters {
+		f, ok := filter.(Filter)
+		if !ok {
+			continue
+		}
+
+		tag := f.Tag()
+		for _, evt := range l.eventsCustomCurrent[tag] {
+			if !f.Matches(evt) {
+				continue
+			}
+
+			copy(l.eventsCustomCurrent[tag], l.eventsCustomCurrent[tag][1:])
+			l.eventsCustomCurrent[tag] = l.eventsCustomCurrent[tag][:len(l.eventsCustomCurrent[tag])-1]
+
+			return evt, true
+		}
+	}
+
+	return nil, false
 }
 
+/*
+func (l *Plugin) Execute(c input.Command) {
+	if ok := l.execute(c); ok {
+		return
+	}
+	l.OriginalSource.Execute(c)
+}
+*/
+
+func (l *Plugin) Execute(c input.Command) bool {
+	t := reflect.TypeOf(c)
+	if _, ok := l.RedirectCommands[t]; !ok {
+		return false
+	}
+
+	for _, index := range l.RedirectCommands[t] {
+		l.Plugins[index].Execute(c)
+	}
+
+	return true
+}
+
+func (l *Plugin) Enabled() bool {
+	return true
+}
+
+func (l *Plugin) Focused(tag event.Tag) bool {
+	return l.OriginalSource.Focused(tag)
+}
+
+func (l *Plugin) Frame(ops *op.Ops) {
+	l.OriginalFrame(ops)
+
+	for _, index := range l.RedirectEvent[reflect.TypeOf(EndFrameEvent{})] {
+		l.Plugins[index].Event(EndFrameEvent{})
+	}
+
+	for i := range l.visited {
+		delete(l.visited, i)
+	}
+
+	if len(l.RedirectOp) > 0 {
+		l.Op((*unsafeOps)(unsafe.Pointer(&ops.Internal)))
+	}
+
+	l.eventsCustomNextMutex.Lock()
+	l.eventsCustomCurrentMutex.Lock()
+	for v := range l.eventsCustomCurrent {
+		l.eventsCustomCurrent[v] = l.eventsCustomCurrent[v][:0]
+	}
+	l.eventsCustomNext, l.eventsCustomCurrent = l.eventsCustomCurrent, l.eventsCustomNext
+	l.eventsCustomNextMutex.Unlock()
+	l.eventsCustomCurrentMutex.Unlock()
+}
+
+// unsafeOps is a copy of internal/ops/ops.go
 type unsafeOps struct {
-	version     int
+	version     uint32
 	data        []byte
 	refs        []interface{}
-	nextStateID int
+	stringRefs  []string
+	nextStateID uint32
 	multipOp    bool
+	macroStack  [2]uint32
+	stacks      [4][2]uint32
 }
 
 var (
@@ -118,7 +206,7 @@ var (
 	typeOps     = reflect.TypeOf(&internalOps)
 )
 
-func (l *Plugin) processFrameEvent(o *unsafeOps) {
+func (l *Plugin) Op(o *unsafeOps) {
 	if _, ok := l.visited[uintptr(unsafe.Pointer(o))]; ok {
 		return
 	}
@@ -127,55 +215,34 @@ func (l *Plugin) processFrameEvent(o *unsafeOps) {
 	for i := range o.refs {
 		if reflect.TypeOf(o.refs[i]) == typeOps {
 			o2 := *(**unsafeOps)(unsafe.Add(unsafe.Pointer(&o.refs[i]), unsafe.Sizeof(uintptr(0))))
-			l.processFrameEvent(o2)
+			l.Op(o2)
 		} else {
-			for _, index := range l.redirectOp[reflect.TypeOf(o.refs[i])] {
-				l.plugins[index].ListenOps(o.refs[i])
+			for _, index := range l.RedirectOp[reflect.TypeOf(o.refs[i])] {
+				l.Plugins[index].Op(o.refs[i])
 			}
 		}
 	}
 }
 
-func Install(w *app.Window, evt event.Event) {
-	var h *Plugin
-	li, ok := handlers.Load(w)
-	if !ok {
-		h = newHandler(w)
-		handlers.Store(w, h)
-	} else {
-		h = li.(*Plugin)
+func (l *Plugin) ProcessEventFromGio(evt event.Event) event.Event {
+	for _, index := range l.RedirectEvent[reflect.TypeOf(evt)] {
+		l.Plugins[index].Event(evt)
 	}
 
-	for _, index := range h.redirectEvent[reflect.TypeOf(evt)] {
-		h.plugins[index].ListenEvents(evt)
-	}
+	switch e := evt.(type) {
+	case app.FrameEvent:
+		l.Invalidated.Store(false)
 
-	switch evt.(type) {
-	case system.FrameEvent:
-		ref := *(**system.FrameEvent)(unsafe.Add(unsafe.Pointer(&evt), unsafe.Sizeof(uintptr(0))))
-		h.invalidated.Store(false)
+		l.OriginalFrame = e.Frame
+		e.Frame = l.Frame
 
-		q := ref.Queue
-		h.queue = q
-		ref.Queue = h
-
-		f := ref.Frame
-		ref.Frame = func(frame *op.Ops) {
-			f(frame)
-
-			h.processFrameEvent((*unsafeOps)(unsafe.Pointer(&frame.Internal)))
-
-			for _, index := range h.redirectEvent[reflect.TypeOf(EndFrameEvent{})] {
-				h.plugins[index].ListenEvents(EndFrameEvent{})
-			}
-
-			for i := range h.visited {
-				delete(h.visited, i)
-			}
+		return e
+	case app.ViewEvent:
+		for _, index := range l.RedirectEvent[reflect.TypeOf(ViewEvent{})] {
+			l.Plugins[index].Event(e)
 		}
+		return e
+	default:
+		return evt
 	}
 }
-
-type EndFrameEvent struct{}
-
-func (EndFrameEvent) ImplementsEvent() {}

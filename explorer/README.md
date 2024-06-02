@@ -27,13 +27,13 @@ If you want to use it without plugin, read the Freestanding instructions. We pro
 
 ## Plugin:
 
-To open an single file, you can use `explorer.OpenFileOp`.
+To open an single file, you can use `explorer.OpenFileCmd`.
 
 That will open native File Dialog/File Picker. Once the file is selected by the end-user,
 one `explorer.OpenFileEvent` will be sent to the given `Tag`. 
 
 ```go
-gioexplorer.OpenFileOp{
+gtx.Execute(gioexplorer.OpenFileCmd{
     Tag: yourTag, 
     Mimetype: []mimetype.MimeType{
       {Extension: "png", Type: "image", Subtype: "png"},
@@ -42,16 +42,16 @@ gioexplorer.OpenFileOp{
       {Extension: "gif", Type: "image", Subtype: "gif"},
       {Extension: "webp", Type: "image", Subtype: "webp"},
     },
-}.Add(gtx.Ops)
+})
 ```
 
 ### Operations:
 
-Operations must be added with `.Add(gtx.Ops)` method. The operation will be executed at the end of the frame.
+Operations must be added with `gtx.Execute` method. The operation will be executed at the end of the frame.
 
-- `gioexplorer.OpenFileOp`:
+- `gioexplorer.OpenFileCmd`:
   - Opens the native file dialog to open/import a single file.
-- `gioexplorer.SaveFileOp`:
+- `gioexplorer.SaveFileCmd`:
   - Open the native file dialog to save/export a single file.
 
 ## Events:

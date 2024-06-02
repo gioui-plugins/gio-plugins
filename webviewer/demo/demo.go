@@ -2,7 +2,10 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"gioui.org/font"
+	"github.com/gioui-plugins/gio-plugins/plugin/gioplugins"
+	"github.com/gioui-plugins/gio-plugins/webviewer/giowebview"
 	"image"
 	"image/color"
 	"math"
@@ -16,15 +19,12 @@ import (
 	"gioui.org/f32"
 	"gioui.org/font/gofont"
 	"gioui.org/io/pointer"
-	"gioui.org/io/system"
 	"gioui.org/layout"
 	"gioui.org/op"
 	"gioui.org/op/clip"
 	"gioui.org/op/paint"
 	"gioui.org/text"
 	"gioui.org/widget"
-	"github.com/gioui-plugins/gio-plugins/plugin"
-	"github.com/gioui-plugins/gio-plugins/webviewer"
 	"github.com/gioui-plugins/gio-plugins/webviewer/webview"
 )
 
@@ -55,7 +55,7 @@ func main() {
 	flag.Parse()
 
 	webview.SetDebug(true)
-	window := app.NewWindow()
+	window := &app.Window{}
 
 	browsers := NewBrowser()
 	browsers.add()
@@ -63,15 +63,15 @@ func main() {
 	go func() {
 		ops := new(op.Ops)
 		// first := true
-		for evt := range window.Events() {
-			plugin.Install(window, evt)
+		for {
+			evt := gioplugins.Event(window)
 
 			switch evt := evt.(type) {
-			case system.DestroyEvent:
+			case app.DestroyEvent:
 				os.Exit(0)
 				return
-			case system.FrameEvent:
-				gtx := layout.NewContext(ops, evt)
+			case app.FrameEvent:
+				gtx := app.NewContext(ops, evt)
 				browsers.Layout(gtx)
 				evt.Frame(ops)
 			}
@@ -197,38 +197,38 @@ func (b *Browsers) remove(i int) {
 }
 
 func (b *Browsers) Layout(gtx layout.Context) layout.Dimensions {
-	if b.Add.Clicked() {
+	if b.Add.Clicked(gtx) {
 		b.add()
 	}
-	if b.Close.Clicked() {
+	if b.Close.Clicked(gtx) {
 		b.remove(b.Selected)
 	}
 
 	currentStoragePanel := b.StorageVisible
-	if b.LocalButton.Clicked() {
+	if b.LocalButton.Clicked(gtx) {
 		currentStoragePanel ^= VisibleLocal
 	}
-	if b.SessionButton.Clicked() {
+	if b.SessionButton.Clicked(gtx) {
 		currentStoragePanel ^= VisibleSession
 	}
-	if b.CookieButton.Clicked() {
+	if b.CookieButton.Clicked(gtx) {
 		currentStoragePanel ^= VisibleCookies
 	}
 	b.StorageVisible = currentStoragePanel
 
 	submittedIndex := -1
-	if b.Go.Clicked() {
+	if b.Go.Clicked(gtx) {
 		submittedIndex = b.Selected
 	}
 
 	for i, t := range b.Address {
 		submited := i == submittedIndex
-		if !t.Focused() && t.Text() == "" {
-			submited = true
-			t.SetText(DefaultURL)
-		}
 
-		for _, evt := range t.Events() {
+		for {
+			evt, ok := t.Update(gtx)
+			if !ok {
+				break
+			}
 			switch evt.(type) {
 			case widget.SubmitEvent:
 				submited = true
@@ -236,31 +236,34 @@ func (b *Browsers) Layout(gtx layout.Context) layout.Dimensions {
 		}
 
 		if submited {
-			w := webviewer.WebViewOp{Tag: b.Tags[i]}.Push(gtx.Ops)
-			webviewer.NavigateOp{URL: t.Text()}.Add(gtx.Ops)
-			w.Pop(gtx.Ops)
+			gtx.Execute(giowebview.NavigateCmd{View: b.Tags[i], URL: t.Text()})
 		}
 	}
 
 	for i, t := range b.Tabs {
-		if t.Clicked() {
+		if t.Clicked(gtx) {
 			b.Selected = i
 		}
 	}
 
 	for i := range b.Tags {
-		for _, evt := range gtx.Events(b.Tags[i]) {
+		for {
+			evt, ok := gtx.Event(giowebview.Filter{Target: b.Tags[i]})
+			if !ok {
+				break
+			}
+
 			switch evt := evt.(type) {
-			case webviewer.TitleEvent:
+			case giowebview.TitleEvent:
 				b.Titles[i] = evt.Title
-			case webviewer.NavigationEvent:
+			case giowebview.NavigationEvent:
 				b.Address[i].SetText(evt.URL)
-			case webviewer.CookiesEvent:
-				// fmt.Println(evt.Cookies)
-			case webviewer.StorageEvent:
-				// fmt.Println(evt.Storage)
-			case webviewer.MessageEvent:
-				// fmt.Println(evt.Message)
+			case giowebview.CookiesEvent:
+				fmt.Println(evt.Cookies)
+			case giowebview.StorageEvent:
+				fmt.Println(evt.Storage)
+			case giowebview.MessageEvent:
+				fmt.Println(evt.Message)
 			}
 		}
 	}
@@ -317,9 +320,9 @@ func (b *Browsers) Layout(gtx layout.Context) layout.Dimensions {
 			}
 			return layout.Flex{Axis: layout.Horizontal}.Layout(gtx, b.TabsFlex...)
 		case 2:
-			defer webviewer.WebViewOp{Tag: b.Tags[b.Selected]}.Push(gtx.Ops).Pop(gtx.Ops)
-			webviewer.OffsetOp{Point: f32.Point{Y: float32(gtxi.Constraints.Max.Y - gtx.Constraints.Max.Y)}}.Add(gtx.Ops)
-			webviewer.RectOp{Size: f32.Point{X: float32(gtx.Constraints.Max.X), Y: float32(gtx.Constraints.Max.Y)}}.Add(gtx.Ops)
+			defer giowebview.WebViewOp{Tag: b.Tags[b.Selected]}.Push(gtx.Ops).Pop(gtx.Ops)
+			giowebview.OffsetOp{Point: f32.Point{Y: float32(gtxi.Constraints.Max.Y - gtx.Constraints.Max.Y)}}.Add(gtx.Ops)
+			giowebview.RectOp{Size: f32.Point{X: float32(gtx.Constraints.Max.X), Y: float32(gtx.Constraints.Max.Y)}}.Add(gtx.Ops)
 			return layout.Dimensions{Size: gtx.Constraints.Max}
 		default:
 			return layout.Dimensions{}
@@ -444,7 +447,7 @@ func (l *Loading) Layout(gtx layout.Context) layout.Dimensions {
 	defer clip.Stroke{Path: path.End(), Width: width}.Op().Push(gtx.Ops).Pop()
 	paint.ColorOp{Color: color.NRGBA{R: 255, G: 255, B: 255, A: 255}}.Add(gtx.Ops)
 	paint.PaintOp{}.Add(gtx.Ops)
-	op.InvalidateOp{}.Add(gtx.Ops)
+	gtx.Execute(op.InvalidateCmd{})
 
 	return layout.Dimensions{Size: gtx.Constraints.Max}
 }

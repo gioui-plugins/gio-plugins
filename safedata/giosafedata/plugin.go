@@ -34,16 +34,22 @@ type safedataPlugin struct {
 	client *safedata.SafeData
 }
 
-// TypeOp implements plugin.Handler.
-func (p *safedataPlugin) TypeOp() []reflect.Type { return wantOps }
+// TypeCommands implements plugin.Handler.
+func (p *safedataPlugin) TypeCommands() []reflect.Type { return wantCommands }
 
 // TypeEvent implements plugin.Handler.
 func (p *safedataPlugin) TypeEvent() []reflect.Type { return wantEvents }
 
-// ListenOps implements plugin.Handler.
-func (p *safedataPlugin) ListenOps(op interface{}) {
+// Execute implements plugin.Handler.
+func (p *safedataPlugin) Execute(op interface{}) {
 	switch op := op.(type) {
-	case internalOp:
+	case WriteSecretCmd:
+		op.execute(p)
+	case ReadSecretCmd:
+		op.execute(p)
+	case DeleteSecretCmd:
+		op.execute(p)
+	case ListSecretCmd:
 		op.execute(p)
 	}
 }

@@ -12,6 +12,8 @@ func _log(s inkwasm.Object) {
 	__log(s)
 
 }
+
+//go:wasmimport gojs github.com/gioui-plugins/gio-plugins/webviewer/webview.__log
 func __log(s inkwasm.Object)
 
 func _querySelector(o inkwasm.Object, s string) (_ inkwasm.Object) {
@@ -20,6 +22,8 @@ func _querySelector(o inkwasm.Object, s string) (_ inkwasm.Object) {
 
 	return r0
 }
+
+//go:wasmimport gojs github.com/gioui-plugins/gio-plugins/webviewer/webview.__querySelector
 func __querySelector(o inkwasm.Object, s string) (_ inkwasm.Object)
 
 func _createElement(s string) (_ inkwasm.Object) {
@@ -28,6 +32,8 @@ func _createElement(s string) (_ inkwasm.Object) {
 
 	return r0
 }
+
+//go:wasmimport gojs github.com/gioui-plugins/gio-plugins/webviewer/webview.__createElement
 func __createElement(s string) (_ inkwasm.Object)
 
 func _setAttribute(o inkwasm.Object, s string, v string) {
@@ -36,6 +42,8 @@ func _setAttribute(o inkwasm.Object, s string, v string) {
 	runtime.KeepAlive(v)
 
 }
+
+//go:wasmimport gojs github.com/gioui-plugins/gio-plugins/webviewer/webview.__setAttribute
 func __setAttribute(o inkwasm.Object, s string, v string)
 
 func _setInnerText(o inkwasm.Object, s string) {
@@ -43,18 +51,24 @@ func _setInnerText(o inkwasm.Object, s string) {
 	runtime.KeepAlive(s)
 
 }
+
+//go:wasmimport gojs github.com/gioui-plugins/gio-plugins/webviewer/webview.__setInnerText
 func __setInnerText(o inkwasm.Object, s string)
 
 func _prepend(o inkwasm.Object, c inkwasm.Object) {
 	__prepend(o, c)
 
 }
+
+//go:wasmimport gojs github.com/gioui-plugins/gio-plugins/webviewer/webview.__prepend
 func __prepend(o inkwasm.Object, c inkwasm.Object)
 
 func _removeChild(o inkwasm.Object, c inkwasm.Object) {
 	__removeChild(o, c)
 
 }
+
+//go:wasmimport gojs github.com/gioui-plugins/gio-plugins/webviewer/webview.__removeChild
 func __removeChild(o inkwasm.Object, c inkwasm.Object)
 
 func _setStyleWidth(o inkwasm.Object, s string) {
@@ -62,6 +76,8 @@ func _setStyleWidth(o inkwasm.Object, s string) {
 	runtime.KeepAlive(s)
 
 }
+
+//go:wasmimport gojs github.com/gioui-plugins/gio-plugins/webviewer/webview.__setStyleWidth
 func __setStyleWidth(o inkwasm.Object, s string)
 
 func _setStyleHeight(o inkwasm.Object, s string) {
@@ -69,6 +85,8 @@ func _setStyleHeight(o inkwasm.Object, s string) {
 	runtime.KeepAlive(s)
 
 }
+
+//go:wasmimport gojs github.com/gioui-plugins/gio-plugins/webviewer/webview.__setStyleHeight
 func __setStyleHeight(o inkwasm.Object, s string)
 
 func _setStylePosition(o inkwasm.Object, s string) {
@@ -76,6 +94,8 @@ func _setStylePosition(o inkwasm.Object, s string) {
 	runtime.KeepAlive(s)
 
 }
+
+//go:wasmimport gojs github.com/gioui-plugins/gio-plugins/webviewer/webview.__setStylePosition
 func __setStylePosition(o inkwasm.Object, s string)
 
 func _setStyleZIndex(o inkwasm.Object, s string) {
@@ -83,6 +103,8 @@ func _setStyleZIndex(o inkwasm.Object, s string) {
 	runtime.KeepAlive(s)
 
 }
+
+//go:wasmimport gojs github.com/gioui-plugins/gio-plugins/webviewer/webview.__setStyleZIndex
 func __setStyleZIndex(o inkwasm.Object, s string)
 
 func _setStyleBorder(o inkwasm.Object, s string) {
@@ -90,6 +112,8 @@ func _setStyleBorder(o inkwasm.Object, s string) {
 	runtime.KeepAlive(s)
 
 }
+
+//go:wasmimport gojs github.com/gioui-plugins/gio-plugins/webviewer/webview.__setStyleBorder
 func __setStyleBorder(o inkwasm.Object, s string)
 
 func _setStyleDisplay(o inkwasm.Object, s string) {
@@ -97,6 +121,8 @@ func _setStyleDisplay(o inkwasm.Object, s string) {
 	runtime.KeepAlive(s)
 
 }
+
+//go:wasmimport gojs github.com/gioui-plugins/gio-plugins/webviewer/webview.__setStyleDisplay
 func __setStyleDisplay(o inkwasm.Object, s string)
 
 func _setStyleTop(o inkwasm.Object, s string) {
@@ -104,6 +130,8 @@ func _setStyleTop(o inkwasm.Object, s string) {
 	runtime.KeepAlive(s)
 
 }
+
+//go:wasmimport gojs github.com/gioui-plugins/gio-plugins/webviewer/webview.__setStyleTop
 func __setStyleTop(o inkwasm.Object, s string)
 
 func _setStyleLeft(o inkwasm.Object, s string) {
@@ -111,6 +139,8 @@ func _setStyleLeft(o inkwasm.Object, s string) {
 	runtime.KeepAlive(s)
 
 }
+
+//go:wasmimport gojs github.com/gioui-plugins/gio-plugins/webviewer/webview.__setStyleLeft
 func __setStyleLeft(o inkwasm.Object, s string)
 
 func _setSrc(o inkwasm.Object, s string) {
@@ -118,4 +148,6 @@ func _setSrc(o inkwasm.Object, s string) {
 	runtime.KeepAlive(s)
 
 }
+
+//go:wasmimport gojs github.com/gioui-plugins/gio-plugins/webviewer/webview.__setSrc
 func __setSrc(o inkwasm.Object, s string)

@@ -3,6 +3,7 @@ package main
 import (
 	"gioui.org/font"
 	"github.com/gioui-plugins/gio-plugins/hyperlink/giohyperlink"
+	"github.com/gioui-plugins/gio-plugins/plugin/gioplugins"
 	"image"
 	"image/color"
 	"log"
@@ -11,8 +12,6 @@ import (
 	"strings"
 
 	"gioui.org/app"
-	"gioui.org/font/gofont"
-	"gioui.org/io/system"
 	"gioui.org/layout"
 	"gioui.org/op"
 	"gioui.org/op/clip"
@@ -20,12 +19,16 @@ import (
 	"gioui.org/unit"
 	"gioui.org/widget"
 	"gioui.org/widget/material"
-	"github.com/gioui-plugins/gio-plugins/plugin"
+	_ "unsafe"
 )
+
+var f = gioplugins.Event
 
 func main() {
 	go func() {
-		w := app.NewWindow(app.Size(unit.Dp(800), unit.Dp(700)), app.MinSize(unit.Dp(400), unit.Dp(400)))
+		w := gioplugins.NewWindow()
+		w.Option(app.Size(unit.Dp(800), unit.Dp(700)), app.MinSize(unit.Dp(400), unit.Dp(400)))
+
 		if err := loop(w); err != nil {
 			panic(err)
 		}
@@ -38,37 +41,41 @@ func main() {
 func loop(w *app.Window) error {
 	var ops op.Ops
 	for {
-		select {
-		case e := <-w.Events():
-			plugin.Install(w, e)
+		e := gioplugins.Event(w)
 
-			switch e := e.(type) {
-			case system.DestroyEvent:
-				return e.Err
-			case system.FrameEvent:
-				gtx := layout.NewContext(&ops, e)
+		switch e := e.(type) {
+		case app.DestroyEvent:
+			return e.Err
+		case app.FrameEvent:
+			gtx := app.NewContext(&ops, e)
 
-				var submitted = false
-				for _, ee := range InputAction.Events() {
-					if _, ok := ee.(widget.SubmitEvent); ok {
-						submitted = true
-						break
-					}
+			var submitted = false
+
+			for {
+				evt, ok := InputAction.Update(gtx)
+				if !ok {
+					break
 				}
 
-				if ButtonAction.Clicked() || submitted {
-					u, err := url.Parse(InputAction.Text())
-					if err != nil {
-						log.Println(err)
-						continue
-					}
-
-					giohyperlink.OpenOp{URI: u}.Add(gtx.Ops)
+				switch evt.(type) {
+				case widget.SubmitEvent:
+					submitted = true
+					break
 				}
-
-				render(gtx)
-				e.Frame(gtx.Ops)
 			}
+
+			if ButtonAction.Clicked(gtx) || submitted {
+				u, err := url.Parse(InputAction.Text())
+				if err != nil {
+					log.Println(err)
+					continue
+				}
+
+				gtx.Execute(giohyperlink.OpenCmd{URI: u})
+			}
+
+			render(gtx)
+			e.Frame(gtx.Ops)
 		}
 	}
 }
@@ -108,7 +115,7 @@ var (
 	MarginDesign = layout.Inset{Right: unit.Dp(30), Bottom: unit.Dp(6), Left: unit.Dp(30), Top: unit.Dp(6)}
 )
 
-var defaultMaterial = material.NewTheme(gofont.Collection())
+var defaultMaterial = material.NewTheme()
 
 type Input struct {
 	Font      font.Font
@@ -116,8 +123,6 @@ type Input struct {
 	Color     color.NRGBA
 	HintColor color.NRGBA
 }
-
-var alreadySetEditor = make(map[*widget.Editor]bool)
 
 func (i *Input) Layout(gtx layout.Context, editor *widget.Editor, hint string, value string) layout.Dimensions {
 	e := material.Editor(defaultMaterial, editor, hint)
@@ -127,11 +132,8 @@ func (i *Input) Layout(gtx layout.Context, editor *widget.Editor, hint string, v
 	e.HintColor = i.HintColor
 
 	if value != "" {
-		if _, ok := alreadySetEditor[editor]; !ok {
-			editor.SetText(value)
-			editor.MoveCaret(editor.Len(), editor.Len())
-			alreadySetEditor[editor] = true
-		}
+		editor.SetText(value)
+		editor.MoveCaret(editor.Len(), editor.Len())
 	}
 
 	return e.Layout(gtx)

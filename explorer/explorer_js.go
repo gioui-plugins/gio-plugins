@@ -75,7 +75,7 @@ func (e *driver) openFile(mimes []mimetype.MimeType) (io.ReadCloser, error) {
 }
 
 func (e *driver) openFileLegacy(mimes []mimetype.MimeType) (io.ReadCloser, error) {
-	res := make(chan result[io.ReadCloser])
+	res := make(chan result)
 	callback := openCallbackLegacy(res)
 
 	extensions := stringBuilderPool.Get().(*strings.Builder)
@@ -91,6 +91,7 @@ func (e *driver) openFileLegacy(mimes []mimetype.MimeType) (io.ReadCloser, error
 	document := js.Global().Get("document")
 	input := document.Call("createElement", "input")
 	input.Call("addEventListener", "change", callback)
+	input.Call("addEventListener", "cancel", callback)
 	input.Set("type", "file")
 	input.Set("style", "display:none;")
 	if extensions.Len() > 0 {
@@ -105,13 +106,6 @@ func (e *driver) openFileLegacy(mimes []mimetype.MimeType) (io.ReadCloser, error
 	}
 	return file.file.(io.ReadCloser), nil
 }
-
-// fileRead and fileWrite calls the JS function directly (without syscall/js to avoid double copying).
-// The function is defined into explorer_js.s, which calls explorer_js.js.
-func fileRead(value js.Value, b []byte) uint32
-func fileWrite(value js.Value, b []byte)
-func fileSlice(start, end uint32, value js.Value, success, failure js.Func)
-func writableWrite(writable js.Value, success js.Value, failure js.Value, b []byte)
 
 func await(value js.Value) ([]js.Value, bool) {
 	res := make(chan []js.Value, 1)
@@ -139,17 +133,20 @@ func await(value js.Value) ([]js.Value, bool) {
 	return r, true
 }
 
-func openCallbackLegacy(r chan result[io.ReadCloser]) js.Func {
-	// There's no way to detect when the dialog is closed, so we can't re-use the callback.
-	return js.FuncOf(func(this js.Value, args []js.Value) interface{} {
+func openCallbackLegacy(r chan result) js.Func {
+	var fn js.Func
+	fn = js.FuncOf(func(this js.Value, args []js.Value) interface{} {
+		defer fn.Release()
+
 		files := args[0].Get("target").Get("files")
 		if files.Length() <= 0 {
-			r <- result[io.ReadCloser]{error: ErrUserDecline}
+			r <- result{error: ErrUserDecline}
 			return nil
 		}
-		r <- result[io.ReadCloser]{file: newFileReader(files.Index(0))}
+		r <- result{file: newFileReader(files.Index(0))}
 		return nil
 	})
+	return fn
 }
 
 var (

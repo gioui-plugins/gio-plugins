@@ -11,8 +11,8 @@ package explorer
 #import <Appkit/AppKit.h>
 
 // Defined on explorer_macos.m file.
-extern void saveFile(CFTypeRef viewRef, char * name, uintptr_t id);
-extern void openFile(CFTypeRef viewRef, char * ext, uintptr_t id);
+extern void gioplugins_explorer_saveFile(CFTypeRef viewRef, char * name, uintptr_t id);
+extern void gioplugins_explorer_openFile(CFTypeRef viewRef, char * ext, uintptr_t id);
 */
 import "C"
 import (
@@ -45,15 +45,15 @@ func (e *driver) saveFile(name string, mime mimetype.MimeType) (io.WriteCloser, 
 	cname := C.CString(name)
 	defer C.free(unsafe.Pointer(cname))
 
-	res := make(chan result[io.WriteCloser])
-	callback := func(r result[io.WriteCloser]) {
+	res := make(chan result)
+	callback := func(r result) {
 		res <- r
 	}
 	hcallback := cgo.NewHandle(callback)
 	defer hcallback.Delete()
 
 	go e.config.RunOnMain(func() {
-		C.saveFile(e.config.View, cname, C.uintptr_t(hcallback))
+		C.gioplugins_explorer_saveFile(C.CFTypeRef(e.config.View), cname, C.uintptr_t(hcallback))
 	})
 
 	r := <-res
@@ -66,8 +66,8 @@ func (e *driver) saveFile(name string, mime mimetype.MimeType) (io.WriteCloser, 
 }
 
 func (e *driver) openFile(mimes []mimetype.MimeType) (io.ReadCloser, error) {
-	res := make(chan result[io.ReadCloser])
-	callback := func(r result[io.ReadCloser]) {
+	res := make(chan result)
+	callback := func(r result) {
 		res <- r
 	}
 	hcallback := cgo.NewHandle(callback)
@@ -82,7 +82,7 @@ func (e *driver) openFile(mimes []mimetype.MimeType) (io.ReadCloser, error) {
 	defer C.free(unsafe.Pointer(cextensions))
 
 	go e.config.RunOnMain(func() {
-		C.openFile(e.config.View, cextensions, C.uintptr_t(hcallback))
+		C.gioplugins_explorer_openFile(C.CFTypeRef(e.config.View), cextensions, C.uintptr_t(hcallback))
 	})
 
 	r := <-res
@@ -92,40 +92,40 @@ func (e *driver) openFile(mimes []mimetype.MimeType) (io.ReadCloser, error) {
 	return r.file.(io.ReadCloser), r.error
 }
 
-//export importCallback
-func importCallback(u *C.char, id uintptr) {
-	if v, ok := cgo.Handle(id).Value().(func(result[io.ReadCloser])); ok {
-		v(newOSFile[io.ReadCloser](u, func(s string) (io.ReadCloser, error) {
+//export gioplugins_explorer_importCallback
+func gioplugins_explorer_importCallback(u *C.char, id uintptr) {
+	if v, ok := cgo.Handle(id).Value().(func(result)); ok {
+		v(newOSFile(u, func(s string) (any, error) {
 			return os.Open(s)
 		}))
 	}
 }
 
-//export exportCallback
-func exportCallback(u *C.char, id uintptr) {
-	if v, ok := cgo.Handle(id).Value().(func(result[io.WriteCloser])); ok {
-		v(newOSFile[io.WriteCloser](u, func(s string) (io.WriteCloser, error) {
+//export gioplugins_explorer_exportCallback
+func gioplugins_explorer_exportCallback(u *C.char, id uintptr) {
+	if v, ok := cgo.Handle(id).Value().(func(result)); ok {
+		v(newOSFile(u, func(s string) (any, error) {
 			return os.Create(s)
 		}))
 	}
 }
 
-func newOSFile[T io.ReadCloser | io.ReadCloser](u *C.char, action func(s string) (T, error)) result[T] {
+func newOSFile(u *C.char, action func(s string) (any, error)) result {
 	name := C.GoString(u)
 	if name == "" {
-		return result[T]{error: ErrUserDecline}
+		return result{error: ErrUserDecline}
 	}
 
 	uri, err := url.Parse(name)
 	if err != nil {
-		return result[T]{error: err}
+		return result{error: err}
 	}
 
 	path, err := url.PathUnescape(uri.Path)
 	if err != nil {
-		return result[T]{error: err}
+		return result{error: err}
 	}
 
 	f, err := action(path)
-	return result[T]{error: err, file: f}
+	return result{error: err, file: f}
 }

@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"gioui.org/font"
 	"gioui.org/op/paint"
 	"image/color"
@@ -10,8 +9,6 @@ import (
 
 	"gioui.org/app"
 	"gioui.org/font/gofont"
-	"gioui.org/io/system"
-	"gioui.org/layout"
 	"gioui.org/op"
 	"gioui.org/text"
 	"gioui.org/widget"
@@ -20,14 +17,12 @@ import (
 )
 
 func main() {
-	config := safedata.Config{
-		App: "MyApp",
-	}
+	config := safedata.Config{App: "MyApp"}
 	sh := safedata.NewSafeData(config)
 
-	window := app.NewWindow()
+	window := &app.Window{}
 
-	shaper := text.NewShaper(gofont.Collection())
+	shaper := text.NewShaper(text.WithCollection(gofont.Collection()))
 
 	mutex := new(sync.Mutex)
 	txt := ""
@@ -35,23 +30,25 @@ func main() {
 	ops := new(op.Ops)
 	ready := make(chan int, 1)
 	go func() {
-		for evt := range window.Events() {
+		for {
+			evt := window.Event()
+
 			switch evt := evt.(type) {
 			case app.ViewEvent:
 				config = giosafedata.NewConfigFromViewEvent(window, evt, config.App)
 				sh.Configure(config)
 				ready <- 1
-			case system.FrameEvent:
+			case app.FrameEvent:
 				mutex.Lock()
-				gtx := layout.NewContext(ops, evt)
+				gtx := app.NewContext(ops, evt)
 
-				paint.ColorOp{Color: color.NRGBA{0, 0, 0, 255}}.Add(gtx.Ops)
+				paint.ColorOp{Color: color.NRGBA{A: 255}}.Add(gtx.Ops)
 				widget.Label{}.Layout(gtx, shaper, font.Font{}, 12, txt, op.CallOp{})
 
-				op.InvalidateOp{}.Add(gtx.Ops)
+				gtx.Execute(op.InvalidateCmd{})
 				evt.Frame(ops)
 				mutex.Unlock()
-			case system.DestroyEvent:
+			case app.DestroyEvent:
 				os.Exit(0)
 			}
 		}
@@ -61,7 +58,6 @@ func main() {
 		<-ready
 		m := make(chan struct{})
 		go func() {
-			fmt.Print("my-secret4")
 			// Add a secret
 			err := sh.Set(safedata.Secret{
 				Identifier:  "my-secret4",
@@ -71,7 +67,7 @@ func main() {
 
 			if err != nil {
 				mutex.Lock()
-				txt = string("ERR ON ADD->" + err.Error())
+				txt = "ERR ON ADD->" + err.Error()
 				mutex.Unlock()
 			}
 			m <- struct{}{}

@@ -29,11 +29,11 @@ If you want to use it without plugin, read the Freestanding instructions. We pro
 
 ### Operations:
 
-Operations must be added with `.Add(gtx.Ops)` method. The operation will be executed at the end of the frame.
+Operations must be added with `gtx.Execute` method. The operation will be executed at the end of the frame.
 
-- `gioshare.TextOp`:
+- `gioshare.TextCmd`:
   - Shares text using the native share dialog.
-- `gioshare.WebsiteOp`:
+- `gioshare.WebsiteCmd`:
   - Shares a website using the native share dialog.
 
 ## Events:

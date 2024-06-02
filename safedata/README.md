@@ -47,15 +47,15 @@ using `giosafedata.NewConfigFromViewEvent`.
 
 ### Operations:
 
-Operations must be added with `.Add(gtx.Ops)` method. The operation will be executed at the end of the frame.
+Operations must be added with `gtx.Execute` method. The operation will be executed at the end of the frame.
 
-- `giosafedata.WriteSecretOp`:
+- `giosafedata.WriteSecretCmd`:
     - Writes a Secret.
-- `giosafedata.ReadSecretOp`:
+- `giosafedata.ReadSecretCmd`:
     - Reads a Secret using the provided Identifier, the response is sent to the given Tag.
-- `giosafedata.DeleteSecretOp`:
+- `giosafedata.DeleteSecretCmd`:
     - Deletes a Secret using the provided Identifier.
-- `giosafedata.ListSecretOp`:
+- `giosafedata.ListSecretCmd`:
     - List all Secret which belongs to the current app.
 
 ## Events:
@@ -65,7 +65,7 @@ Events are response sent using the `Tag` and should be handled with `gtx.Events(
 - `giosafedata.ErrorEvent`:
     - Sent to `Tag` when it's not possible to write/read/list/delete.
 - `giosafedata.SecretsEvent`:
-    - Sent to `Tag` as response from `ReadSecretOp` or `ListSecretOp`.
+    - Sent to `Tag` as response from `ReadSecretCmd` or `ListSecretCmd`.
 
 ## Features
 
@@ -89,7 +89,7 @@ known issues/vulnerability:
 
 - [Darwin] You must sign your app.
 - [Darwin] Credentials are visible cross-application after user authorization.
-- [Android] Credentials may lose after app uninstall or update.
+- [Android] Credentials may lost after app uninstall or update.
 - [Windows] Large data is split into multiple credentials, due to maximum size for each credential.
 - [Windows] Credential Storage have a very low capacity, preventing from storing large data or too many credentials.
 - [Windows] Credentials are visible cross-application, without restrictions.

@@ -26,12 +26,14 @@ First, you must download the `plugin` package:
 go get -u github.com/gioui-plugins/gio-plugins@latest
 ```
 
-Now, you need to modify your event-loop, you must include `plugin.Install()` in your event-loop, before handling
+Now, you need to modify your event-loop, you must include `gioplugins.Event(window)` in your event-loop, before handling
 events:
 
 ```diff
-for evt := range w.Events() { // Gio main event loop
-+    plugin.Install(w, evt)
+window := &app.Window{} // Gio window
+
+for { 
++   evt := gioplugins.Event(window) // Gio main event loop
 
     switch evt := evt.(type) {
         // ...
@@ -40,19 +42,29 @@ for evt := range w.Events() { // Gio main event loop
 ```
 
 Each plugin has its own README.md file, explaining how to use it. In general, you can simple
-use `nameOfPlugin.SomeOp{}.Add(gtx.Ops)`, similar of how you use `clipboard.ReadOp{}.Add(gtx.Ops)`, native from Gio.
+use `nameOfPlugin.SomeOp{}.Add(gtx.Ops)`, similar of how you use `pointer.PassOp{}.Add(gtx.Ops)`, native 
+from Gio. Beginning with Gio 0.6, it also introduces `Command`, which is executed using `gtx.Execute`, you can
+also use Commands, if the plugin supports it, for instance `gtx.Execute(gioshare.TextCmd{Text: "Hello, World!"})`, 
+similar to what you are familiar with `gtx.Execute(clipboard.WriteCmd{Text: "Hello, World!"})`.
 
-Once `plugin.Install` is set, you can use the plugins as simple `op` commands. If you are unsure if the plugin is
-working, you can use the `pingpong` package, which will return on `PongEvent` to the given Tag:
+Once `gioplugins.Event` is set, you can use the plugins as simple `op` operations or `cmd` commands. If you are unsure 
+if the plugin is working, you can use the `pingpong` package, which will return on `PongEvent` to the given Tag:
 
 ```go
 pingpong.PingOp{Tag: &something}.Add(gtx.Ops)
+
+gtx.Execute(pingpong.PingCmd{Tag: &something})
 ```
 
 You can receive responses using the `Tag`, as Gio-core operations:
 
 ```go
-for _, evt := range gtx.Events(&something) {
+for {
+	evt, ok := gtx.Events(pingpong.Filter{Tag: &something})
+	if !ok {
+		break
+    } 
+	
     if evt, ok := evt.(pingpong.PongEvent); ok {
         fmt.Println(evt.Pong)
     } 
@@ -73,18 +85,15 @@ Of course, `pingpong` has no use in real-world applications, but it can be used 
 | **[Hyperlink](https://github.com/gioui-plugins/gio-plugins/tree/main/hyperlink)** |  Open hyperlinks in the default browser.            | _Android, iOS, macOS, Windows, WebAssembly_  |  
 | **[Explorer](https://github.com/gioui-plugins/gio-plugins/tree/main/explorer)** |  Opens the native file-dialog, to read/write files.  | _Android, iOS, macOS, Windows, WebAssembly_  |  
 | **[Safedata](https://github.com/gioui-plugins/gio-plugins/tree/main/safedata)** | Read/Write files into the secure storage of the device. | _Android, iOS, macOS, Windows, WebAssembly_  |
+
 **We have few plugins planned:**
 
 Some plugins are planned, but not yet implemented, follow the development at https://github.com/orgs/gioui-plugins/projects/1. Also, 
 consider send some 👍 on issues which mentions features that you like.
 
-
-
 If you want to help, please open an issue or a PR! If you want to suggest a plugin, please open an issue.
 
 -----------
-
-
 
 ### Creating a new plugin
 

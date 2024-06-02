@@ -1,4 +1,4 @@
-package webviewer
+package giowebview
 
 import (
 	"gioui.org/app"
@@ -6,6 +6,11 @@ import (
 )
 
 // NewConfigFromViewEvent creates a webview.Config based on app.ViewEvent.
-func NewConfigFromViewEvent(w *app.Window, evt app.ViewEvent) webview.Config {
+func NewConfigFromViewEvent(w *app.Window, e app.ViewEvent) webview.Config {
+	evt, ok := e.(app.Win32ViewEvent)
+	if !ok {
+		return webview.Config{}
+	}
+
 	return webview.Config{HWND: evt.HWND, RunOnMain: w.Run}
 }

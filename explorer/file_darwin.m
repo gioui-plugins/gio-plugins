@@ -3,7 +3,7 @@
 @implementation explorer_file
 @end
 
-CFTypeRef newFile(CFTypeRef url) {
+CFTypeRef gioplugins_explorer_newFile(CFTypeRef url) {
     if (@available(iOS 13, macOS 10.15, *)) {
         explorer_file *f = [[explorer_file alloc] init];
         f.url = (__bridge NSURL *)url;
@@ -17,7 +17,7 @@ CFTypeRef newFile(CFTypeRef url) {
     return 0;
 }
 
-uint64_t fileRead(CFTypeRef file, uint8_t *b, uint64_t len) {
+uint64_t gioplugins_explorer_fileRead(CFTypeRef file, uint8_t *b, uint64_t len) {
     explorer_file *f = (__bridge explorer_file *)file;
 	if (@available(iOS 13, macOS 10.15, *)) {
 	    NSError *err = nil;
@@ -33,7 +33,7 @@ uint64_t fileRead(CFTypeRef file, uint8_t *b, uint64_t len) {
 	return 0; // Impossible condition since newFileReader will return 0.
 }
 
-bool fileWrite(CFTypeRef file, uint8_t *b, uint64_t len) {
+bool gioplugins_explorer_fileWrite(CFTypeRef file, uint8_t *b, uint64_t len) {
     explorer_file *f = (__bridge explorer_file *)file;
 	if (@available(iOS 13, macOS 10.15, *)) {
 	    NSError *err = nil;
@@ -48,7 +48,7 @@ bool fileWrite(CFTypeRef file, uint8_t *b, uint64_t len) {
 	return NO; // Impossible condition since newFileWriter will return 0.
 }
 
-bool fileClose(CFTypeRef file) {
+bool gioplugins_explorer_fileClose(CFTypeRef file) {
     explorer_file *f = (__bridge explorer_file *)file;
 	if (@available(iOS 13, macOS 10.15, *)) {
         [f.url stopAccessingSecurityScopedResource];
@@ -64,7 +64,7 @@ bool fileClose(CFTypeRef file) {
 	return NO; // Impossible condition since newFileWriter will return 0.
 }
 
-char* getError(CFTypeRef file) {
+char* gioplugins_explorer_getError(CFTypeRef file) {
     explorer_file *f = (__bridge explorer_file *)file;
     if (f.err == 0) {
         return 0;

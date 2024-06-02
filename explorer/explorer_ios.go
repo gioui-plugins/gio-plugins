@@ -17,8 +17,8 @@ package explorer
 @property uintptr_t callback;
 @end
 
-extern CFTypeRef saveFile(CFTypeRef view, char * name, uintptr_t callback, CFTypeRef pooled);
-extern CFTypeRef openFile(CFTypeRef view, char * ext, uintptr_t callback, CFTypeRef pooled);
+extern CFTypeRef gioplugins_explorer_saveFile(CFTypeRef view, char * name, uintptr_t callback, CFTypeRef pooled);
+extern CFTypeRef gioplugins_explorer_openFile(CFTypeRef view, char * ext, uintptr_t callback, CFTypeRef pooled);
 */
 import "C"
 import (
@@ -76,8 +76,8 @@ func (e *driver) saveFile(name string, mime mimetype.MimeType) (io.WriteCloser, 
 	cname := C.CString(name)
 	defer C.free(unsafe.Pointer(cname))
 
-	res := make(chan result[io.ReadWriteCloser], 1)
-	hcallback := cgo.NewHandle(func(r result[io.ReadWriteCloser]) { res <- r })
+	res := make(chan result, 1)
+	hcallback := cgo.NewHandle(func(r result) { res <- r })
 	defer hcallback.Delete()
 
 	r := e.savePool.Get().(C.CFTypeRef)
@@ -86,8 +86,8 @@ func (e *driver) saveFile(name string, mime mimetype.MimeType) (io.WriteCloser, 
 	}()
 
 	go e.config.RunOnMain(func() {
-		if r = C.saveFile(e.picker, cname, C.uintptr_t(hcallback), r); r == 0 {
-			res <- result[io.ReadWriteCloser]{error: ErrNotAvailable}
+		if r = C.gioplugins_explorer_saveFile(e.picker, cname, C.uintptr_t(hcallback), r); r == 0 {
+			res <- result{error: ErrNotAvailable}
 		}
 	})
 
@@ -95,7 +95,7 @@ func (e *driver) saveFile(name string, mime mimetype.MimeType) (io.WriteCloser, 
 	if file.error != nil {
 		return nil, file.error
 	}
-	return file.file, nil
+	return file.file.(io.WriteCloser), nil
 }
 
 func (e *driver) openFile(mimes []mimetype.MimeType) (io.ReadCloser, error) {
@@ -114,8 +114,8 @@ func (e *driver) openFile(mimes []mimetype.MimeType) (io.ReadCloser, error) {
 	cextensions := C.CString(s.String())
 	defer C.free(unsafe.Pointer(cextensions))
 
-	res := make(chan result[io.ReadWriteCloser], 1)
-	hcallback := cgo.NewHandle(func(r result[io.ReadWriteCloser]) { res <- r })
+	res := make(chan result, 1)
+	hcallback := cgo.NewHandle(func(r result) { res <- r })
 	defer hcallback.Delete()
 
 	r := e.openPool.Get().(C.CFTypeRef)
@@ -124,8 +124,8 @@ func (e *driver) openFile(mimes []mimetype.MimeType) (io.ReadCloser, error) {
 	}()
 
 	go e.config.RunOnMain(func() {
-		if r = C.openFile(e.picker, cextensions, C.uintptr_t(hcallback), r); r == 0 {
-			res <- result[io.ReadWriteCloser]{error: ErrNotAvailable}
+		if r = C.gioplugins_explorer_openFile(e.picker, cextensions, C.uintptr_t(hcallback), r); r == 0 {
+			res <- result{error: ErrNotAvailable}
 		}
 	})
 
@@ -133,13 +133,13 @@ func (e *driver) openFile(mimes []mimetype.MimeType) (io.ReadCloser, error) {
 	if file.error != nil {
 		return nil, file.error
 	}
-	return file.file, nil
+	return file.file.(io.ReadCloser), nil
 }
 
 //export pickerCallback
-func pickerCallback(u C.CFTypeRef, id C.uintptr_t) {
-	if fn, ok := cgo.Handle(id).Value().(func(result[io.ReadWriteCloser])); ok {
-		res := result[io.ReadWriteCloser]{error: ErrUserDecline}
+func gioplugins_explorer_pickerCallback(u C.CFTypeRef, id C.uintptr_t) {
+	if fn, ok := cgo.Handle(id).Value().(func(result)); ok {
+		res := result{error: ErrUserDecline}
 		if u != 0 {
 			res.file, res.error = newFile(u)
 		}

@@ -35,9 +35,7 @@ func (f *FileReader) Read(b []byte) (n int, err error) {
 		return 0, io.ErrClosedPipe
 	}
 
-	go func() {
-		fileSlice(f.index, f.index+uint32(len(b)), f.buffer, f.successFunc, f.failureFunc)
-	}()
+	go fileSlice(f.index, f.index+uint32(len(b)), f.buffer, f.successFunc, f.failureFunc)
 
 	buffer := <-f.callback
 	n32 := fileRead(buffer, b)
@@ -158,3 +156,15 @@ func (f *FileWriter) Close() error {
 	f.writable.Call("close")
 	return nil
 }
+
+//go:wasmimport gojs github.com/gioui-plugins/gio-plugins/explorer.fileRead
+func fileRead(value js.Value, b []byte) uint32
+
+//go:wasmimport gojs github.com/gioui-plugins/gio-plugins/explorer.fileWrite
+func fileWrite(value js.Value, b []byte)
+
+//go:wasmimport gojs github.com/gioui-plugins/gio-plugins/explorer.fileSlice
+func fileSlice(start, end uint32, value js.Value, success, failure js.Func)
+
+//go:wasmimport gojs github.com/gioui-plugins/gio-plugins/explorer.writableWrite
+func writableWrite(writable js.Value, success js.Value, failure js.Value, b []byte)

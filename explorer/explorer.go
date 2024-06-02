@@ -40,7 +40,7 @@ func (e *Explorer) SaveFile(name string, mime mimetype.MimeType) (io.WriteCloser
 
 var stringBuilderPool = sync.Pool{New: func() any { return &strings.Builder{} }}
 
-type result[T any] struct {
-	file  T
+type result struct {
+	file  interface{}
 	error error
 }

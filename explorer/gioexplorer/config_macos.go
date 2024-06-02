@@ -14,7 +14,12 @@ func NewConfigFromViewEvent(w *app.Window, evt app.ViewEvent) explorer.Config {
 	return r
 }
 
-func UpdateConfigFromViewEvent(config *explorer.Config, w *app.Window, evt app.ViewEvent) {
+func UpdateConfigFromViewEvent(config *explorer.Config, w *app.Window, e app.ViewEvent) {
+	evt, ok := e.(app.AppKitViewEvent)
+	if !ok {
+		return
+	}
+
 	config.View = evt.View
 	config.Layer = evt.Layer
 	config.RunOnMain = w.Run

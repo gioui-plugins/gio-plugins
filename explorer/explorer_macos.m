@@ -8,7 +8,7 @@
 #import <Appkit/AppKit.h>
 #import <UniformTypeIdentifiers/UniformTypeIdentifiers.h>
 
-void saveFile(CFTypeRef viewRef, char *name, uintptr_t id) {
+void gioplugins_explorer_saveFile(CFTypeRef viewRef, char *name, uintptr_t id) {
     NSView *view = (__bridge NSView *) viewRef;
 
     NSSavePanel *panel = [NSSavePanel savePanel];
@@ -16,14 +16,14 @@ void saveFile(CFTypeRef viewRef, char *name, uintptr_t id) {
     [panel setNameFieldStringValue:@(name)];
     [panel beginSheetModalForWindow:[view window] completionHandler:^(NSInteger result) {
         if (result == NSModalResponseOK) {
-            exportCallback((char *) [[panel URL].absoluteString UTF8String], id);
+            gioplugins_explorer_exportCallback((char *) [[panel URL].absoluteString UTF8String], id);
         } else {
-            exportCallback((char *) (""), id);
+            gioplugins_explorer_exportCallback((char *) (""), id);
         }
     }];
 }
 
-void openFile(CFTypeRef viewRef, char *ext, uintptr_t id) {
+void gioplugins_explorer_openFile(CFTypeRef viewRef, char *ext, uintptr_t id) {
     NSView *view = (__bridge NSView *) viewRef;
 
     NSOpenPanel *panel = [NSOpenPanel openPanel];
@@ -42,9 +42,9 @@ void openFile(CFTypeRef viewRef, char *ext, uintptr_t id) {
     [(NSSavePanel *) panel setAllowedContentTypes:[NSArray arrayWithArray:contentTypes]];
     [panel beginSheetModalForWindow:[view window] completionHandler:^(NSInteger result) {
         if (result == NSModalResponseOK) {
-            importCallback((char *) [[panel URL].absoluteString UTF8String], id);
+            gioplugins_explorer_importCallback((char *) [[panel URL].absoluteString UTF8String], id);
         } else {
-            importCallback((char *) (""), id);
+            gioplugins_explorer_importCallback((char *) (""), id);
         }
     }];
 }
