@@ -184,7 +184,6 @@ func (l *Plugin) Frame(ops *op.Ops) {
 	for v := range l.eventsCustomCurrent {
 		l.eventsCustomCurrent[v] = l.eventsCustomCurrent[v][:0]
 	}
-	l.eventsCustomNext, l.eventsCustomCurrent = l.eventsCustomCurrent, l.eventsCustomNext
 	l.eventsCustomNextMutex.Unlock()
 	l.eventsCustomCurrentMutex.Unlock()
 }
@@ -232,6 +231,12 @@ func (l *Plugin) ProcessEventFromGio(evt event.Event) event.Event {
 	switch e := evt.(type) {
 	case app.FrameEvent:
 		l.Invalidated.Store(false)
+
+		l.eventsCustomNextMutex.Lock()
+		l.eventsCustomCurrentMutex.Lock()
+		l.eventsCustomNext, l.eventsCustomCurrent = l.eventsCustomCurrent, l.eventsCustomNext
+		l.eventsCustomNextMutex.Unlock()
+		l.eventsCustomCurrentMutex.Unlock()
 
 		l.OriginalFrame = e.Frame
 		e.Frame = l.Frame
