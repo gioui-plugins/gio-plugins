@@ -10,9 +10,6 @@ import (
 	"git.wow.st/gmp/jni"
 )
 
-//go:generate mkdir -p $TEMP/hyperlink/classes && javac -source 8 -target 8 -bootclasspath $ANDROID_HOME/platforms/android-30/android.jar -d $TEMP/hyperlink/classes hyperlink_android.java
-//go:generate jar cf hyperlink_android.jar -C $TEMP/hyperlink/classes .
-
 type driver struct {
 	config Config
 	mutex  sync.Mutex

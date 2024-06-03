@@ -34,11 +34,17 @@ type safedataPlugin struct {
 	client *safedata.SafeData
 }
 
-// TypeCommands implements plugin.Handler.
-func (p *safedataPlugin) TypeCommands() []reflect.Type { return wantCommands }
+// TypeOp implements plugin.Handler.
+func (p *safedataPlugin) TypeOp() []reflect.Type { return nil }
+
+// TypeCommand implements plugin.Handler.
+func (p *safedataPlugin) TypeCommand() []reflect.Type { return wantCommands }
 
 // TypeEvent implements plugin.Handler.
 func (p *safedataPlugin) TypeEvent() []reflect.Type { return wantEvents }
+
+// Op implements plugin.Handler.
+func (p *safedataPlugin) Op(op interface{}) {}
 
 // Execute implements plugin.Handler.
 func (p *safedataPlugin) Execute(op interface{}) {
@@ -54,8 +60,8 @@ func (p *safedataPlugin) Execute(op interface{}) {
 	}
 }
 
-// ListenEvents implements plugin.Handler.
-func (p *safedataPlugin) ListenEvents(evt event.Event) {
+// Event implements plugin.Handler.
+func (p *safedataPlugin) Event(evt event.Event) {
 	switch evt := evt.(type) {
 	case app.ViewEvent:
 		config := NewConfigFromViewEvent(p.window, evt, safedata.DefaultAppName)

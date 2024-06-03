@@ -120,6 +120,18 @@ the Windows and Android as high-priority, and the WebAssembly as medium-priority
 Furthermore, we don't have any plans to support Linux and FreeBSD due to the low market-share and the lack of API
 standards.
 
+| Priority | OS          | Arch         |
+|----------|-------------|--------------|
+| High     | Windows     | AMD64        |
+| High     | Android     | ARM64, ARMv7 |
+| Medium   | WebAssembly | WASMv1       |
+| Low      | MacOS       | ARM64, AMD64 |
+| Low      | iOS         | ARM64        |
+| Ignored  | FreeBSD     | -            |
+| Ignored  | Linux       | -            |
+
+Currently, some package might not work on some platforms, and some features might not be available on some platforms.
+
 ### Security
 
 This package heavily uses `unsafe`, and as it suggest: it can be unsafe to use. We are not responsible for any damage

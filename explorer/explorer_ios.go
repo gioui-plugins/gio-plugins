@@ -136,7 +136,7 @@ func (e *driver) openFile(mimes []mimetype.MimeType) (io.ReadCloser, error) {
 	return file.file.(io.ReadCloser), nil
 }
 
-//export pickerCallback
+//export gioplugins_explorer_pickerCallback
 func gioplugins_explorer_pickerCallback(u C.CFTypeRef, id C.uintptr_t) {
 	if fn, ok := cgo.Handle(id).Value().(func(result)); ok {
 		res := result{error: ErrUserDecline}

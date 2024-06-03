@@ -22,9 +22,6 @@ import (
 	"github.com/gioui-plugins/gio-plugins/explorer/mimetype"
 )
 
-//go:generate javac -source 8 -target 8  -bootclasspath $ANDROID_HOME/platforms/android-30/android.jar -d $TEMP/explorer_explorer_android/classes explorer_android.java
-//go:generate jar cf explorer_android.jar -C $TEMP/explorer_explorer_android/classes .
-
 type driver struct {
 	config Config
 	mutex  sync.Mutex
@@ -113,7 +110,7 @@ func (e *driver) saveFile(filename string, mime mimetype.MimeType) (io.WriteClos
 			e.mutex.Lock()
 			defer e.mutex.Unlock()
 
-			return jni.CallVoidMethod(env, e.explorerClass, e.explorerMethodSave,
+			return jni.CallVoidMethod(env, e.explorerObject, e.explorerMethodSave,
 				jni.Value(e.config.View),
 				jni.Value(jni.JavaString(env, strings.TrimPrefix(strings.ToLower(filepath.Ext(filename)), "."))),
 				jni.Value(cgo.NewHandle(callback)),
