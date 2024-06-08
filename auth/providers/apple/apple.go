@@ -50,7 +50,7 @@ func (c *Provider) webURL(nonce string) string {
 	return "https://appleid.apple.com/auth/authorize?" + v.Encode()
 }
 
-// Scheme returns the scheme for Windows and macOS (non-AppStore).
+// Scheme returns the scheme for Windows, Android and macOS (non-AppStore).
 func (c *Provider) Scheme() (out string) {
 	return c.SchemeURL
 }

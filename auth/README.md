@@ -44,24 +44,34 @@ in `gogio`.
 
 ## Security
 
-Not all providers supports PKCE (I'm aim at you, Apple). Consider as recommended to use "Nonce" as additional security
-measure, not just for replay attacks.
+Not all providers supports PKCE (Apple, who have guessed?!).
+
+It's not publicly recommended or endorsed. However, I recommend to use "Nonce" as additional security measure, not
+just for replay attacks. That is explained below.
+
+**Not that it don't prevent impersonation attacks (some other app pretending to be your app), that is issue related
+to OAuth2/OpenID Connect via CustomScheme/DeepLinking.** 
 
 ### Recommended Flow
 
-If you are connecting to your own backend, for authentication, you should use the following flow:
+If you are connecting to your own backend, for authentication, you can use the following flow:
 
-1. Client: Generate a random byte sequence (>= 32 bytes)
+1. Client: Generate a random byte sequence (usually 32 bytes)
     - You may need to store the random byte sequence, if you are on a web environment (JS/WASM).
     - You may want to set additional cookies to prevent CSRF and can combine that if this random-sequence.
 2. Client: Creates a Hash (using any secure PRP/Hash) and encodes it.
-3. Client: Define the `Nonce` as the pre-image of the hash (the value of step 1) and to the request (using Open function
-   from Auth).
-4. Client: Once the response received from the provider, along with the pre-image to your backend.
-5. Server: Validates the OpenID Connect signature and the `Nonce` (using the pre-image).
+3. Client: When calling `Open`, defines the `Nonce` as the image/result of the hash (the value of step 2).
+4. User: Authenticates on the provider (that is Google/Apple, external service). The provider will send the response
+   to the client (using the custom scheme or some native way).
+5. Client: Once the response is received (from step 4), send the OpenID (or other value) AND the pre-image (value from
+   step 1) to your backend-server.
+6. Server: Validates the OpenID Connect signature and the `Nonce` (using the pre-image sent on step 5).
 
 That will prevent replay attacks, since the `Nonce` must be unique for each request. Also, it will prevent someone
 from stealing the `id_token` and using it on your backend, since the `Nonce` must match if the provided pre-image.
+
+So, if other app gets the response from the provider, it will not be able to use it on your backend, since it doesn't
+know the pre-image used for the Nonce.
 
 Additionally, it's possible to combine other information into the `Nonce`, and use similarly to `State`.
 
@@ -72,17 +82,17 @@ Additionally, it's possible to combine other information into the `Nonce`, and u
 Add your provider to the `gioauth.DefaultProviders` list. For example:
 
 ```go
-	gioauth.DefaultProviders = []providers.Provider{
-		&google.Provider{
-			WebClientID:     "YOUR-CODE.apps.googleusercontent.com",
-			DesktopClientID: "YOUR-CODE.apps.googleusercontent.com",
-			RedirectURL:     "",
-		},
-		&apple.Provider{
-			ServiceIdentifier: "YOUR-APP",
-			RedirectURL:       "https://your-call-back.com/path/",
-		},
-	}
+    gioauth.DefaultProviders = []providers.Provider{
+&google.Provider{
+WebClientID:     "YOUR-CODE.apps.googleusercontent.com",
+DesktopClientID: "YOUR-CODE.apps.googleusercontent.com",
+RedirectURL:     "",
+},
+&apple.Provider{
+ServiceIdentifier: "YOUR-APP",
+RedirectURL:       "https://your-call-back.com/path/",
+},
+}
 ```
 
 You also need to use `gogio` to setup deeplinking, see above.
@@ -131,6 +141,6 @@ Events are response sent using the `Tag` and should be handled with `gtx.Events(
     - Developers: must have macOS device with Golang, Xcode, and CLang installed.
 - Android:
     - End-Users: must have Android 6+.
-    - Developers: must have Golang 1.18+, OpenJDK 1.8, Android NDK, Android SDK 30
+    - Developers: must have Golang 1.18+, OpenJDK 11, Android NDK, Android SDK 30 and Maven.
       installed ([here for more information](https://gioui.org/doc/install/android)).
 

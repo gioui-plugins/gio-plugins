@@ -1,2 +1,2 @@
 gen:
-	go run ../../../cmd/gen/pom.go
+	go run ../../../cmd/pomgen/pom.go .

@@ -11,14 +11,23 @@ import (
 )
 
 func main() {
+	path := os.Args[1]
+	if path == "" {
+		panic("missing path")
+	}
+
 	cmd := exec.Command("mvn", "dependency:copy-dependencies", "-U", "-DoutputDirectory=target")
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
+	cmd.Dir = path
 	if err := cmd.Run(); err != nil {
 		panic(err)
 	}
 
-	matches, err := filepath.Glob("target/*")
+	os.Mkdir(filepath.Join(path, "target"), 0777)
+	os.Mkdir(filepath.Join(path, "jar"), 0777)
+
+	matches, err := filepath.Glob(filepath.Join(path, "target", "*"))
 	if err != nil {
 		panic(err)
 	}
@@ -75,7 +84,7 @@ func main() {
 					panic(err)
 				}
 
-				d := filepath.Join("target", filepath.Base(match)+".jar")
+				d := filepath.Join(path, "target", filepath.Base(match)+".jar")
 				out, err := os.Create(d)
 				if err != nil {
 					panic(err)
@@ -89,7 +98,7 @@ func main() {
 			}
 		}
 
-		out, err := os.Create(filepath.Join("jar", filepath.Base(match)))
+		out, err := os.Create(filepath.Join(path, "jar", filepath.Base(match)))
 		if err != nil {
 			panic(err)
 		}
@@ -103,7 +112,7 @@ func main() {
 	}
 
 	for i := range jars {
-		jars[i] = "./" + filepath.Join("internal", "android", "target", filepath.Base(jars[i]))
+		jars[i] = filepath.Join(path, "target", filepath.Base(jars[i]))
 	}
 
 	fmt.Println(strings.Join(jars, ":"))

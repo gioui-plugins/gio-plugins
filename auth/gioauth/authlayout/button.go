@@ -2,6 +2,7 @@ package authlayout
 
 import (
 	"gioui.org/font"
+	"gioui.org/io/event"
 	"gioui.org/io/pointer"
 	"gioui.org/layout"
 	"gioui.org/op"
@@ -93,7 +94,7 @@ func (b ButtonStyle) layoutText(gtx layout.Context, icon *giosvg.Icon, pointer *
 			// Logo
 			var off op.TransformStack
 			switch b.IconAlignment {
-			case layout.Start:
+			case layout.Start, layout.Baseline:
 				off = op.Offset(image.Pt(0, 0)).Push(gtx.Ops)
 			case layout.Middle:
 				off = op.Offset(image.Pt((gtx.Constraints.Max.X-logoSize-logoPadding-labelDims.Size.X)/2, 0)).Push(gtx.Ops)
@@ -193,7 +194,7 @@ type Pointer struct {
 }
 
 func (e *Pointer) add(ops *op.Ops) {
-	pointer.InputOp{Tag: e, Types: pointer.Press | pointer.Release | pointer.Enter | pointer.Leave | pointer.Cancel}.Add(ops)
+	event.Op(ops, e)
 	pointer.CursorPointer.Add(ops)
 }
 
@@ -206,10 +207,15 @@ func (e *Pointer) Clicked(gtx layout.Context) bool {
 	e.clickFrame = gtx.Now
 	e.clicked = false
 
-	for _, ev := range gtx.Events(e) {
-		switch evt := ev.(type) {
+	for {
+		evt, ok := gtx.Event(pointer.Filter{Target: e, Kinds: pointer.Press | pointer.Release | pointer.Enter | pointer.Leave | pointer.Cancel})
+		if !ok {
+			break
+		}
+
+		switch evt := evt.(type) {
 		case pointer.Event:
-			switch evt.Type {
+			switch evt.Kind {
 			case pointer.Release:
 				if !e.pressed || e.pid != evt.PointerID {
 					break
@@ -253,6 +259,7 @@ func (e *Pointer) Clicked(gtx layout.Context) bool {
 				if e.pid == evt.PointerID {
 					e.entered = true
 				}
+			default:
 			}
 		}
 	}

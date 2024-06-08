@@ -1,12 +1,13 @@
 package plugin
 
 import (
+	"encoding/binary"
 	"gioui.org/app"
 	"gioui.org/io/event"
 	"gioui.org/op"
 	"gioui.org/op/clip"
+	"golang.org/x/crypto/blake2b"
 	"reflect"
-	"sync"
 )
 
 // Handler is the interface that represents the Plugin.
@@ -43,6 +44,25 @@ type Filter interface {
 
 	// Matches returns true if the event matches the Filter.
 	Matches(event.Event) bool
+}
+
+// UntaggedFilter is used to filter events, without using event.Tag.
+type UntaggedFilter interface {
+	event.Filter
+
+	// Matches returns true if the event matches the Filter.
+	Matches(event.Event) bool
+
+	// Name returns the name of the filter.
+	Name() uint64
+}
+
+// NewIntName returns a uint64 from the given name,
+// it is used to generate a unique name for the untagged filter and events.
+func NewIntName(name string) uint64 {
+	h, _ := blake2b.New(8, nil)
+	h.Write([]byte(name))
+	return binary.BigEndian.Uint64(h.Sum(nil))
 }
 
 var registeredPlugins []func(w *app.Window, handler *Plugin) Handler
@@ -102,58 +122,8 @@ func NewHandlerFunc(ops, cmd, evt []reflect.Type, listenOp, listenCmd func(op in
 	}
 }
 
-// OpPool is a pool of specific type of op.
-type OpPool[T any] struct {
-	mutex  *sync.Mutex
-	unused []*T
-	empty  T
-}
-
-// NewOpPool returns a new OpPool.
-// That is useful to avoid memory allocation, you MUST
-// call Release() after you done using the op.
-func NewOpPool[T any]() OpPool[T] {
-	return OpPool[T]{
-		mutex:  &sync.Mutex{},
-		unused: make([]*T, 0, 16),
-		empty:  *new(T),
-	}
-}
-
-// Get returns a new op from the pool.
-func (x *OpPool[T]) Get() *T {
-	x.mutex.Lock()
-	defer x.mutex.Unlock()
-
-	if len(x.unused) == 0 {
-		return new(T)
-	}
-
-	n := len(x.unused) - 1
-	v := x.unused[n]
-	x.unused = x.unused[:n]
-	return v
-}
-
-// WriteOp adds the given data into the op.Ops queue.
-func (x *OpPool[T]) WriteOp(op *op.Ops, data T) {
-	cmd := x.Get()
-	*cmd = data
-
-	WriteOp(op, cmd)
-}
-
 // WriteOp writes the given op into the op.Ops queue.
 func WriteOp(ops *op.Ops, c any) {
 	defer clip.Rect{}.Push(ops).Pop()
 	event.Op(ops, c)
-}
-
-// Release releases the given data, so it can be reused.
-func (x *OpPool[T]) Release(data *T) {
-	x.mutex.Lock()
-	defer x.mutex.Unlock()
-
-	*data = x.empty
-	x.unused = append(x.unused, data)
 }

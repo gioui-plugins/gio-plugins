@@ -38,6 +38,18 @@ var DefaultDarkGoogleButtonStyle = ButtonStyle{
 
 // GoogleDummyButton is a button that can be used to sign in with Google.
 // It doesn't perform any action, it just displays a button.
+//
+// You need to call Clicked (from ButtonStyle) to check if the button was
+// clicked, and Layout to lay out the button.
+//
+// Usually you would do something similar to:
+//
+//	if googleButton.Clicked(gtx) {
+//	   // Perform the Google sign in.
+//	   gtx.Execute(gioauth.Open{Tag: tag, Provider: google.IdentifierGoogle, Nonce: nonce})
+//	}
+//
+// googleButton.Layout(gtx)
 type GoogleDummyButton struct {
 	ButtonStyle
 	Pointer

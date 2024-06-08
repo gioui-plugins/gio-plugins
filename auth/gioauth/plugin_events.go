@@ -1,7 +1,6 @@
 package gioauth
 
 import (
-	"gioui.org/io/system"
 	"github.com/gioui-plugins/gio-plugins/auth"
 	"github.com/gioui-plugins/gio-plugins/plugin"
 	"reflect"
@@ -11,8 +10,8 @@ import (
 
 var (
 	wantEvents = []reflect.Type{
-		reflect.TypeOf(app.ViewEvent{}),
-		reflect.TypeOf(system.FrameEvent{}),
+		reflect.TypeOf(plugin.ViewEvent{}),
+		reflect.TypeOf(app.FrameEvent{}),
 		reflect.TypeOf(plugin.EndFrameEvent{}),
 	}
 )

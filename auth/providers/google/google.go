@@ -86,6 +86,7 @@ func (c *Provider) Scheme() (out string) {
 	return out + c.DesktopClientID[0:last]
 }
 
+// Identifier returns the identifier for the provider.
 func (c *Provider) Identifier() providers.Identifier {
 	return IdentifierGoogle
 }

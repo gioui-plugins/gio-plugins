@@ -32,7 +32,9 @@ var (
 type Auth struct {
 	// driver holds OS-Specific content, it varies for each OS.
 	driver
-	providers map[providers.Identifier]providers.Provider
+
+	providersMutex sync.Mutex
+	providers      map[providers.Identifier]providers.Provider
 
 	eventsMutex sync.Mutex
 	eventsChan  []chan Event
@@ -57,6 +59,9 @@ func NewAuth(config Config, provider ...providers.Provider) *Auth {
 
 // AddProvider adds a new provider to the Auth
 func (a *Auth) AddProvider(provider providers.Provider) {
+	a.providersMutex.Lock()
+	defer a.providersMutex.Unlock()
+
 	if provider == nil {
 		return
 	}
@@ -73,8 +78,15 @@ func (a *Auth) Configure(config Config) {
 
 // Open displays the authentication window.
 // It will discard any previous authentication, if any.
+//
+// Nonce is a random string, which is used to prevent replay attacks,
+// however it can be an image/result of a hash function, which you can
+// later use to verify the authenticity of the response, using the
+// pre-image of the hash, sent by the user.
 func (a *Auth) Open(provider providers.Identifier, nonce string) error {
+	a.providersMutex.Lock()
 	p, ok := a.providers[provider]
+	a.providersMutex.Unlock()
 	if !ok {
 		return ErrProviderNotFound
 	}
