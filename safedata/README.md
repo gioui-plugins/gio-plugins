@@ -60,7 +60,7 @@ Operations must be added with `gtx.Execute` method. The operation will be execut
 
 ## Events:
 
-Events are response sent using the `Tag` and should be handled with `gtx.Events()`.
+Events are response sent using the `Tag` and should be handled with `gioplugins.Event()`.
 
 - `giosafedata.ErrorEvent`:
     - Sent to `Tag` when it's not possible to write/read/list/delete.

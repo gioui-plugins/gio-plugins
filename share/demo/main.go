@@ -71,7 +71,7 @@ func main() {
 
 	go func() {
 		for {
-			e := gioplugins.Event(w)
+			e := gioplugins.Hijack(w)
 
 			switch e := e.(type) {
 			case app.FrameEvent:
@@ -88,9 +88,9 @@ func main() {
 				if submit.Clicked(gtx) {
 					switch currentMode {
 					case modeText:
-						gtx.Execute(gioshare.TextCmd{Title: title.Text(), Text: desc.Text()})
+						gioplugins.Execute(gtx, gioshare.TextCmd{Title: title.Text(), Text: desc.Text()})
 					case modeLink:
-						gtx.Execute(gioshare.WebsiteCmd{Title: title.Text(), Text: desc.Text(), Link: url.Text()})
+						gioplugins.Execute(gtx, gioshare.WebsiteCmd{Title: title.Text(), Text: desc.Text(), Link: url.Text()})
 					}
 				}
 

@@ -4,6 +4,8 @@ gioui.org v0.1.1-0.20230801070910-edbf872b44af h1:JyZldA0MGu2FjO8vCnLOhnFeL1HicO
 gioui.org v0.1.1-0.20230801070910-edbf872b44af/go.mod h1:klzDun/4xN9Z9DyIRVyNHU8b6lqbHIcJpnIhKOArpyY=
 gioui.org v0.6.0 h1:ZSXO/AbpFZJ2L9NU69uFQfDI3BKIH+YEJElrn0B+aZI=
 gioui.org v0.6.0/go.mod h1:eUvGo6FAzA7jUqeSu5a+M1W03yc9r1nanIBS8A5+Nng=
+gioui.org v0.6.1-0.20240607083507-1151eac07d84 h1:Q/bNtQo2CNji8D4Zgo7BsLKj1MYXmG6nMXmujuJNtz0=
+gioui.org v0.6.1-0.20240607083507-1151eac07d84/go.mod h1:19wZxaNP+eHN4H2YdZwEfbkAAgoYB5rcIbDHo4BqUl4=
 gioui.org/cpu v0.0.0-20210808092351-bfe733dd3334/go.mod h1:A8M0Cn5o+vY5LTMlnRoK3O5kG+rH0kWfJjeKd9QpBmQ=
 gioui.org/cpu v0.0.0-20220412190645-f1e9e8c3b1f7 h1:tNJdnP5CgM39PRc+KWmBRRYX/zJ+rd5XaYxY5d5veqA=
 gioui.org/cpu v0.0.0-20220412190645-f1e9e8c3b1f7/go.mod h1:A8M0Cn5o+vY5LTMlnRoK3O5kG+rH0kWfJjeKd9QpBmQ=

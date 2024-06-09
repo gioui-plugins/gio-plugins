@@ -155,5 +155,8 @@ func (x *OpPool[T]) Release(data *T) {
 	defer x.mutex.Unlock()
 
 	*data = x.empty
+	if len(x.unused) >= cap(x.unused) {
+		return
+	}
 	x.unused = append(x.unused, data)
 }

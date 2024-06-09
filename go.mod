@@ -2,10 +2,8 @@ module github.com/gioui-plugins/gio-plugins
 
 go 1.22
 
-replace gioui.org => ../gio
-
 require (
-	gioui.org v0.6.0
+	gioui.org v0.6.1-0.20240607083507-1151eac07d84
 	git.wow.st/gmp/jni v0.0.0-20210610011705-34026c7e22d0
 	github.com/go-ole/go-ole v1.2.6
 	github.com/inkeliz/go_inkwasm v0.1.23-0.20240519174017-989fbe5b10f6

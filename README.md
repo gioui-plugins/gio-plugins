@@ -26,14 +26,14 @@ First, you must download the `plugin` package:
 go get -u github.com/gioui-plugins/gio-plugins@latest
 ```
 
-Now, you need to modify your event-loop, you must include `gioplugins.Event(window)` in your event-loop, before handling
+Now, you need to modify your event-loop, you must include `gioplugins.Hijack(window)` in your event-loop, before handling
 events:
 
 ```diff
 window := &app.Window{} // Gio window
 
 for { 
-+   evt := gioplugins.Event(window) // Gio main event loop
++   evt := gioplugins.Hijack(window) // Gio main event loop
 
     switch evt := evt.(type) {
         // ...
@@ -44,7 +44,7 @@ for {
 Each plugin has its own README.md file, explaining how to use it. In general, you can simple
 use `nameOfPlugin.SomeOp{}.Add(gtx.Ops)`, similar of how you use `pointer.PassOp{}.Add(gtx.Ops)`, native 
 from Gio. Beginning with Gio 0.6, it also introduces `Command`, which is executed using `gtx.Execute`, you can
-also use Commands, if the plugin supports it, for instance `gtx.Execute(gioshare.TextCmd{Text: "Hello, World!"})`, 
+also use Commands, if the plugin supports it, for instance `gioplugins.Execute(gtx, gioshare.TextCmd{Text: "Hello, World!"})`, 
 similar to what you are familiar with `gtx.Execute(clipboard.WriteCmd{Text: "Hello, World!"})`.
 
 Once `gioplugins.Event` is set, you can use the plugins as simple `op` operations or `cmd` commands. If you are unsure 
@@ -53,14 +53,16 @@ if the plugin is working, you can use the `pingpong` package, which will return 
 ```go
 pingpong.PingOp{Tag: &something}.Add(gtx.Ops)
 
-gtx.Execute(pingpong.PingCmd{Tag: &something})
+gioplugins.Execute(gtx, pingpong.PingCmd{Tag: &something})
 ```
 
-You can receive responses using the `Tag`, as Gio-core operations:
+> Note: It's uses `gioplugins.Execute` and not `gtx.Execute`!
+
+You can receive responses using the `Tag`, similar Gio-core operations:
 
 ```go
 for {
-	evt, ok := gtx.Events(pingpong.Filter{Tag: &something})
+	evt, ok := gioplugins.Event(pingpong.Filter{Tag: &something})
 	if !ok {
 		break
     } 
@@ -77,14 +79,14 @@ Of course, `pingpong` has no use in real-world applications, but it can be used 
 
 **We have few plugins available:**
 
-| Name           | Description | OS |
-|----------------|------------------|-----------------|
-| **[PingPong](https://github.com/gioui-plugins/gio-plugins/tree/main/pingpong)** | Test if the plugin system is working.            | _Android, iOS, macOS, Windows, WebAssembly, Linux, FreeBSD_  |  
-| **[Share](https://github.com/gioui-plugins/gio-plugins/tree/main/share)** | Share text/links using the native share dialog.            | _Android, iOS, macOS, Windows, WebAssembly_  |  
-| **[WebViewer](https://github.com/gioui-plugins/gio-plugins/tree/main/webviewer)** | Display in-app webview using the native webview implementation on each platform.            | _Android, iOS, macOS, Windows, WebAssembly_  |  
-| **[Hyperlink](https://github.com/gioui-plugins/gio-plugins/tree/main/hyperlink)** |  Open hyperlinks in the default browser.            | _Android, iOS, macOS, Windows, WebAssembly_  |  
-| **[Explorer](https://github.com/gioui-plugins/gio-plugins/tree/main/explorer)** |  Opens the native file-dialog, to read/write files.  | _Android, iOS, macOS, Windows, WebAssembly_  |  
-| **[Safedata](https://github.com/gioui-plugins/gio-plugins/tree/main/safedata)** | Read/Write files into the secure storage of the device. | _Android, iOS, macOS, Windows, WebAssembly_  |
+| Name                                                                              | Description                                                                      | OS                                                          |
+|-----------------------------------------------------------------------------------|----------------------------------------------------------------------------------|-------------------------------------------------------------|
+| **[PingPong](https://github.com/gioui-plugins/gio-plugins/tree/main/pingpong)**   | Test if the plugin system is working.                                            | _Android, iOS, macOS, Windows, WebAssembly, Linux, FreeBSD_ |  
+| **[Share](https://github.com/gioui-plugins/gio-plugins/tree/main/share)**         | Share text/links using the native share dialog.                                  | _Android, iOS, macOS, Windows, WebAssembly_                 |  
+| **[WebViewer](https://github.com/gioui-plugins/gio-plugins/tree/main/webviewer)** | Display in-app webview using the native webview implementation on each platform. | _Android, iOS, macOS, Windows, WebAssembly_                 |  
+| **[Hyperlink](https://github.com/gioui-plugins/gio-plugins/tree/main/hyperlink)** | Open hyperlinks in the default browser.                                          | _Android, iOS, macOS, Windows, WebAssembly_                 |  
+| **[Explorer](https://github.com/gioui-plugins/gio-plugins/tree/main/explorer)**   | Opens the native file-dialog, to read/write files.                               | _Android, iOS, macOS, Windows, WebAssembly_                 |  
+| **[Safedata](https://github.com/gioui-plugins/gio-plugins/tree/main/safedata)**   | Read/Write files into the secure storage of the device.                          | _Android, iOS, macOS, Windows, WebAssembly_                 |
 
 **We have few plugins planned:**
 

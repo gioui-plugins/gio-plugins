@@ -10,6 +10,7 @@ import (
 	_ "image/jpeg"
 	"image/png"
 	_ "image/png"
+	"os"
 	"sync"
 
 	"gioui.org/app"
@@ -56,15 +57,19 @@ func main() {
 
 	go func() {
 		for {
-			evt := gioplugins.Event(w)
+			evt := gioplugins.Hijack(w)
 
 			switch evt := evt.(type) {
 			case app.FrameEvent:
 				mutex.Lock()
 				gtx := app.NewContext(ops, evt)
 				p.Layout(gtx)
-				evt.Frame(ops)
 				mutex.Unlock()
+
+				evt.Frame(ops)
+			case app.DestroyEvent:
+				os.Exit(0)
+				return
 			}
 		}
 	}()
@@ -95,19 +100,19 @@ var _FileTypes = []mimetype.MimeType{
 func (p *Page) Layout(gtx layout.Context) layout.Dimensions {
 
 	if p.uploadClickable.Clicked(gtx) {
-		gtx.Execute(gioexplorer.OpenFileCmd{Tag: p.tag, Mimetype: _FileTypes})
+		gioplugins.Execute(gtx, gioexplorer.OpenFileCmd{Tag: p.tag, Mimetype: _FileTypes})
 		p.error = ""
 		p.cancel = false
 	}
 
 	if p.saveClickable.Clicked(gtx) {
-		gtx.Execute(gioexplorer.SaveFileCmd{Tag: p.tag, Mimetype: _FileTypes[0], Filename: "image.png"})
+		gioplugins.Execute(gtx, gioexplorer.SaveFileCmd{Tag: p.tag, Mimetype: _FileTypes[0], Filename: "image.png"})
 		p.error = ""
 		p.cancel = false
 	}
 
 	for {
-		evt, ok := gtx.Event(gioexplorer.Filter{Target: p.tag})
+		evt, ok := gioplugins.Event(gtx, gioexplorer.Filter{Target: p.tag})
 		if !ok {
 			break
 		}

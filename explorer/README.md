@@ -33,7 +33,7 @@ That will open native File Dialog/File Picker. Once the file is selected by the 
 one `explorer.OpenFileEvent` will be sent to the given `Tag`. 
 
 ```go
-gtx.Execute(gioexplorer.OpenFileCmd{
+gioplugins.Execute(gtx, gioexplorer.OpenFileCmd{
     Tag: yourTag, 
     Mimetype: []mimetype.MimeType{
       {Extension: "png", Type: "image", Subtype: "png"},
@@ -56,7 +56,7 @@ Operations must be added with `gtx.Execute` method. The operation will be execut
 
 ## Events:
 
-Events are response sent using the `Tag` and should be handled with `gtx.Events()`.
+Events are response sent using the `Tag` and should be handled with `gioplugins.Event()`.
 
 - `gioexplorer.OpenFileEvent`:
   - Sent to `Tag` when the user chooses the file to be read/open. That event contains one io.ReadCloser.

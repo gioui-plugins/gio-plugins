@@ -167,16 +167,17 @@ func (l *Plugin) Focused(tag event.Tag) bool {
 func (l *Plugin) Frame(ops *op.Ops) {
 	l.OriginalFrame(ops)
 
-	for _, index := range l.RedirectEvent[reflect.TypeOf(EndFrameEvent{})] {
-		l.Plugins[index].Event(EndFrameEvent{})
-	}
-
 	for i := range l.visited {
 		delete(l.visited, i)
 	}
 
 	if len(l.RedirectOp) > 0 {
 		l.Op((*unsafeOps)(unsafe.Pointer(&ops.Internal)))
+	}
+
+	// Must be after processing ops
+	for _, index := range l.RedirectEvent[reflect.TypeOf(EndFrameEvent{})] {
+		l.Plugins[index].Event(EndFrameEvent{})
 	}
 
 	l.eventsCustomNextMutex.Lock()

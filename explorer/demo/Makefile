@@ -14,6 +14,7 @@ windows:
 	$(GO) run $(GOGIO) -target windows -o ./windows.exe .
 
 macos:
-	$(GO) run $(GOGIO) -target macos -o ./macos.app .
+	$(GO) run $(GOGIO) -target macos -arch arm64 -o ./macos_arm64.app .
+	$(GO) run $(GOGIO) -target macos -arch amd64 -o ./macos_intel.app .
 
 all: js android ios windows macos

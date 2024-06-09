@@ -32,7 +32,7 @@ func main() {
 	ops := new(op.Ops)
 	go func() {
 		for {
-			evt := gioplugins.Event(window)
+			evt := gioplugins.Hijack(window)
 
 			switch evt := evt.(type) {
 			case app.FrameEvent:
@@ -49,12 +49,14 @@ func main() {
 					}),
 					layout.Rigid(func(gtx layout.Context) layout.Dimensions {
 						if Load.Clicked(gtx) {
-							gtx.Execute(giosafedata.ReadSecretCmd{Tag: Load, Identifier: TextKey.Text()})
+
+							gioplugins.Execute(gtx, giosafedata.ReadSecretCmd{Tag: Load, Identifier: TextKey.Text()})
+
 							TextKey.SetText("")
 							TextData.SetText("")
 						}
 						for {
-							evt, ok := gtx.Event(giosafedata.Filter{Source: Load})
+							evt, ok := gioplugins.Event(gtx, giosafedata.Filter{Source: Load})
 							if !ok {
 								break
 							}
@@ -81,7 +83,7 @@ func main() {
 					}),
 					layout.Rigid(func(gtx layout.Context) layout.Dimensions {
 						if Save.Clicked(gtx) {
-							gtx.Execute(giosafedata.WriteSecretCmd{
+							gioplugins.Execute(gtx, giosafedata.WriteSecretCmd{
 								Secret: safedata.Secret{
 									Identifier: TextKey.Text(),
 									Data:       []byte(TextData.Text()),

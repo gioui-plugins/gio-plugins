@@ -64,7 +64,7 @@ func main() {
 		ops := new(op.Ops)
 		// first := true
 		for {
-			evt := gioplugins.Event(window)
+			evt := gioplugins.Hijack(window)
 
 			switch evt := evt.(type) {
 			case app.DestroyEvent:
@@ -236,7 +236,7 @@ func (b *Browsers) Layout(gtx layout.Context) layout.Dimensions {
 		}
 
 		if submited {
-			gtx.Execute(giowebview.NavigateCmd{View: b.Tags[i], URL: t.Text()})
+			gioplugins.Execute(gtx, giowebview.NavigateCmd{View: b.Tags[i], URL: t.Text()})
 		}
 	}
 
@@ -248,7 +248,7 @@ func (b *Browsers) Layout(gtx layout.Context) layout.Dimensions {
 
 	for i := range b.Tags {
 		for {
-			evt, ok := gtx.Event(giowebview.Filter{Target: b.Tags[i]})
+			evt, ok := gioplugins.Event(gtx, giowebview.Filter{Target: b.Tags[i]})
 			if !ok {
 				break
 			}

@@ -29,7 +29,7 @@ To open one link, you can use the `Open` operation.
 That will open the link in the default browser. You can use `OpenURL` to open a `*url.URL`:
 
 ```go
-gtx.Execute(giohyperlink.OpenOp{URI: &url.URL{
+gioplugins.Execute(gtx, giohyperlink.OpenOp{URI: &url.URL{
     Scheme: "https",
     Host:   "github.com",
 }})
@@ -44,7 +44,7 @@ Operations must be added with `gtx.Execute` method. The operation will be execut
 
 ## Events:
 
-Events are response sent using the `Tag` and should be handled with `gtx.Events()`.
+Events are response sent using the `Tag` and should be handled with `gioplugins.Event()`.
 
 - `giohyperlink.ErrorEvent`:
     - Sent to `Tag` when it's not possible to open the hyperlink.

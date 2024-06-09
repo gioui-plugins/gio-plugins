@@ -91,7 +91,7 @@ first `webviewer.WebViewOp`, it will affect all WebViews. It's recommended to se
 
 ## Events
 
-Events are response sent using the `Tag` and should be handled with `gtx.Events()`.
+Events are response sent using the `Tag` and should be handled with `gioplugins.Event()`.
 
 - `webviewer.NavigationEvent`:
     - Sent to `WebViewOp.Tag` when the WebView navigates to a new page.

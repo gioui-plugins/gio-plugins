@@ -7,7 +7,7 @@ replace gioui.org => ../../../gio
 replace github.com/gioui-plugins/gio-plugins => ../../
 
 require (
-	gioui.org v0.6.0
+	gioui.org v0.6.1-0.20240607083507-1151eac07d84
 	github.com/gioui-plugins/gio-plugins v0.0.0-00010101000000-000000000000
 )
 

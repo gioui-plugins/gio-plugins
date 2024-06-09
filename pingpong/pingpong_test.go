@@ -19,7 +19,7 @@ func TestMain(m *testing.M) {
 		first := true
 
 		for {
-			evt := gioplugins.Event(w)
+			evt := gioplugins.Hijack(w)
 
 			switch evt := evt.(type) {
 			case app.FrameEvent:
@@ -29,11 +29,11 @@ func TestMain(m *testing.M) {
 				PingOp{Tag: w, Text: "Ping"}.Add(gtx.Ops)
 
 				// By Command
-				gtx.Execute(PingCmd{Tag: w, Text: "Ping"})
+				gioplugins.Execute(gtx, PingCmd{Tag: w, Text: "Ping"})
 
 				founds := 0
 				for {
-					evt, ok := gtx.Event(Filter{Target: w})
+					evt, ok := gioplugins.Event(gtx, Filter{Target: w})
 					if !ok {
 						break
 					}

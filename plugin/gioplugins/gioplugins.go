@@ -4,7 +4,9 @@ import (
 	"gioui.org/app"
 	"gioui.org/io/event"
 	"gioui.org/io/input"
+	"gioui.org/layout"
 	"github.com/gioui-plugins/gio-plugins/plugin"
+	"runtime"
 	"sync"
 	"unsafe"
 )
@@ -13,7 +15,7 @@ func NewWindow() *app.Window {
 	return new(app.Window)
 }
 
-// Event is the main event handler for the plugin, you MUST use it as a wrapper,
+// Hijack is the main event handler for the plugin, you MUST use it as a wrapper,
 // for the app.Window.Event method.
 //
 // It will COMBINE the events from the app.Window.Event method with the plugin events.
@@ -32,10 +34,10 @@ func NewWindow() *app.Window {
 //	 w := app.Window{}
 //
 //		for {
-//		   e := gioplugins.Event(w)
+//		   e := gioplugins.Hook(w)
 //		   // ...
 //		}
-func Event(w *app.Window) event.Event {
+func Hijack(w *app.Window) event.Event {
 	instance := getInstanceByWindow(w)
 	if instance == nil {
 		instance = createInstance(w)
@@ -49,6 +51,45 @@ func Event(w *app.Window) event.Event {
 	return evt
 }
 
+// Event returns custom events from the last frame.
+func Event(gtx layout.Context, filters ...event.Filter) (evt event.Event, ok bool) {
+	ptr := unsafe.Pointer(&filters)
+	defer runtime.KeepAlive(ptr)
+
+	return _event(gtx, uintptr(ptr))
+}
+
+func _event(gtx layout.Context, fptr uintptr) (evt event.Event, ok bool) {
+	filters := *(*[]event.Filter)(unsafe.Pointer(fptr))
+	source := (*gioInputSource)(unsafe.Pointer(&gtx.Source))
+
+	if li := getInstanceByRouter(source.r); li != nil {
+		if evt, ok := li.Plugin.Event(filters...); ok {
+			return evt, true
+		}
+	}
+	return nil, false
+}
+
+// Execute executes the command.
+func Execute(gtx layout.Context, c input.Command) {
+	ptr := unsafe.Pointer(&c)
+	defer runtime.KeepAlive(ptr)
+
+	_execute(gtx, uintptr(ptr))
+}
+
+func _execute(gtx layout.Context, fptr uintptr) {
+	cmd := *(*input.Command)(unsafe.Pointer(fptr))
+	source := (*gioInputSource)(unsafe.Pointer(&gtx.Source))
+
+	if li := getInstanceByRouter(source.r); li != nil {
+		if li.Plugin.Execute(cmd) {
+			return
+		}
+	}
+}
+
 // gioInputSource must match the input.Source.
 type gioInputSource struct {
 	r *input.Router
@@ -57,24 +98,6 @@ type gioInputSource struct {
 func init() {
 	if unsafe.Sizeof(gioInputSource{}) != unsafe.Sizeof(input.Source{}) {
 		panic("Gio version not supported")
-	}
-
-	input.SourceEventProcessor = func(r *input.Router, filters ...event.Filter) (evt event.Event, ok bool) {
-		if li := getInstanceByRouter(r); li != nil {
-			if evt, ok := li.Plugin.Event(filters...); ok {
-				return evt, true
-			}
-		}
-		return r.Event(filters...)
-	}
-
-	input.SourceExecuteProcessor = func(r *input.Router, c input.Command) {
-		if li := getInstanceByRouter(r); li != nil {
-			if li.Plugin.Execute(c) {
-				return
-			}
-		}
-		r.Execute(c)
 	}
 }
 

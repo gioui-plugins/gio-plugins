@@ -13,9 +13,9 @@ import (
 )
 
 var wantOps = []reflect.Type{
-	reflect.TypeOf(WebViewOp{}),
-	reflect.TypeOf(OffsetOp{}),
-	reflect.TypeOf(RectOp{}),
+	reflect.TypeOf(&WebViewOp{}),
+	reflect.TypeOf(&OffsetOp{}),
+	reflect.TypeOf(&RectOp{}),
 }
 
 // WebViewOp shows the webview into the specified area.
@@ -56,19 +56,29 @@ type RectOp struct {
 	SE, SW, NW, NE float32
 }
 
+var _WebViewOpPool = plugin.NewOpPool[WebViewOp]()
+var _OffsetOpPool = plugin.NewOpPool[OffsetOp]()
+var _RectOpPool = plugin.NewOpPool[RectOp]()
+
 // Push adds a new WebViewOp to the queue, any subsequent Ops (sucha as RectOp)
 // will affect this WebViewOp.
 // In order to stop using this WebViewOp, call Pop.
 func (o WebViewOp) Push(op *op.Ops) WebViewOp {
 	o.isPop = false
-	plugin.WriteOp(op, o)
+	opc := _WebViewOpPool.Get()
+	*opc = o
+
+	plugin.WriteOp(op, opc)
 	return o
 }
 
 // Pop stops using the WebViewOp.
 func (o WebViewOp) Pop(op *op.Ops) {
 	o.isPop = true
-	plugin.WriteOp(op, o)
+	opc := _WebViewOpPool.Get()
+	*opc = o
+
+	plugin.WriteOp(op, opc)
 }
 
 func (o WebViewOp) execute(w *app.Window, p *webViewPlugin, _ app.FrameEvent) {
@@ -117,7 +127,9 @@ func NewOffsetOp[POINT image.Point | f32.Point](v POINT) OffsetOp {
 
 // Add adds a new OffsetOp to the queue.
 func (o OffsetOp) Add(op *op.Ops) {
-	plugin.WriteOp(op, o)
+	opc := _OffsetOpPool.Get()
+	*opc = o
+	plugin.WriteOp(op, opc)
 }
 
 func (o OffsetOp) execute(_ *app.Window, p *webViewPlugin, _ app.FrameEvent) {
@@ -142,7 +154,10 @@ func NewRectOp[POINT image.Point | f32.Point](v POINT) RectOp {
 
 // Add adds a new RectOp to the queue.
 func (o RectOp) Add(op *op.Ops) {
-	plugin.WriteOp(op, o)
+	opc := _RectOpPool.Get()
+	*opc = o
+
+	plugin.WriteOp(op, opc)
 }
 
 func (o RectOp) execute(_ *app.Window, p *webViewPlugin, e app.FrameEvent) {

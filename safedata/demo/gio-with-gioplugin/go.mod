@@ -2,14 +2,12 @@ module demo
 
 go 1.22
 
-toolchain go1.22.2
-
 replace gioui.org => ../../../../gio
 
 replace github.com/gioui-plugins/gio-plugins => ../../../
 
 require (
-	gioui.org v0.6.0
+	gioui.org v0.6.1-0.20240607083507-1151eac07d84
 	github.com/gioui-plugins/gio-plugins v0.0.0-20230131035626-ce5fcaaee1e6
 )
 

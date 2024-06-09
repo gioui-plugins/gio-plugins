@@ -20,12 +20,13 @@ type pingPong struct {
 	p *plugin.Plugin
 }
 
-func (p *pingPong) TypeOp() []reflect.Type      { return []reflect.Type{reflect.TypeOf(PingOp{})} }
+func (p *pingPong) TypeOp() []reflect.Type      { return []reflect.Type{reflect.TypeOf(&PingOp{})} }
 func (p *pingPong) TypeCommand() []reflect.Type { return []reflect.Type{reflect.TypeOf(PingCmd{})} }
 func (p *pingPong) TypeEvent() []reflect.Type   { return nil }
 
 func (p *pingPong) Op(op interface{}) {
-	if ping, ok := op.(PingOp); ok {
+	if ping, ok := op.(*PingOp); ok {
+		defer _PingOpPool.Release(ping)
 		p.p.SendEvent(ping.Tag, PongEvent{Text: ping.Text})
 	}
 }
@@ -44,8 +45,14 @@ type PingOp struct {
 	Text string
 }
 
+var _PingOpPool = plugin.NewOpPool[PingOp]()
+
 // Add writes the operation to the given op.Ops.
-func (o PingOp) Add(ops *op.Ops) { plugin.WriteOp(ops, o) }
+func (o PingOp) Add(ops *op.Ops) {
+	opc := _PingOpPool.Get()
+	*opc = o
+	plugin.WriteOp(ops, opc)
+}
 
 // PingCmd is a command that sends a PongEvent to the given tag.
 type PingCmd struct {

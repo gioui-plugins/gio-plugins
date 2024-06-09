@@ -75,18 +75,24 @@ func (p *webViewPlugin) TypeEvent() []reflect.Type { return wantEvent }
 // Op implements plugin.Handler.
 func (p *webViewPlugin) Op(op interface{}) {
 	switch v := op.(type) {
-	case WebViewOp:
+	case *WebViewOp:
+		defer _WebViewOpPool.Release(v)
+
 		v.execute(p.window, p, p.frame)
-	case OffsetOp:
+	case *OffsetOp:
+		defer _OffsetOpPool.Release(v)
+
 		v.execute(p.window, p, p.frame)
-	case RectOp:
+	case *RectOp:
+		defer _RectOpPool.Release(v)
+
 		v.execute(p.window, p, p.frame)
 	}
 }
 
 // Execute implements plugin.Handler.
-func (p *webViewPlugin) Execute(op interface{}) {
-	switch v := op.(type) {
+func (p *webViewPlugin) Execute(cmd interface{}) {
+	switch v := cmd.(type) {
 	case interface {
 		execute(w *app.Window, p *webViewPlugin, _ app.FrameEvent)
 	}:

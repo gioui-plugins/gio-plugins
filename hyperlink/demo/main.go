@@ -41,7 +41,7 @@ func main() {
 func loop(w *app.Window) error {
 	var ops op.Ops
 	for {
-		e := gioplugins.Event(w)
+		e := gioplugins.Hijack(w)
 
 		switch e := e.(type) {
 		case app.DestroyEvent:
@@ -71,7 +71,7 @@ func loop(w *app.Window) error {
 					continue
 				}
 
-				gtx.Execute(giohyperlink.OpenCmd{URI: u})
+				gioplugins.Execute(gtx, giohyperlink.OpenCmd{URI: u})
 			}
 
 			render(gtx)
