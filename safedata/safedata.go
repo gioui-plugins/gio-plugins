@@ -64,10 +64,17 @@ type Secret struct {
 	Data []byte
 }
 
+// SafeData is a cross-platform package for securely storing
+// and retrieving sensitive data.
+//
+// Note that the security of the data depends on the underlying
+// operating system's security features. Also, it will not
+// guarantee the integrity of the data.
 type SafeData struct {
 	driver
 }
 
+// NewSafeData creates a new SafeData instance.
 func NewSafeData(config Config) *SafeData {
 	if config.App == "" {
 		config.App = DefaultAppName
@@ -78,14 +85,9 @@ func NewSafeData(config Config) *SafeData {
 	return &h
 }
 
+// Looper is a function that will be called for each
+// secret, when calling SafeData.List function.
 type Looper func(identifier string) (next bool)
-
-type safeData interface {
-	setSecret(secret Secret) error
-	listSecret(looper Looper) error
-	getSecret(identifier string, secret *Secret) error
-	removeSecret(identifier string) error
-}
 
 // Set uploads (or updates) the given secret to the OS
 // credentials manager.
@@ -136,10 +138,18 @@ func (s *SafeData) Remove(identifier string) error {
 	return s.removeSecret(identifier)
 }
 
+// Configure sets the configuration for the SafeData.
 func (s *SafeData) Configure(config Config) {
 	if config.App == "" {
 		config.App = DefaultAppName
 	}
 
 	configureDriver(&s.driver, config)
+}
+
+type safeData interface {
+	setSecret(secret Secret) error
+	listSecret(looper Looper) error
+	getSecret(identifier string, secret *Secret) error
+	removeSecret(identifier string) error
 }

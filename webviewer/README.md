@@ -45,35 +45,35 @@ The operation will be executed at the end of the frame.
 
 **Storage:**
 
-- `webviewer.SetStorageOp{Local: webviewer.StorageTypeLocal, Storage: webviewer.Storage{Key: "key", Value: "value"}}`:
+- `webviewer.SetStorageCmd{Local: webviewer.StorageTypeLocal, Storage: webviewer.Storage{Key: "key", Value: "value"}}`:
     - Set storage data for the WebView.
-- `webviewer.ListStorageOp{Tag: &something, Local: webviewer.StorageTypeLocal}`:
+- `webviewer.ListStorageCmd{Tag: &something, Local: webviewer.StorageTypeLocal}`:
     - List the storage for the WebView. The response will be sent using the `Tag` as `StorageEvent`.
-- `webviewer.RemoveStorageOp{Tag: &something, Local: webviewer.StorageTypeLocal, Content: webviewer.Storage{Key: "key"}}`:
+- `webviewer.RemoveStorageCmd{Tag: &something, Local: webviewer.StorageTypeLocal, Content: webviewer.Storage{Key: "key"}}`:
     - Remove the storage for the WebView.
 
 **Cookies:**
 
-- `webviewer.SetCookieOp{Cookie: webviewer.Cookie{Name: "name", Value: "value"}}`:
+- `webviewer.SetCookieCmd{Cookie: webviewer.Cookie{Name: "name", Value: "value"}}`:
     - Set the cookie data for the WebView.
-- `webviewer.ListCookieOp{Tag: &something}`:
+- `webviewer.ListCookieCmd{Tag: &something}`:
     - List the cookie for the WebView. The response will be sent using the `Tag` as `CookiesEvent`.
-- `webviewer.RemoveCookieOp{Tag: &something, Cookie: webviewer.Cookie{Name: "name"}}`:
+- `webviewer.RemoveCookieCmd{Tag: &something, Cookie: webviewer.Cookie{Name: "name"}}`:
     - Remove the cookie for the WebView.
 
 **Cache:**
 
-- `webviewer.ClearCacheOp{}`:
+- `webviewer.ClearCacheCmd{}`:
   - Clear Cache, Cookies, LocalStorage, SessionStorage, WebSQL, IndexedDB of the current WebView.
 
 **Javascript:**
 
-- `webviewer.JavascriptOp{Javascript: "console.log(\"Hello World\")"}`:
+- `webviewer.JavascriptCmd{Javascript: "console.log(\"Hello World\")"}`:
     - Execute the given Javascript code in the WebView.
-- `webviewer.InstallJavascriptOp{Javascript: "console.log(\"Hello World\")"}`:
+- `webviewer.InstallJavascriptCmd{Javascript: "console.log(\"Hello World\")"}`:
     - Persistently define the given Javascript code in the WebView. This code will be executed in every
       page load.
-- `webviewer.MessageReceiverOp{Tag: &something, Name: "your_function_name"}`:
+- `webviewer.MessageReceiverCmd{Tag: &something, Name: "your_function_name"}`:
     - Defines an function which can be called from the WebView, the function can be called
       as `window.callback.your_function_name("some text")` on the WebView side. The response will be sent using
       the `Tag` as `MessageEvent`.
@@ -91,7 +91,7 @@ first `webviewer.WebViewOp`, it will affect all WebViews. It's recommended to se
 
 ## Events
 
-Events are response sent using the `Tag` and should be handled with `gtx.Events()`.
+Events are response sent using the `Tag` and should be handled with `gioplugins.Event()`.
 
 - `webviewer.NavigationEvent`:
     - Sent to `WebViewOp.Tag` when the WebView navigates to a new page.

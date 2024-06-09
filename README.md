@@ -26,12 +26,14 @@ First, you must download the `plugin` package:
 go get -u github.com/gioui-plugins/gio-plugins@latest
 ```
 
-Now, you need to modify your event-loop, you must include `plugin.Install()` in your event-loop, before handling
+Now, you need to modify your event-loop, you must include `gioplugins.Hijack(window)` in your event-loop, before handling
 events:
 
 ```diff
-for evt := range w.Events() { // Gio main event loop
-+    plugin.Install(w, evt)
+window := &app.Window{} // Gio window
+
+for { 
++   evt := gioplugins.Hijack(window) // Gio main event loop
 
     switch evt := evt.(type) {
         // ...
@@ -40,19 +42,31 @@ for evt := range w.Events() { // Gio main event loop
 ```
 
 Each plugin has its own README.md file, explaining how to use it. In general, you can simple
-use `nameOfPlugin.SomeOp{}.Add(gtx.Ops)`, similar of how you use `clipboard.ReadOp{}.Add(gtx.Ops)`, native from Gio.
+use `nameOfPlugin.SomeOp{}.Add(gtx.Ops)`, similar of how you use `pointer.PassOp{}.Add(gtx.Ops)`, native 
+from Gio. Beginning with Gio 0.6, it also introduces `Command`, which is executed using `gtx.Execute`, you can
+also use Commands, if the plugin supports it, for instance `gioplugins.Execute(gtx, gioshare.TextCmd{Text: "Hello, World!"})`, 
+similar to what you are familiar with `gtx.Execute(clipboard.WriteCmd{Text: "Hello, World!"})`.
 
-Once `plugin.Install` is set, you can use the plugins as simple `op` commands. If you are unsure if the plugin is
-working, you can use the `pingpong` package, which will return on `PongEvent` to the given Tag:
+Once `gioplugins.Event` is set, you can use the plugins as simple `op` operations or `cmd` commands. If you are unsure 
+if the plugin is working, you can use the `pingpong` package, which will return on `PongEvent` to the given Tag:
 
 ```go
 pingpong.PingOp{Tag: &something}.Add(gtx.Ops)
+
+gioplugins.Execute(gtx, pingpong.PingCmd{Tag: &something})
 ```
 
-You can receive responses using the `Tag`, as Gio-core operations:
+> Note: It's uses `gioplugins.Execute` and not `gtx.Execute`!
+
+You can receive responses using the `Tag`, similar Gio-core operations:
 
 ```go
-for _, evt := range gtx.Events(&something) {
+for {
+	evt, ok := gioplugins.Event(pingpong.Filter{Tag: &something})
+	if !ok {
+		break
+    } 
+	
     if evt, ok := evt.(pingpong.PongEvent); ok {
         fmt.Println(evt.Pong)
     } 
@@ -65,26 +79,23 @@ Of course, `pingpong` has no use in real-world applications, but it can be used 
 
 **We have few plugins available:**
 
-| Name           | Description | OS |
-|----------------|------------------|-----------------|
-| **[PingPong](https://github.com/gioui-plugins/gio-plugins/tree/main/pingpong)** | Test if the plugin system is working.            | _Android, iOS, macOS, Windows, WebAssembly, Linux, FreeBSD_  |  
-| **[Share](https://github.com/gioui-plugins/gio-plugins/tree/main/share)** | Share text/links using the native share dialog.            | _Android, iOS, macOS, Windows, WebAssembly_  |  
-| **[WebViewer](https://github.com/gioui-plugins/gio-plugins/tree/main/webviewer)** | Display in-app webview using the native webview implementation on each platform.            | _Android, iOS, macOS, Windows, WebAssembly_  |  
-| **[Hyperlink](https://github.com/gioui-plugins/gio-plugins/tree/main/hyperlink)** |  Open hyperlinks in the default browser.            | _Android, iOS, macOS, Windows, WebAssembly_  |  
-| **[Explorer](https://github.com/gioui-plugins/gio-plugins/tree/main/explorer)** |  Opens the native file-dialog, to read/write files.  | _Android, iOS, macOS, Windows, WebAssembly_  |  
-| **[Safedata](https://github.com/gioui-plugins/gio-plugins/tree/main/safedata)** | Read/Write files into the secure storage of the device. | _Android, iOS, macOS, Windows, WebAssembly_  |
+| Name                                                                              | Description                                                                      | OS                                                          |
+|-----------------------------------------------------------------------------------|----------------------------------------------------------------------------------|-------------------------------------------------------------|
+| **[PingPong](https://github.com/gioui-plugins/gio-plugins/tree/main/pingpong)**   | Test if the plugin system is working.                                            | _Android, iOS, macOS, Windows, WebAssembly, Linux, FreeBSD_ |  
+| **[Share](https://github.com/gioui-plugins/gio-plugins/tree/main/share)**         | Share text/links using the native share dialog.                                  | _Android, iOS, macOS, Windows, WebAssembly_                 |  
+| **[WebViewer](https://github.com/gioui-plugins/gio-plugins/tree/main/webviewer)** | Display in-app webview using the native webview implementation on each platform. | _Android, iOS, macOS, Windows, WebAssembly_                 |  
+| **[Hyperlink](https://github.com/gioui-plugins/gio-plugins/tree/main/hyperlink)** | Open hyperlinks in the default browser.                                          | _Android, iOS, macOS, Windows, WebAssembly_                 |  
+| **[Explorer](https://github.com/gioui-plugins/gio-plugins/tree/main/explorer)**   | Opens the native file-dialog, to read/write files.                               | _Android, iOS, macOS, Windows, WebAssembly_                 |  
+| **[Safedata](https://github.com/gioui-plugins/gio-plugins/tree/main/safedata)**   | Read/Write files into the secure storage of the device.                          | _Android, iOS, macOS, Windows, WebAssembly_                 |
+
 **We have few plugins planned:**
 
 Some plugins are planned, but not yet implemented, follow the development at https://github.com/orgs/gioui-plugins/projects/1. Also, 
 consider send some 👍 on issues which mentions features that you like.
 
-
-
 If you want to help, please open an issue or a PR! If you want to suggest a plugin, please open an issue.
 
 -----------
-
-
 
 ### Creating a new plugin
 
@@ -110,6 +121,18 @@ Most plugins are compatible with Android 5+, iOS 13+, MacOS 12+, Windows 10+ and
 the Windows and Android as high-priority, and the WebAssembly as medium-priority, MacOS and iOS as low-priority.
 Furthermore, we don't have any plans to support Linux and FreeBSD due to the low market-share and the lack of API
 standards.
+
+| Priority | OS          | Arch         |
+|----------|-------------|--------------|
+| High     | Windows     | AMD64        |
+| High     | Android     | ARM64, ARMv7 |
+| Medium   | WebAssembly | WASMv1       |
+| Low      | MacOS       | ARM64, AMD64 |
+| Low      | iOS         | ARM64        |
+| Ignored  | FreeBSD     | -            |
+| Ignored  | Linux       | -            |
+
+Currently, some package might not work on some platforms, and some features might not be available on some platforms.
 
 ### Security
 

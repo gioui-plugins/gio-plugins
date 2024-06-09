@@ -1,6 +1,6 @@
-//go:build darwin && !ios
+//go:build !android && !darwin && !ios && !windows && !(js && wasm)
 
-package webviewer
+package giowebview
 
 import (
 	"gioui.org/app"
@@ -9,5 +9,5 @@ import (
 
 // NewConfigFromViewEvent creates a webview.Config based on app.ViewEvent.
 func NewConfigFromViewEvent(w *app.Window, evt app.ViewEvent) webview.Config {
-	return webview.Config{View: evt.View, Layer: evt.Layer, RunOnMain: w.Run}
+	return webview.Config{}
 }

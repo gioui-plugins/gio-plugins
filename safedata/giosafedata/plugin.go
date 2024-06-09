@@ -35,21 +35,33 @@ type safedataPlugin struct {
 }
 
 // TypeOp implements plugin.Handler.
-func (p *safedataPlugin) TypeOp() []reflect.Type { return wantOps }
+func (p *safedataPlugin) TypeOp() []reflect.Type { return nil }
+
+// TypeCommand implements plugin.Handler.
+func (p *safedataPlugin) TypeCommand() []reflect.Type { return wantCommands }
 
 // TypeEvent implements plugin.Handler.
 func (p *safedataPlugin) TypeEvent() []reflect.Type { return wantEvents }
 
-// ListenOps implements plugin.Handler.
-func (p *safedataPlugin) ListenOps(op interface{}) {
+// Op implements plugin.Handler.
+func (p *safedataPlugin) Op(op interface{}) {}
+
+// Execute implements plugin.Handler.
+func (p *safedataPlugin) Execute(op interface{}) {
 	switch op := op.(type) {
-	case internalOp:
+	case WriteSecretCmd:
+		op.execute(p)
+	case ReadSecretCmd:
+		op.execute(p)
+	case DeleteSecretCmd:
+		op.execute(p)
+	case ListSecretCmd:
 		op.execute(p)
 	}
 }
 
-// ListenEvents implements plugin.Handler.
-func (p *safedataPlugin) ListenEvents(evt event.Event) {
+// Event implements plugin.Handler.
+func (p *safedataPlugin) Event(evt event.Event) {
 	switch evt := evt.(type) {
 	case app.ViewEvent:
 		config := NewConfigFromViewEvent(p.window, evt, safedata.DefaultAppName)

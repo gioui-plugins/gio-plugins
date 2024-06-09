@@ -2,22 +2,26 @@ package giohyperlink
 
 import (
 	"gioui.org/app"
-	"gioui.org/io/system"
 	"github.com/gioui-plugins/gio-plugins/hyperlink"
 )
 
 // NewConfigFromViewEvent creates a share.Config based on app.ViewEvent.
-func NewConfigFromViewEvent(w *app.Window, evt app.ViewEvent) hyperlink.Config {
+func NewConfigFromViewEvent(w *app.Window, e app.ViewEvent) hyperlink.Config {
 	r := hyperlink.Config{}
-	UpdateConfigFromViewEvent(&r, w, evt)
+	UpdateConfigFromViewEvent(&r, w, e)
 	return r
 }
 
-func UpdateConfigFromViewEvent(config *hyperlink.Config, w *app.Window, evt app.ViewEvent) {
+func UpdateConfigFromViewEvent(config *hyperlink.Config, w *app.Window, e app.ViewEvent) {
+	evt, ok := e.(app.AndroidViewEvent)
+	if !ok {
+		return
+	}
+
 	config.VM = app.JavaVM()
 	config.Context = app.AppContext()
 	config.View = evt.View
 	config.RunOnMain = w.Run
 }
 
-func UpdateConfigFromStageEvent(config *hyperlink.Config, _ *app.Window, evt system.StageEvent) {}
+func UpdateConfigFromConfigEvent(config *hyperlink.Config, _ *app.Window, evt app.ConfigEvent) {}

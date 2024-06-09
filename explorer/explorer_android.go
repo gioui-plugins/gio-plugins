@@ -22,9 +22,6 @@ import (
 	"github.com/gioui-plugins/gio-plugins/explorer/mimetype"
 )
 
-//go:generate javac -source 8 -target 8  -bootclasspath $ANDROID_HOME/platforms/android-30/android.jar -d $TEMP/explorer_explorer_android/classes explorer_android.java
-//go:generate jar cf explorer_android.jar -C $TEMP/explorer_explorer_android/classes .
-
 type driver struct {
 	config Config
 	mutex  sync.Mutex
@@ -103,8 +100,8 @@ func (e *driver) destroy() {
 }
 
 func (e *driver) saveFile(filename string, mime mimetype.MimeType) (io.WriteCloser, error) {
-	res := make(chan result[io.WriteCloser])
-	callback := func(r result[io.WriteCloser]) {
+	res := make(chan result)
+	callback := func(r result) {
 		res <- r
 	}
 
@@ -113,7 +110,7 @@ func (e *driver) saveFile(filename string, mime mimetype.MimeType) (io.WriteClos
 			e.mutex.Lock()
 			defer e.mutex.Unlock()
 
-			return jni.CallVoidMethod(env, e.explorerClass, e.explorerMethodSave,
+			return jni.CallVoidMethod(env, e.explorerObject, e.explorerMethodSave,
 				jni.Value(e.config.View),
 				jni.Value(jni.JavaString(env, strings.TrimPrefix(strings.ToLower(filepath.Ext(filename)), "."))),
 				jni.Value(cgo.NewHandle(callback)),
@@ -121,7 +118,7 @@ func (e *driver) saveFile(filename string, mime mimetype.MimeType) (io.WriteClos
 		})
 
 		if err != nil {
-			res <- result[io.WriteCloser]{error: err}
+			res <- result{error: err}
 		}
 	})
 
@@ -136,8 +133,8 @@ func (e *driver) saveFile(filename string, mime mimetype.MimeType) (io.WriteClos
 func (e *driver) openFile(mime []mimetype.MimeType) (io.ReadCloser, error) {
 	s := stringBuilderPool.Get().(*strings.Builder)
 
-	res := make(chan result[io.ReadCloser])
-	callback := func(r result[io.ReadCloser]) {
+	res := make(chan result)
+	callback := func(r result) {
 		defer stringBuilderPool.Put(s)
 		res <- r
 		s.Reset()
@@ -162,7 +159,7 @@ func (e *driver) openFile(mime []mimetype.MimeType) (io.ReadCloser, error) {
 			)
 		})
 		if err != nil {
-			res <- result[io.ReadCloser]{error: err}
+			res <- result{error: err}
 		}
 	})
 
@@ -176,17 +173,17 @@ func (e *driver) openFile(mime []mimetype.MimeType) (io.ReadCloser, error) {
 
 //export Java_org_gioui_x_explorer_explorer_1android_ImportCallback
 func Java_org_gioui_x_explorer_explorer_1android_ImportCallback(env *C.JNIEnv, _ C.jclass, stream C.jobject, handler C.jlong, err C.jstring) {
-	fileCallback[io.ReadCloser](env, stream, handler, err)
+	fileCallback(env, stream, handler, err)
 }
 
 //export Java_org_gioui_x_explorer_explorer_1android_ExportCallback
 func Java_org_gioui_x_explorer_explorer_1android_ExportCallback(env *C.JNIEnv, _ C.jclass, stream C.jobject, handler C.jlong, err C.jstring) {
-	fileCallback[io.WriteCloser](env, stream, handler, err)
+	fileCallback(env, stream, handler, err)
 }
 
-func fileCallback[T io.ReadCloser | io.WriteCloser](env *C.JNIEnv, stream C.jobject, handler C.jlong, err C.jstring) {
-	if callback, ok := cgo.Handle(handler).Value().(func(result[T])); ok {
-		var res result[T]
+func fileCallback(env *C.JNIEnv, stream C.jobject, handler C.jlong, err C.jstring) {
+	if callback, ok := cgo.Handle(handler).Value().(func(result)); ok {
+		var res result
 		env := jni.EnvFor(uintptr(unsafe.Pointer(env)))
 		if stream == 0 {
 			res.error = ErrUserDecline
@@ -198,7 +195,7 @@ func fileCallback[T io.ReadCloser | io.WriteCloser](env *C.JNIEnv, stream C.jobj
 		} else {
 			file, err := newFile(env, jni.NewGlobalRef(env, jni.Object(uintptr(stream))))
 			if file != nil {
-				res.file = file.(T)
+				res.file = file
 			}
 			res.error = err
 		}

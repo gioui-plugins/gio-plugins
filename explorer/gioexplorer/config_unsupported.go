@@ -12,4 +12,5 @@ func NewConfigFromViewEvent(w *app.Window, evt app.ViewEvent, title string) expl
 	return explorer.Config{}
 }
 
-func UpdateConfigFromViewEvent(config *explorer.Config, w *app.Window, evt app.ViewEvent) {}
+// UpdateConfigFromViewEvent updates explorer.Config based on app.ViewEvent.
+func UpdateConfigFromViewEvent(config *explorer.Config, w *app.Window, e app.ViewEvent) {}

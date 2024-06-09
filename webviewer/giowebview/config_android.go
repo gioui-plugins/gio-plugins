@@ -1,4 +1,4 @@
-package webviewer
+package giowebview
 
 import (
 	"gioui.org/app"
@@ -7,6 +7,11 @@ import (
 )
 
 // NewConfigFromViewEvent creates a webview.Config based on app.ViewEvent.
-func NewConfigFromViewEvent(w *app.Window, evt app.ViewEvent) webview.Config {
+func NewConfigFromViewEvent(w *app.Window, e app.ViewEvent) webview.Config {
+	evt, ok := e.(app.AndroidViewEvent)
+	if !ok {
+		return webview.Config{}
+	}
+
 	return webview.Config{View: jni.Class(evt.View), VM: jni.JVMFor(app.JavaVM()), Context: jni.Object(app.AppContext()), RunOnMain: w.Run}
 }

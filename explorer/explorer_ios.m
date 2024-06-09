@@ -13,16 +13,16 @@
         url = (__bridge_retained CFTypeRef)([urls objectAtIndex:0]);
     }
     [self.picker removeFromParentViewController];
-    pickerCallback(url, self.callback);
+    gioplugins_explorer_pickerCallback(url, self.callback);
 }
 
 - (void)documentPickerWasCancelled:(UIDocumentPickerViewController *)controller {
     [self.picker removeFromParentViewController];
-    pickerCallback(0, self.callback);
+    gioplugins_explorer_pickerCallback(0, self.callback);
 }
 @end
 
-CFTypeRef saveFile(CFTypeRef view, char * name, uintptr_t callback, CFTypeRef pooled) {
+CFTypeRef gioplugins_explorer_saveFile(CFTypeRef view, char * name, uintptr_t callback, CFTypeRef pooled) {
   explorer_picker * explorer = nil;
   if (pooled == 0) {
     explorer = [[explorer_picker alloc] init];
@@ -44,7 +44,7 @@ CFTypeRef saveFile(CFTypeRef view, char * name, uintptr_t callback, CFTypeRef po
     return 0;
 }
 
-CFTypeRef openFile(CFTypeRef view, char * ext, uintptr_t callback, CFTypeRef pooled) {
+CFTypeRef gioplugins_explorer_openFile(CFTypeRef view, char * ext, uintptr_t callback, CFTypeRef pooled) {
   explorer_picker * explorer = nil;
   if (pooled == 0) {
     explorer = [[explorer_picker alloc] init];

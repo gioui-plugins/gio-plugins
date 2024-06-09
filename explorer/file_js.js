@@ -1,5 +1,10 @@
 (() => {
-    Object.assign(go.importObject.go, {
+    if (go.importObject.gojs == null) {
+        go.importObject.gojs = {};
+    }
+})();
+(() => {
+    Object.assign(go.importObject.gojs, {
         // fileSlice(uint32, uint32, js.Value, js.Func, js.Func) uint32
         "github.com/gioui-plugins/gio-plugins/explorer.fileSlice": (sp) => {
             sp = (sp >>> 0);

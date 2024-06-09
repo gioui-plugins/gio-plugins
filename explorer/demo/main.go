@@ -3,16 +3,18 @@ package main
 import (
 	"gioui.org/font"
 	"github.com/gioui-plugins/gio-plugins/explorer/gioexplorer"
+	"github.com/gioui-plugins/gio-plugins/plugin/gioplugins"
 	"image"
 	"image/color"
 	_ "image/gif"
 	_ "image/jpeg"
 	"image/png"
 	_ "image/png"
+	"os"
+	"sync"
 
 	"gioui.org/app"
 	"gioui.org/font/gofont"
-	"gioui.org/io/system"
 	"gioui.org/layout"
 	"gioui.org/op"
 	"gioui.org/op/clip"
@@ -20,11 +22,10 @@ import (
 	"gioui.org/text"
 	"gioui.org/widget"
 	"github.com/gioui-plugins/gio-plugins/explorer/mimetype"
-	"github.com/gioui-plugins/gio-plugins/plugin"
 	_ "golang.org/x/image/webp"
 )
 
-var _Sharper = text.NewShaper(gofont.Collection())
+var _Sharper = text.NewShaper(text.WithCollection(gofont.Collection()))
 var _ImageResult = make(chan img)
 
 type img struct {
@@ -33,28 +34,42 @@ type img struct {
 }
 
 func main() {
-	w := app.NewWindow(app.Size(500, 500))
+	w := new(app.Window)
+
 	ops := new(op.Ops)
 	p := new(Page)
 	p.tag = new(int)
 
+	mutex := new(sync.Mutex)
 	go func() {
 		for {
 			select {
 			case img := <-_ImageResult:
+				mutex.Lock()
 				p.image = img.widget
 				p.raw = img.image
 				p.loading = false
+				mutex.Unlock()
 				w.Invalidate()
-			case evt := <-w.Events():
-				plugin.Install(w, evt)
+			}
+		}
+	}()
 
-				switch evt := evt.(type) {
-				case system.FrameEvent:
-					gtx := layout.NewContext(ops, evt)
-					p.Layout(gtx)
-					evt.Frame(ops)
-				}
+	go func() {
+		for {
+			evt := gioplugins.Hijack(w)
+
+			switch evt := evt.(type) {
+			case app.FrameEvent:
+				mutex.Lock()
+				gtx := app.NewContext(ops, evt)
+				p.Layout(gtx)
+				mutex.Unlock()
+
+				evt.Frame(ops)
+			case app.DestroyEvent:
+				os.Exit(0)
+				return
 			}
 		}
 	}()
@@ -84,19 +99,24 @@ var _FileTypes = []mimetype.MimeType{
 
 func (p *Page) Layout(gtx layout.Context) layout.Dimensions {
 
-	if p.uploadClickable.Clicked() {
-		gioexplorer.OpenFileOp{Tag: p.tag, Mimetype: _FileTypes}.Add(gtx.Ops)
+	if p.uploadClickable.Clicked(gtx) {
+		gioplugins.Execute(gtx, gioexplorer.OpenFileCmd{Tag: p.tag, Mimetype: _FileTypes})
 		p.error = ""
 		p.cancel = false
 	}
 
-	if p.saveClickable.Clicked() {
-		gioexplorer.SaveFileOp{Tag: p.tag, Mimetype: _FileTypes[0], Filename: "image.png"}.Add(gtx.Ops)
+	if p.saveClickable.Clicked(gtx) {
+		gioplugins.Execute(gtx, gioexplorer.SaveFileCmd{Tag: p.tag, Mimetype: _FileTypes[0], Filename: "image.png"})
 		p.error = ""
 		p.cancel = false
 	}
 
-	for _, evt := range gtx.Events(p.tag) {
+	for {
+		evt, ok := gioplugins.Event(gtx, gioexplorer.Filter{Target: p.tag})
+		if !ok {
+			break
+		}
+
 		if p.loading {
 			continue
 		}

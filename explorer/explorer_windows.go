@@ -11,7 +11,6 @@ import (
 	"unicode/utf16"
 	"unsafe"
 
-	"gioui.org/io/event"
 	"github.com/gioui-plugins/gio-plugins/explorer/mimetype"
 	"golang.org/x/sys/windows"
 )
@@ -62,13 +61,16 @@ type (
 	}
 )
 
-type explorer struct{}
+type driver struct{}
 
-func (e *explorerPlugin) listenEvents(evt event.Event) {
-	// NO-OP
+func attachDriver(house *Explorer, config Config) {
+	house.driver = driver{}
+	configureDriver(&house.driver, config)
 }
 
-func (e *explorerPlugin) saveFile(name string, mime mimetype.MimeType) (io.WriteCloser, error) {
+func configureDriver(driver *driver, config Config) {}
+
+func (e *driver) saveFile(name string, mime mimetype.MimeType) (io.WriteCloser, error) {
 	pathUTF16 := make([]uint16, _FilePathLength)
 	copy(pathUTF16, windows.StringToUTF16(name))
 
@@ -105,7 +107,7 @@ func (e *explorerPlugin) saveFile(name string, mime mimetype.MimeType) (io.Write
 	return os.Create(path)
 }
 
-func (e *explorerPlugin) openFile(mimes []mimetype.MimeType) (io.ReadCloser, error) {
+func (e *driver) openFile(mimes []mimetype.MimeType) (io.ReadCloser, error) {
 	pathUTF16 := make([]uint16, _FilePathLength)
 
 	filterUTF16, err := buildFilter(mimes)

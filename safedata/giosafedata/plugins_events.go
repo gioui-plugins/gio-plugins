@@ -1,15 +1,15 @@
 package giosafedata
 
 import (
+	"github.com/gioui-plugins/gio-plugins/plugin"
 	"reflect"
 
-	"gioui.org/app"
 	"github.com/gioui-plugins/gio-plugins/safedata"
 )
 
 var (
 	wantEvents = []reflect.Type{
-		reflect.TypeOf(app.ViewEvent{}),
+		reflect.TypeOf(plugin.ViewEvent{}),
 	}
 )
 
@@ -18,7 +18,7 @@ type ErrorEvent struct {
 	Error error
 }
 
-// SecretsEvent is issued as response for ReadSecretOp and ListSecretOp.
+// SecretsEvent is issued as response for ReadSecretCmd and ListSecretCmd.
 type SecretsEvent struct {
 	Secrets []safedata.Secret
 }

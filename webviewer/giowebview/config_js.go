@@ -1,4 +1,4 @@
-package webviewer
+package giowebview
 
 import (
 	"syscall/js"

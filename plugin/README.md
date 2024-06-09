@@ -3,11 +3,11 @@ Plugin
 
 This package is required to interact with any other package in this repository.
 
-You MUST use `plugin.Install()` in your event-loop:
+You MUST use `gioplugins.Hijack()` in your event-loop:
 
 ```diff
-for evt := range w.Events() { // Gio main event loop
-+    plugin.Install(w, evt)
+for { // Gio main event loop
++    evt := gioplugins.Hijack(window)
 
     switch evt := evt.(type) {
         // ...

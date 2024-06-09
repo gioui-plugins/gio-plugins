@@ -3,7 +3,6 @@ package plugin
 import (
 	"gioui.org/app"
 	"gioui.org/io/event"
-	"gioui.org/io/router"
 	"gioui.org/io/system"
 	"gioui.org/layout"
 	"gioui.org/op"
@@ -16,12 +15,6 @@ import (
 
 type testingOp struct {
 	data string
-}
-
-var testingOpPool = NewOpPool[testingOp]()
-
-func (t testingOp) Add(ops *op.Ops) {
-	testingOpPool.WriteOp(ops, t)
 }
 
 type testingEvent struct {
@@ -48,13 +41,12 @@ func (t *testingPlugin) TypeEvent() []reflect.Type {
 
 func (t *testingPlugin) ListenOps(op interface{}) {
 	if op, ok := op.(*testingOp); ok {
-		testingOpPool.Release(op)
 		t.ackListenOps = true
 	}
 }
 
 func (t *testingPlugin) ListenEvents(evt event.Event) {
-	if _, ok := evt.(system.FrameEvent); ok {
+	if _, ok := evt.(app.FrameEvent); ok {
 		t.ackListenEvent = true
 		t.p.SendEvent(event.Tag(0), testingEvent{data: "test"})
 	}

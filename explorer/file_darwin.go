@@ -11,11 +11,11 @@ package explorer
 @property NSURL* url;
 @end
 
-extern CFTypeRef newFile(CFTypeRef url);
-extern uint64_t fileRead(CFTypeRef file, uint8_t *b, uint64_t len);
-extern bool fileWrite(CFTypeRef file, uint8_t *b, uint64_t len);
-extern bool fileClose(CFTypeRef file);
-extern char* getError(CFTypeRef file);
+extern CFTypeRef gioplugins_explorer_newFile(CFTypeRef url);
+extern uint64_t gioplugins_explorer_fileRead(CFTypeRef file, uint8_t *b, uint64_t len);
+extern bool gioplugins_explorer_fileWrite(CFTypeRef file, uint8_t *b, uint64_t len);
+extern bool gioplugins_explorer_fileClose(CFTypeRef file);
+extern char* gioplugins_explorer_getError(CFTypeRef file);
 
 */
 import "C"
@@ -32,7 +32,7 @@ type File struct {
 }
 
 func newFile(url C.CFTypeRef) (*File, error) {
-	file := C.newFile(url)
+	file := C.gioplugins_explorer_newFile(url)
 	if err := getError(file); err != nil {
 		return nil, err
 	}
@@ -47,7 +47,7 @@ func (f *File) Read(b []byte) (n int, err error) {
 	buf := (*C.uint8_t)(unsafe.Pointer(&b[0]))
 	length := C.uint64_t(uint64(len(b)))
 
-	if n = int(int64(C.fileRead(f.file, buf, length))); n == 0 {
+	if n = int(int64(C.gioplugins_explorer_fileRead(f.file, buf, length))); n == 0 {
 		if err := getError(f.file); err != nil {
 			return n, err
 		}
@@ -68,7 +68,7 @@ func (f *File) Write(b []byte) (n int, err error) {
 	buf := (*C.uint8_t)(unsafe.Pointer(&b[0]))
 	length := C.uint64_t(int64(len(b)))
 
-	if ok := bool(C.fileWrite(f.file, buf, length)); !ok {
+	if ok := bool(C.gioplugins_explorer_fileWrite(f.file, buf, length)); !ok {
 		if err := getError(f.file); err != nil {
 			return 0, err
 		}
@@ -84,7 +84,7 @@ func (f *File) Close() error {
 		C.CFRelease(f.url)
 	}()
 
-	if ok := bool(C.fileClose(f.file)); !ok {
+	if ok := bool(C.gioplugins_explorer_fileClose(f.file)); !ok {
 		return getError(f.file)
 	}
 	f.closed = true
@@ -96,7 +96,7 @@ func getError(file C.CFTypeRef) error {
 	if file == 0 {
 		return ErrNotAvailable
 	}
-	if err := C.GoString(C.getError(file)); len(err) > 0 {
+	if err := C.GoString(C.gioplugins_explorer_getError(file)); len(err) > 0 {
 		return errors.New(err)
 	}
 	return nil
@@ -104,5 +104,5 @@ func getError(file C.CFTypeRef) error {
 
 // Exported function is required to create cgo header.
 //
-//export file_darwin
-func file_darwin() {}
+//export gioplugins_explorer_file_darwin
+func gioplugins_explorer_file_darwin() {}
