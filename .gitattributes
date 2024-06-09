@@ -1,8 +1,12 @@
 * text eol=lf
-*.dll binary
-*.jar binary
 *.aar binary
+*.apk binary
+*.jar binary
+*.dll binary
 *.so binary
+*.dex binary
+*.class binary
+*.s binary
 *.zip binary
 *.gz binary
-*.class binary
+*.ttf binary

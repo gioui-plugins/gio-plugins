@@ -16,6 +16,4 @@ func NewConfigFromViewEvent(w *app.Window, e app.ViewEvent) hyperlink.Config {
 
 func UpdateConfigFromViewEvent(config *hyperlink.Config, w *app.Window, e app.ViewEvent) {}
 
-func UpdateConfigFromConfigEvent(config *hyperlink.Config, _ *app.Window, e app.ConfigEvent) {
-	config.Blur = e.Config.Focused != true
-}
+func UpdateConfigFromConfigEvent(config *hyperlink.Config, _ *app.Window, e app.ConfigEvent) {}
