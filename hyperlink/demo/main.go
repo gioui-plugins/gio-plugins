@@ -2,6 +2,7 @@ package main
 
 import (
 	"gioui.org/font"
+	"gioui.org/io/key"
 	"github.com/gioui-plugins/gio-plugins/hyperlink/giohyperlink"
 	"github.com/gioui-plugins/gio-plugins/plugin/gioplugins"
 	"image"
@@ -103,7 +104,7 @@ func render(gtx layout.Context) layout.Dimensions {
 // Actions
 var (
 	ButtonAction = &widget.Clickable{}
-	InputAction  = &widget.Editor{SingleLine: true, Submit: true}
+	InputAction  = &widget.Editor{SingleLine: true, Submit: true, InputHint: key.HintURL}
 )
 
 // Design
@@ -122,6 +123,7 @@ type Input struct {
 	TextSize  unit.Sp
 	Color     color.NRGBA
 	HintColor color.NRGBA
+	notSet    bool
 }
 
 func (i *Input) Layout(gtx layout.Context, editor *widget.Editor, hint string, value string) layout.Dimensions {
@@ -131,9 +133,10 @@ func (i *Input) Layout(gtx layout.Context, editor *widget.Editor, hint string, v
 	e.Hint = hint
 	e.HintColor = i.HintColor
 
-	if value != "" {
+	if value != "" && !i.notSet {
 		editor.SetText(value)
 		editor.MoveCaret(editor.Len(), editor.Len())
+		i.notSet = true
 	}
 
 	return e.Layout(gtx)

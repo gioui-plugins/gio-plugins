@@ -6,7 +6,7 @@ replace github.com/gioui-plugins/gio-plugins => ../../
 
 require (
 	gioui.org v0.6.1-0.20240607083507-1151eac07d84
-	github.com/gioui-plugins/gio-plugins v0.0.0-00010101000000-000000000000
+	github.com/gioui-plugins/gio-plugins v0.1.0
 )
 
 require (
@@ -16,6 +16,7 @@ require (
 	git.wow.st/gmp/jni v0.0.0-20210610011705-34026c7e22d0 // indirect
 	github.com/akavel/rsrc v0.10.1 // indirect
 	github.com/go-text/typesetting v0.1.1 // indirect
+	golang.org/x/crypto v0.23.0 // indirect
 	golang.org/x/exp v0.0.0-20221012211006-4de253d81b95 // indirect
 	golang.org/x/exp/shiny v0.0.0-20220921164117-439092de6870 // indirect
 	golang.org/x/image v0.5.0 // indirect
