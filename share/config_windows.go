@@ -1,6 +1,6 @@
 package share
 
-// Config is the configuration for a WebView.
+// Config is the configuration for a Share.
 type Config struct {
 	// HWND is the handle to the window.
 	HWND uintptr

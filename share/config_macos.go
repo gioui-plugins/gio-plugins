@@ -2,7 +2,7 @@
 
 package share
 
-// Config is the configuration for a WebView.
+// Config is the configuration for a Share.
 type Config struct {
 	// View is a CFTypeRef for the NSView for the window.
 	View uintptr
