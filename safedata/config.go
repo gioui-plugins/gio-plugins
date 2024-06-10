@@ -2,7 +2,7 @@
 
 package safedata
 
-// Config is the configuration for a WebView.
+// Config is the configuration for a SafeData.
 //
 // Each OS contains their own settings and options,
 // check each config_* file for more details.
