@@ -1,4 +1,4 @@
-//go:build !android && !darwin && !ios && !windows && !(js && wasm) && !freebsd && !linux && !openbsd && !netbsd && !dragonfly
+//go:build !android && !js
 
 package hyperlink
 
