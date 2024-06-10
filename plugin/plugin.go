@@ -11,6 +11,18 @@ import (
 	"unsafe"
 )
 
+type queue struct {
+	taggedEvents  map[event.Tag][]event.Event
+	untaggedEvent map[uint64][]event.Event
+}
+
+func newQueue() *queue {
+	return &queue{
+		taggedEvents:  make(map[event.Tag][]event.Event, 128),
+		untaggedEvent: make(map[uint64][]event.Event, 128),
+	}
+}
+
 type Plugin struct {
 	window *app.Window
 
@@ -18,8 +30,8 @@ type Plugin struct {
 	eventsCustomCurrentMutex sync.Mutex
 
 	// double buffered events
-	eventsCustomNext    map[event.Tag][]event.Event
-	eventsCustomCurrent map[event.Tag][]event.Event
+	eventsCustomNext    *queue
+	eventsCustomCurrent *queue
 
 	eventsPool []event.Event
 
@@ -38,12 +50,14 @@ type Plugin struct {
 
 func NewPlugin(w *app.Window) *Plugin {
 	h := &Plugin{
-		window:           w,
-		Plugins:          make([]Handler, len(registeredPlugins)),
-		visited:          make(map[uintptr]struct{}, 128),
-		RedirectOp:       make(map[reflect.Type][]int, 128),
-		RedirectCommands: make(map[reflect.Type][]int, 128),
-		RedirectEvent:    make(map[reflect.Type][]int, 128),
+		window:              w,
+		Plugins:             make([]Handler, len(registeredPlugins)),
+		visited:             make(map[uintptr]struct{}, 128),
+		RedirectOp:          make(map[reflect.Type][]int, 128),
+		RedirectCommands:    make(map[reflect.Type][]int, 128),
+		RedirectEvent:       make(map[reflect.Type][]int, 128),
+		eventsCustomNext:    newQueue(),
+		eventsCustomCurrent: newQueue(),
 	}
 
 	for index, pf := range registeredPlugins {
@@ -78,15 +92,27 @@ func (l *Plugin) SendEvent(tag event.Tag, data event.Event) {
 	l.eventsCustomNextMutex.Lock()
 	defer l.eventsCustomNextMutex.Unlock()
 
-	if l.eventsCustomNext == nil {
-		l.eventsCustomNext = make(map[event.Tag][]event.Event, 128)
+	if l.eventsCustomNext.taggedEvents[tag] == nil {
+		l.eventsCustomNext.taggedEvents[tag] = make([]event.Event, 0, 128)
 	}
 
-	if l.eventsCustomNext[tag] == nil {
-		l.eventsCustomNext[tag] = make([]event.Event, 0, 128)
+	l.eventsCustomNext.taggedEvents[tag] = append(l.eventsCustomNext.taggedEvents[tag], data)
+
+	if !l.Invalidated.Load() {
+		l.window.Invalidate()
+		l.Invalidated.Store(true)
+	}
+}
+
+func (l *Plugin) SendEventUntagged(tag uint64, data event.Event) {
+	l.eventsCustomNextMutex.Lock()
+	defer l.eventsCustomNextMutex.Unlock()
+
+	if l.eventsCustomNext.untaggedEvent[tag] == nil {
+		l.eventsCustomNext.untaggedEvent[tag] = make([]event.Event, 0, 128)
 	}
 
-	l.eventsCustomNext[tag] = append(l.eventsCustomNext[tag], data)
+	l.eventsCustomNext.untaggedEvent[tag] = append(l.eventsCustomNext.untaggedEvent[tag], data)
 
 	if !l.Invalidated.Load() {
 		l.window.Invalidate()
@@ -113,21 +139,28 @@ func (l *Plugin) Event(filters ...event.Filter) (event.Event, bool) {
 	defer l.eventsCustomCurrentMutex.Unlock()
 
 	for _, filter := range filters {
-		f, ok := filter.(Filter)
-		if !ok {
-			continue
-		}
+		switch f := filter.(type) {
+		case Filter:
+			tag := f.Tag()
+			for _, evt := range l.eventsCustomCurrent.taggedEvents[tag] {
+				if !f.Matches(evt) {
+					continue
+				}
 
-		tag := f.Tag()
-		for _, evt := range l.eventsCustomCurrent[tag] {
-			if !f.Matches(evt) {
-				continue
+				copy(l.eventsCustomCurrent.taggedEvents[tag], l.eventsCustomCurrent.taggedEvents[tag][1:])
+				l.eventsCustomCurrent.taggedEvents[tag] = l.eventsCustomCurrent.taggedEvents[tag][:len(l.eventsCustomCurrent.taggedEvents[tag])-1]
+
+				return evt, true
 			}
+		case UntaggedFilter:
+			tag := f.Name()
+			for _, evt := range l.eventsCustomCurrent.untaggedEvent[tag] {
+				if !f.Matches(evt) {
+					continue
+				}
 
-			copy(l.eventsCustomCurrent[tag], l.eventsCustomCurrent[tag][1:])
-			l.eventsCustomCurrent[tag] = l.eventsCustomCurrent[tag][:len(l.eventsCustomCurrent[tag])-1]
-
-			return evt, true
+				return evt, true
+			}
 		}
 	}
 
@@ -182,8 +215,11 @@ func (l *Plugin) Frame(ops *op.Ops) {
 
 	l.eventsCustomNextMutex.Lock()
 	l.eventsCustomCurrentMutex.Lock()
-	for v := range l.eventsCustomCurrent {
-		l.eventsCustomCurrent[v] = l.eventsCustomCurrent[v][:0]
+	for v := range l.eventsCustomCurrent.taggedEvents {
+		l.eventsCustomCurrent.taggedEvents[v] = l.eventsCustomCurrent.taggedEvents[v][:0]
+	}
+	for v := range l.eventsCustomCurrent.untaggedEvent {
+		l.eventsCustomCurrent.untaggedEvent[v] = l.eventsCustomCurrent.untaggedEvent[v][:0]
 	}
 	l.eventsCustomNextMutex.Unlock()
 	l.eventsCustomCurrentMutex.Unlock()

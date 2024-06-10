@@ -1,10 +1,12 @@
 package plugin
 
 import (
+	"encoding/binary"
 	"gioui.org/app"
 	"gioui.org/io/event"
 	"gioui.org/op"
 	"gioui.org/op/clip"
+	"golang.org/x/crypto/blake2b"
 	"reflect"
 	"sync"
 )
@@ -43,6 +45,25 @@ type Filter interface {
 
 	// Matches returns true if the event matches the Filter.
 	Matches(event.Event) bool
+}
+
+// UntaggedFilter is used to filter events, without using event.Tag.
+type UntaggedFilter interface {
+	event.Filter
+
+	// Matches returns true if the event matches the Filter.
+	Matches(event.Event) bool
+
+	// Name returns the name of the filter.
+	Name() uint64
+}
+
+// NewIntName returns a uint64 from the given name,
+// it is used to generate a unique name for the untagged filter and events.
+func NewIntName(name string) uint64 {
+	h, _ := blake2b.New(8, nil)
+	h.Write([]byte(name))
+	return binary.BigEndian.Uint64(h.Sum(nil))
 }
 
 var registeredPlugins []func(w *app.Window, handler *Plugin) Handler

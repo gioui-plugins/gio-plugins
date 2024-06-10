@@ -2,7 +2,7 @@
 
 package hyperlink
 
-// Config is the configuration for a WebView.
+// Config is the configuration for a Hyperlink.
 //
 // Each OS contains their own settings and options,
 // check each config_* file for more details.

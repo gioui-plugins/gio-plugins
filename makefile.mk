@@ -14,7 +14,7 @@ endif
 define generate_java
 java_$(1):
 	mkdir -p $(TEMP)/$(1)_android/classes
-	PATH=$(ANDROID_JAVA_ROOT):$(PATH) javac -source 8 -target 8 -bootclasspath $(ANDROID_PLATFORM)/android.jar -d $(TEMP)/$(1)_android/classes $(1)_android.java
+	PATH=$(ANDROID_JAVA_ROOT):$(PATH) javac -source 8 -target 8 -bootclasspath $(ANDROID_PLATFORM)/android.jar -cp $(2) -d $(TEMP)/$(1)_android/classes $(1)_android.java
 	jar cf $(1)_android.jar -C $(TEMP)/$(1)_android/classes .
 	rm -rf $(TEMP)/$(1)_android
 endef
@@ -25,4 +25,11 @@ inkwasm_$(1):
 	mv inkwasm_js.go $(1)_js_wasm.go
 	mv inkwasm_js.s $(1)_js_wasm.s
 	mv inkwasm_js.js $(1)_js.js
+endef
+
+CURDIR = $(shell pwd)
+
+define generate_pom
+pom_$(1):
+	go run $(CURDIR)/../cmd/pomgen/pom.go $(2)
 endef
