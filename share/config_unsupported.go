@@ -2,5 +2,5 @@
 
 package share
 
-// Config is the configuration for a WebView.
+// Config is the configuration for a Share.
 type Config struct{}

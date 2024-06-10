@@ -1,6 +1,6 @@
 package share
 
-// Config is the configuration for a WebView.
+// Config is the configuration for a Share.
 type Config struct {
 	// VM is the Java VM.
 	VM uintptr
