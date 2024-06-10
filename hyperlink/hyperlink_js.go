@@ -13,10 +13,20 @@ var (
 	_actives  = make([]js.Value, 0, 32)
 )
 
-type driver struct{}
+type driver struct {
+	closeFn js.Func
+}
 
 func attachDriver(house *Hyperlink, config Config) {
-	house.driver = driver{}
+	d := driver{}
+	d.closeFn = js.FuncOf(func(this js.Value, args []js.Value) interface{} {
+		configureDriver(&d, Config{Blur: true})
+		return nil
+	})
+
+	js.Global().Get("document").Call("addEventListener", "visibilitychange", d.closeFn)
+
+	house.driver = d
 }
 
 func configureDriver(driver *driver, config Config) {
@@ -28,16 +38,19 @@ func configureDriver(driver *driver, config Config) {
 	}
 }
 
-func (*driver) open(u *url.URL) error {
+func (d *driver) closeFunc() js.Func {
+	return d.closeFn
+}
+
+func (d *driver) open(u *url.URL) error {
 	if ok := js.Global().Call("open", u.String(), "_blank", "noreferrer,noopener").Truthy(); !ok {
 		// If there's a error let's use the hacky way:
 		// It will create a "fullscreen <a>", which clicking will
 		// open the URL.
 		// Generally, it will need two clicks to open the URL.
 
-		// We can't hook into `a` (adding `a.addEvenetListener("click")` will make it fail again,
-		// not sure why.
-		// We remove this `a` when the app lost focus (based on Page Visibility API, which Gio relies on).
+		// We remove this `a` when the app lost focus (based on Page Visibility API, which Gio relies on),
+		// or when the user clicks on the `a` element, if the `onclick` works.
 		a := _document.Call("createElement", "a")
 		a.Set("href", u.String())
 		a.Set("target", "_blank")
@@ -50,6 +63,7 @@ func (*driver) open(u *url.URL) error {
 		a.Get("style").Set("position", "fixed")
 		a.Get("style").Set("top", "0")
 		a.Get("style").Set("z-index", "2147483647")
+		a.Set("onclick", d.closeFunc())
 		_body.Call("appendChild", a)
 		_actives = append(_actives, a)
 	}
