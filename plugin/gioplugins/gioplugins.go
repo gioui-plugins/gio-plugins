@@ -11,6 +11,9 @@ import (
 	"unsafe"
 )
 
+// NewWindow creates a new window.
+// That is just a alias to gioui.org/app.Window, you
+// still need to use Hijack to get the events.
 func NewWindow() *app.Window {
 	return new(app.Window)
 }
@@ -25,7 +28,7 @@ func NewWindow() *app.Window {
 //	 w := app.Window{}
 //
 //		for {
-//		    e := w.Event()
+//		    e := w.Event()            // << Change here
 //		    // ...
 //		}
 //
@@ -34,7 +37,7 @@ func NewWindow() *app.Window {
 //	 w := app.Window{}
 //
 //		for {
-//		   e := gioplugins.Hook(w)
+//		   e := gioplugins.Hijack(w)  // << Change here
 //		   // ...
 //		}
 func Hijack(w *app.Window) event.Event {
@@ -72,15 +75,13 @@ func _event(gtx layout.Context, fptr uintptr) (evt event.Event, ok bool) {
 }
 
 // Execute executes the command.
+//
+// @TODO the input.Command is escaping to heap, we need to fix this.
 func Execute(gtx layout.Context, c input.Command) {
-	ptr := unsafe.Pointer(&c)
-	defer runtime.KeepAlive(ptr)
-
-	_execute(gtx, uintptr(ptr))
+	_execute(gtx, c)
 }
 
-func _execute(gtx layout.Context, fptr uintptr) {
-	cmd := *(*input.Command)(unsafe.Pointer(fptr))
+func _execute(gtx layout.Context, cmd input.Command) {
 	source := (*gioInputSource)(unsafe.Pointer(&gtx.Source))
 
 	if li := getInstanceByRouter(source.r); li != nil {
