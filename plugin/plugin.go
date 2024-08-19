@@ -12,17 +12,18 @@ import (
 )
 
 type queue struct {
-	taggedEvents  map[event.Tag][]event.Event
-	untaggedEvent map[uint64][]event.Event
+	taggedEvents   map[event.Tag][]event.Event
+	untaggedEvents map[uint64][]event.Event
 }
 
 func newQueue() *queue {
 	return &queue{
-		taggedEvents:  make(map[event.Tag][]event.Event, 128),
-		untaggedEvent: make(map[uint64][]event.Event, 128),
+		taggedEvents:   make(map[event.Tag][]event.Event, 128),
+		untaggedEvents: make(map[uint64][]event.Event, 128),
 	}
 }
 
+// Plugin is the main interface for the plugins.
 type Plugin struct {
 	window *app.Window
 
@@ -48,6 +49,7 @@ type Plugin struct {
 	OriginalSource input.Source
 }
 
+// NewPlugin creates a new plugin.
 func NewPlugin(w *app.Window) *Plugin {
 	h := &Plugin{
 		window:              w,
@@ -88,6 +90,7 @@ func NewPlugin(w *app.Window) *Plugin {
 	return h
 }
 
+// SendEvent sends an event with a tag.
 func (l *Plugin) SendEvent(tag event.Tag, data event.Event) {
 	l.eventsCustomNextMutex.Lock()
 	defer l.eventsCustomNextMutex.Unlock()
@@ -104,15 +107,16 @@ func (l *Plugin) SendEvent(tag event.Tag, data event.Event) {
 	}
 }
 
+// SendEventUntagged sends an event without a tag.
 func (l *Plugin) SendEventUntagged(tag uint64, data event.Event) {
 	l.eventsCustomNextMutex.Lock()
 	defer l.eventsCustomNextMutex.Unlock()
 
-	if l.eventsCustomNext.untaggedEvent[tag] == nil {
-		l.eventsCustomNext.untaggedEvent[tag] = make([]event.Event, 0, 128)
+	if l.eventsCustomNext.untaggedEvents[tag] == nil {
+		l.eventsCustomNext.untaggedEvents[tag] = make([]event.Event, 0, 128)
 	}
 
-	l.eventsCustomNext.untaggedEvent[tag] = append(l.eventsCustomNext.untaggedEvent[tag], data)
+	l.eventsCustomNext.untaggedEvents[tag] = append(l.eventsCustomNext.untaggedEvents[tag], data)
 
 	if !l.Invalidated.Load() {
 		l.window.Invalidate()
@@ -134,6 +138,7 @@ func (l *Plugin) Event(t ...event.Filter) (event.Event, bool) {
 }
 */
 
+// Event returns the first event that matches the filters.
 func (l *Plugin) Event(filters ...event.Filter) (event.Event, bool) {
 	l.eventsCustomCurrentMutex.Lock()
 	defer l.eventsCustomCurrentMutex.Unlock()
@@ -154,10 +159,13 @@ func (l *Plugin) Event(filters ...event.Filter) (event.Event, bool) {
 			}
 		case UntaggedFilter:
 			tag := f.Name()
-			for _, evt := range l.eventsCustomCurrent.untaggedEvent[tag] {
+			for _, evt := range l.eventsCustomCurrent.untaggedEvents[tag] {
 				if !f.Matches(evt) {
 					continue
 				}
+
+				copy(l.eventsCustomCurrent.untaggedEvents[tag], l.eventsCustomCurrent.untaggedEvents[tag][1:])
+				l.eventsCustomCurrent.untaggedEvents[tag] = l.eventsCustomCurrent.untaggedEvents[tag][:len(l.eventsCustomCurrent.untaggedEvents[tag])-1]
 
 				return evt, true
 			}
@@ -176,6 +184,7 @@ func (l *Plugin) Execute(c input.Command) {
 }
 */
 
+// Execute executes the command.
 func (l *Plugin) Execute(c input.Command) bool {
 	t := reflect.TypeOf(c)
 	if _, ok := l.RedirectCommands[t]; !ok {
@@ -189,14 +198,17 @@ func (l *Plugin) Execute(c input.Command) bool {
 	return true
 }
 
+// Enabled returns if the plugin is enabled.
 func (l *Plugin) Enabled() bool {
 	return true
 }
 
+// Focused returns if the plugin is focused.
 func (l *Plugin) Focused(tag event.Tag) bool {
 	return l.OriginalSource.Focused(tag)
 }
 
+// Frame is the function called at the end of the frame.
 func (l *Plugin) Frame(ops *op.Ops) {
 	l.OriginalFrame(ops)
 
@@ -218,8 +230,8 @@ func (l *Plugin) Frame(ops *op.Ops) {
 	for v := range l.eventsCustomCurrent.taggedEvents {
 		l.eventsCustomCurrent.taggedEvents[v] = l.eventsCustomCurrent.taggedEvents[v][:0]
 	}
-	for v := range l.eventsCustomCurrent.untaggedEvent {
-		l.eventsCustomCurrent.untaggedEvent[v] = l.eventsCustomCurrent.untaggedEvent[v][:0]
+	for v := range l.eventsCustomCurrent.untaggedEvents {
+		l.eventsCustomCurrent.untaggedEvents[v] = l.eventsCustomCurrent.untaggedEvents[v][:0]
 	}
 	l.eventsCustomNextMutex.Unlock()
 	l.eventsCustomCurrentMutex.Unlock()
@@ -242,6 +254,7 @@ var (
 	typeOps     = reflect.TypeOf(&internalOps)
 )
 
+// Op is the function that processes the ops.
 func (l *Plugin) Op(o *unsafeOps) {
 	if _, ok := l.visited[uintptr(unsafe.Pointer(o))]; ok {
 		return
@@ -260,6 +273,7 @@ func (l *Plugin) Op(o *unsafeOps) {
 	}
 }
 
+// ProcessEventFromGio processes the event from Gio.
 func (l *Plugin) ProcessEventFromGio(evt event.Event) event.Event {
 	for _, index := range l.RedirectEvent[reflect.TypeOf(evt)] {
 		l.Plugins[index].Event(evt)

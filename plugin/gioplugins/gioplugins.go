@@ -6,7 +6,6 @@ import (
 	"gioui.org/io/input"
 	"gioui.org/layout"
 	"github.com/gioui-plugins/gio-plugins/plugin"
-	"runtime"
 	"sync"
 	"unsafe"
 )
@@ -56,10 +55,7 @@ func Hijack(w *app.Window) event.Event {
 
 // Event returns custom events from the last frame.
 func Event(gtx layout.Context, filters ...event.Filter) (evt event.Event, ok bool) {
-	ptr := unsafe.Pointer(&filters)
-	defer runtime.KeepAlive(ptr)
-
-	return _event(gtx, uintptr(ptr))
+	return _event(gtx, uintptr(unsafe.Pointer(&filters)))
 }
 
 func _event(gtx layout.Context, fptr uintptr) (evt event.Event, ok bool) {
