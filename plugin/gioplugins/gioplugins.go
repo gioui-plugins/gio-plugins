@@ -55,7 +55,12 @@ func Hijack(w *app.Window) event.Event {
 
 // Event returns custom events from the last frame.
 func Event(gtx layout.Context, filters ...event.Filter) (evt event.Event, ok bool) {
-	return _event(gtx, uintptr(unsafe.Pointer(&filters)))
+	evt, ok = _event(gtx, uintptr(unsafe.Pointer(&filters)))
+	for _, f := range filters {
+		// Hack to avoid the escape to heap, while keeping it alive.
+		f.ImplementsFilter()
+	}
+	return evt, ok
 }
 
 func _event(gtx layout.Context, fptr uintptr) (evt event.Event, ok bool) {
