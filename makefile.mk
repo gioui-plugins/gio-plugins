@@ -14,7 +14,7 @@ endif
 define generate_java
 java_$(1):
 	mkdir -p $(TEMP)/$(1)_android/classes
-	PATH=$(ANDROID_JAVA_ROOT):$(PATH) javac -source 8 -target 8 -bootclasspath $(ANDROID_PLATFORM)/android.jar -cp $(2) -d $(TEMP)/$(1)_android/classes $(1)_android.java
+	PATH=$(ANDROID_JAVA_ROOT):$(PATH) javac -source 8 -target 8 -bootclasspath $(ANDROID_PLATFORM)/android.jar $(if $(2),-cp $(2)) -d $(TEMP)/$(1)_android/classes $(1)_android.java
 	jar cf $(1)_android.jar -C $(TEMP)/$(1)_android/classes .
 	rm -rf $(TEMP)/$(1)_android
 endef
