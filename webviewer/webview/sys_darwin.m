@@ -150,14 +150,26 @@ void getCookies(CFTypeRef config, uintptr_t handler, uintptr_t done) {
 
 void addCookie(CFTypeRef config, uintptr_t done, char *name, char *value, char *domain, char *path, int64_t expires, uint64_t features) {
     WKWebViewConfiguration *configuration = (__bridge WKWebViewConfiguration *)config;
-    NSHTTPCookie *cookie = [NSHTTPCookie cookieWithProperties:@{
-       NSHTTPCookieName: @(name),
-        NSHTTPCookieValue: @(value),
-        NSHTTPCookieDomain: @(domain),
-        NSHTTPCookiePath: @(path),
-        NSHTTPCookieExpires: [NSDate dateWithTimeIntervalSince1970:expires],
-        NSHTTPCookieSecure: ((features & 2) == 2 ? @("true") : @("false")),
-    }];
+    NSHTTPCookie *cookie;
+
+    if (expires == 0) {
+        cookie = [NSHTTPCookie cookieWithProperties:@{
+            NSHTTPCookieName: @(name),
+            NSHTTPCookieValue: @(value),
+            NSHTTPCookieDomain: @(domain),
+            NSHTTPCookiePath: @(path),
+            NSHTTPCookieSecure: ((features & 2) == 2 ? @("true") : @("false")),
+        }];
+    } else {
+        cookie = [NSHTTPCookie cookieWithProperties:@{
+           NSHTTPCookieName: @(name),
+            NSHTTPCookieValue: @(value),
+            NSHTTPCookieDomain: @(domain),
+            NSHTTPCookiePath: @(path),
+            NSHTTPCookieExpires: [NSDate dateWithTimeIntervalSince1970:expires],
+            NSHTTPCookieSecure: ((features & 2) == 2 ? @("true") : @("false")),
+        }];
+    }
 
     [[[configuration websiteDataStore] httpCookieStore] setCookie:cookie completionHandler: ^(void) {
         reportDone(done, nil);
