@@ -43,7 +43,7 @@ func (h *driver) init() {
 		}
 
 		h.hyperlinkClass = jni.Class(jni.NewGlobalRef(env, jni.Object(class)))
-		h.hyperlinkMethodOpen = jni.GetStaticMethodID(env, h.hyperlinkClass, "open", "(Landroid/view/View;Ljava/lang/String;Landroid/view/View;Ljava/lang/String;)V")
+		h.hyperlinkMethodOpen = jni.GetStaticMethodID(env, h.hyperlinkClass, "open", "(Landroid/view/View;Ljava/lang/String;Ljava/lang/String;)V")
 
 		return nil
 	})
