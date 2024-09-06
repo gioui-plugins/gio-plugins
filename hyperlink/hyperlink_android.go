@@ -61,7 +61,7 @@ func (h *driver) destroy() {
 	})
 }
 
-func (h *driver) open(u *url.URL) error {
+func (h *driver) open(u *url.URL, preferredPackage string) error {
 	if h.config.View == 0 {
 		return ErrNotReady
 	}

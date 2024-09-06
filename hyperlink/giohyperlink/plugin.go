@@ -40,7 +40,7 @@ func (h *hyperlinkPlugin) Op(op interface{}) {}
 func (h *hyperlinkPlugin) Execute(op any) {
 	switch op := op.(type) {
 	case OpenCmd:
-		if err := h.client.Open(op.URI); err != nil {
+		if err := h.client.OpenWith(op.URI, op.PreferredPackage); err != nil {
 			h.plugin.SendEvent(op.Tag, ErrorEvent{err})
 		}
 	}
