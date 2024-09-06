@@ -13,6 +13,6 @@ func attachDriver(house *Hyperlink, config Config) {}
 
 func configureDriver(driver *driver, config Config) {}
 
-func (*driver) open(u *url.URL) error {
+func (*driver) open(u *url.URL, preferredPackage string) error {
 	return exec.Command("xdg-open", u.String()).Run()
 }

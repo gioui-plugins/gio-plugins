@@ -42,7 +42,7 @@ func (d *driver) closeFunc() js.Func {
 	return d.closeFn
 }
 
-func (d *driver) open(u *url.URL) error {
+func (d *driver) open(u *url.URL, preferredPackage string) error {
 	if ok := js.Global().Call("open", u.String(), "_blank", "noreferrer,noopener").Truthy(); !ok {
 		// If there's a error let's use the hacky way:
 		// It will create a "fullscreen <a>", which clicking will
