@@ -84,7 +84,7 @@ func main() {
 					panic(err)
 				}
 
-				d := filepath.Join(path, "target", filepath.Base(match)+".jar")
+				d := filepath.Join(path, "target", filepath.Base(match)+filepath.Base(f.Name)+".jar") // bug
 				out, err := os.Create(d)
 				if err != nil {
 					panic(err)
