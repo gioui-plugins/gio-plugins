@@ -233,8 +233,8 @@ func (l *Plugin) Frame(ops *op.Ops) {
 	for v := range l.eventsCustomCurrent.untaggedEvents {
 		l.eventsCustomCurrent.untaggedEvents[v] = l.eventsCustomCurrent.untaggedEvents[v][:0]
 	}
-	l.eventsCustomNextMutex.Unlock()
 	l.eventsCustomCurrentMutex.Unlock()
+	l.eventsCustomNextMutex.Unlock()
 }
 
 // unsafeOps is a copy of internal/ops/ops.go
@@ -286,8 +286,8 @@ func (l *Plugin) ProcessEventFromGio(evt event.Event) event.Event {
 		l.eventsCustomNextMutex.Lock()
 		l.eventsCustomCurrentMutex.Lock()
 		l.eventsCustomNext, l.eventsCustomCurrent = l.eventsCustomCurrent, l.eventsCustomNext
-		l.eventsCustomNextMutex.Unlock()
 		l.eventsCustomCurrentMutex.Unlock()
+		l.eventsCustomNextMutex.Unlock()
 
 		l.OriginalFrame = e.Frame
 		e.Frame = l.Frame
