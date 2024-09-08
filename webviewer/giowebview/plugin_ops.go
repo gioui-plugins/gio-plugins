@@ -81,13 +81,9 @@ func (o WebViewOp) Pop(op *op.Ops) {
 	plugin.WriteOp(op, opc)
 }
 
-func (o WebViewOp) execute(w *app.Window, p *webViewPlugin, _ app.FrameEvent) {
-	p.mutex.Lock()
-	defer p.mutex.Unlock()
-
+func (o WebViewOp) execute(w *app.Window, p *webViewPlugin) {
 	runnerIndex, ok := p.tags[o.Tag]
 	if !ok {
-		p.config = NewConfigFromViewEvent(w, p.viewEvent)
 		wv, err := webview.NewWebView(p.config)
 		if err != nil {
 			panic(err)
@@ -132,7 +128,7 @@ func (o OffsetOp) Add(op *op.Ops) {
 	plugin.WriteOp(op, opc)
 }
 
-func (o OffsetOp) execute(_ *app.Window, p *webViewPlugin, _ app.FrameEvent) {
+func (o OffsetOp) execute(_ *app.Window, p *webViewPlugin) {
 	if p.active == nil {
 		return
 	}
@@ -163,14 +159,6 @@ func (o RectOp) Add(op *op.Ops) {
 func (o RectOp) execute(_ *app.Window, p *webViewPlugin, e app.FrameEvent) {
 	if p.active == nil {
 		return
-	}
-
-	p.mutex.Lock()
-	defer p.mutex.Unlock()
-
-	if e.Metric.PxPerDp != p.config.PxPerDp {
-		p.config.PxPerDp = e.Metric.PxPerDp
-		p.active.Configure(p.config)
 	}
 
 	p.seem[p.activeIndex] = true

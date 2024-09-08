@@ -259,8 +259,8 @@ public class sys_android {
         cookieManager.removeAllCookies(new ValueCallback<Boolean>() {
             @Override
             public void onReceiveValue(Boolean aBoolean) {
-                cookieManager.flush();
                 reportDone(done, "");
+                cookieManager.flush();
             }
         });
     }

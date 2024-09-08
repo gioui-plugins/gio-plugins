@@ -44,6 +44,7 @@ func (s *Scheduler) SetRunner(r func(f func())) {
 			fns := make([]func(), 0, 32)
 			last := 0
 			for range s.update {
+			repeat:
 				s.mutex.Lock()
 				if last == s.counter {
 					s.mutex.Unlock()
@@ -69,13 +70,11 @@ func (s *Scheduler) SetRunner(r func(f func())) {
 				fns = fns[:0]
 
 				s.mutex.Lock()
-				if s.counter != last && len(s.update) == 0 {
-					select {
-					case s.update <- struct{}{}:
-					default:
-					}
-				}
+				isOutdated := s.counter != last && len(s.update) == 0
 				s.mutex.Unlock()
+				if isOutdated {
+					goto repeat
+				}
 			}
 		}()
 	}
