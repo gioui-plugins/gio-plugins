@@ -14,7 +14,7 @@ public class hyperlink_android {
         Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
         Activity activity = (Activity)view.getContext();
 
-        if (packageName.length() > 0 && isInstalled(activity, packageName)) {
+        if (packageName != null && packageName.length() > 0 && isInstalled(activity, packageName)) {
             intent.setPackage(packageName);
         }
 
