@@ -138,10 +138,10 @@ func (e *driver) openNative(provider *google.Provider, nonce string) error {
 }
 
 //export Java_com_inkeliz_auth_1android_auth_1android_NativeAuthCallback
-func Java_com_inkeliz_auth_1android_auth_1android_NativeAuthCallback(env *C.JNIEnv, _ C.jclass, handler uintptr, idToken C.jstring) {
+func Java_com_inkeliz_auth_1android_auth_1android_NativeAuthCallback(env *C.JNIEnv, _ C.jclass, handler C.jlong, idToken C.jstring) {
 	r := AuthenticatedEvent{
 		Provider: google.IdentifierGoogle,
-		IDToken:  jni.GoString(jni.EnvFor((uintptr)(unsafe.Pointer(env))), jni.String(idToken)),
+		IDToken:  jni.GoString(jni.EnvFor(uintptr(unsafe.Pointer(env))), jni.String(idToken)),
 	}
 
 	driver, ok := cgo.Handle(handler).Value().(*driver)

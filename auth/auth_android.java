@@ -116,21 +116,18 @@ public class auth_android {
           try {
             GoogleIdTokenCredential googleIdTokenCredential = GoogleIdTokenCredential.createFrom(((CustomCredential) credential).getData());
             NativeAuthCallback(LastHandler, googleIdTokenCredential.getIdToken());
+            return;
           } catch (Exception e) {
-            Log.e("gioplugins_auth", "Received an invalid Google ID token response", e);
+            Log.e("gioplugins_auth", "Error parsing Google ID token", e);
+            NativeAuthCallback(LastHandler, "");
           }
-        } else {
-          // Catch any unrecognized custom credential type here.
-          Log.e("gioplugins_auth", "Unexpected type of credential");
         }
-      } else {
-        // Catch any unrecognized credential type here.
-        Log.e("gioplugins_auth", "Unexpected type of credential");
       }
+
+      NativeAuthCallback(LastHandler, "");
     }
 
     public void handleFailure(GetCredentialException e) {
-      // Handle the error.
       Log.e("gioplugins_auth", "Error getting credential", e);
       NativeAuthCallback(LastHandler, "");
     }
