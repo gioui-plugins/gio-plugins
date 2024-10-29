@@ -11,3 +11,9 @@ import (
 func NewConfigFromViewEvent(w *app.Window, evt app.ViewEvent) webview.Config {
 	return webview.Config{}
 }
+
+// UpdateConfigFromViewEvent updates a webview.Config based on app.ViewEvent.
+func UpdateConfigFromViewEvent(config *webview.Config, w *app.Window, e app.ViewEvent) {}
+
+// UpdateConfigFromFrameEvent updates a webview.Config based on app.FrameEvent.
+func UpdateConfigFromFrameEvent(config *webview.Config, w *app.Window, evt app.FrameEvent) {}

@@ -41,10 +41,20 @@ func (h *Hyperlink) Configure(config Config) {
 //
 // If you want to ignore the scheme, set InsecureIgnoreScheme to true, or use OpenUnsafe.
 func (h *Hyperlink) Open(uri *url.URL) error {
+	return h.OpenWith(uri, "")
+}
+
+// OpenWith opens the given URL with some preferred package.
+// It will return ErrInvalidURL if the URL doesn't use http or https.
+//
+// The preferredPackage is the name of the package (on Android), such as "com.android.chrome".
+//
+// If you want to ignore the scheme, set InsecureIgnoreScheme to true, or use OpenUnsafe.
+func (h *Hyperlink) OpenWith(uri *url.URL, preferredPackage string) error {
 	if uri == nil || uri.Scheme == "" || ((uri.Scheme != "http" && uri.Scheme != "https") && InsecureIgnoreScheme == false) {
 		return ErrInvalidURL
 	}
-	return h.driver.open(uri)
+	return h.driver.open(uri, preferredPackage)
 }
 
 // OpenUnsafe is the same as Open, but it doesn't validate the URL.
@@ -52,5 +62,5 @@ func (h *Hyperlink) Open(uri *url.URL) error {
 // That may crash or cause unexpected behavior if you use a non http/https URL,
 // so use it with caution.
 func (h *Hyperlink) OpenUnsafe(uri *url.URL) error {
-	return h.driver.open(uri)
+	return h.driver.open(uri, "")
 }

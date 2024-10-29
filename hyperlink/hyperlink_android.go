@@ -43,7 +43,7 @@ func (h *driver) init() {
 		}
 
 		h.hyperlinkClass = jni.Class(jni.NewGlobalRef(env, jni.Object(class)))
-		h.hyperlinkMethodOpen = jni.GetStaticMethodID(env, h.hyperlinkClass, "open", "(Landroid/view/View;Ljava/lang/String;)V")
+		h.hyperlinkMethodOpen = jni.GetStaticMethodID(env, h.hyperlinkClass, "open", "(Landroid/view/View;Ljava/lang/String;Ljava/lang/String;)V")
 
 		return nil
 	})
@@ -61,7 +61,7 @@ func (h *driver) destroy() {
 	})
 }
 
-func (h *driver) open(u *url.URL) error {
+func (h *driver) open(u *url.URL, preferredPackage string) error {
 	if h.config.View == 0 {
 		return ErrNotReady
 	}
@@ -70,8 +70,10 @@ func (h *driver) open(u *url.URL) error {
 		h.mutex.Lock()
 		defer h.mutex.Unlock()
 
-		err := jni.CallStaticVoidMethod(env, h.hyperlinkClass, h.hyperlinkMethodOpen, jni.Value(h.config.View), jni.Value(jni.JavaString(env, u.String())))
-		if err != nil {
+		uri := jni.Value(jni.JavaString(env, u.String()))
+		pkg := jni.Value(jni.JavaString(env, preferredPackage))
+
+		if err := jni.CallStaticVoidMethod(env, h.hyperlinkClass, h.hyperlinkMethodOpen, jni.Value(h.config.View), uri, pkg); err != nil {
 			panic(err)
 		}
 
