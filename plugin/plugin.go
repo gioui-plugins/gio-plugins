@@ -145,18 +145,6 @@ func (l *Plugin) Event(filters ...event.Filter) (event.Event, bool) {
 
 	for _, filter := range filters {
 		switch f := filter.(type) {
-		case Filter:
-			tag := f.Tag()
-			for _, evt := range l.eventsCustomCurrent.taggedEvents[tag] {
-				if !f.Matches(evt) {
-					continue
-				}
-
-				copy(l.eventsCustomCurrent.taggedEvents[tag], l.eventsCustomCurrent.taggedEvents[tag][1:])
-				l.eventsCustomCurrent.taggedEvents[tag] = l.eventsCustomCurrent.taggedEvents[tag][:len(l.eventsCustomCurrent.taggedEvents[tag])-1]
-
-				return evt, true
-			}
 		case UntaggedFilter:
 			tag := f.Name()
 			for _, evt := range l.eventsCustomCurrent.untaggedEvents[tag] {
@@ -166,6 +154,18 @@ func (l *Plugin) Event(filters ...event.Filter) (event.Event, bool) {
 
 				copy(l.eventsCustomCurrent.untaggedEvents[tag], l.eventsCustomCurrent.untaggedEvents[tag][1:])
 				l.eventsCustomCurrent.untaggedEvents[tag] = l.eventsCustomCurrent.untaggedEvents[tag][:len(l.eventsCustomCurrent.untaggedEvents[tag])-1]
+
+				return evt, true
+			}
+		case Filter:
+			tag := f.Tag()
+			for _, evt := range l.eventsCustomCurrent.taggedEvents[tag] {
+				if !f.Matches(evt) {
+					continue
+				}
+
+				copy(l.eventsCustomCurrent.taggedEvents[tag], l.eventsCustomCurrent.taggedEvents[tag][1:])
+				l.eventsCustomCurrent.taggedEvents[tag] = l.eventsCustomCurrent.taggedEvents[tag][:len(l.eventsCustomCurrent.taggedEvents[tag])-1]
 
 				return evt, true
 			}
