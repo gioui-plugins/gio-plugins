@@ -81,8 +81,10 @@ func (p *authPlugin) Event(evt event.Event) {
 		if p.client == nil {
 			p.config = NewConfigFromViewEvent(p.window, evt)
 			p.client = auth.NewAuth(p.config, DefaultProviders...)
+
+			evts := p.client.Events()
 			go func() {
-				for evt := range p.client.Events() {
+				for evt := range evts {
 					switch evt := evt.(type) {
 					case auth.ErrorEvent:
 						p.plugin.SendEventUntagged(intName, ErrorEvent(evt))
