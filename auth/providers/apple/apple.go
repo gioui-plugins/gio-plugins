@@ -27,8 +27,8 @@ type Provider struct {
 	// a custom scheme from the RedirectURL.
 	SchemeURL string
 
-	// EnableEmailAndName is used to enable the email and name scopes.
-	EnableEmailAndName bool
+	// DisabledEmailAndName is used to enable the email and name scopes.
+	DisabledEmailAndName bool
 }
 
 // URL returns the URL for the current platform.
@@ -44,7 +44,7 @@ func (c *Provider) ClientID() string {
 // webURL is used in Android and JS.
 func (c *Provider) webURL(nonce string) string {
 	v := url.Values{}
-	if c.EnableEmailAndName {
+	if !c.DisabledEmailAndName {
 		v.Set("scope", "name email")
 	}
 	v.Set("response_type", "code id_token")
@@ -53,7 +53,7 @@ func (c *Provider) webURL(nonce string) string {
 	v.Set("client_id", c.ClientID())
 	v.Set("nonce", nonce)
 
-	if runtime.GOOS == "js" && !c.EnableEmailAndName {
+	if runtime.GOOS == "js" && c.DisabledEmailAndName {
 		v.Set("response_mode", "fragment")
 	} else {
 		v.Set("response_mode", "form_post")

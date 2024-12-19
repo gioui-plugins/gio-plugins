@@ -10,8 +10,8 @@ Brings "Sign in with Apple" and "Sign in with Google" to your Gio app.
 
 That package requires to register your app on each provider (Apple/Google) and need to define the appropriate
 information (like AppID, AppName, RedirectURL and your signing key). Each provider has its own requirements,
-and you should follow the instructions below. If you are not using this package as Plugin (you are not
-using `gioauth.ListenOp`), then you need to call `ProcessCustomSchemeCallback` manually, when new URL is received.
+and you should follow the instructions below. If you are not using this package as Plugin, then you need to 
+call `ProcessCustomSchemeCallback` manually, when new URL is received.
 
 It's out of scope of this package to explain how to register your app on each provider.
 
@@ -26,6 +26,13 @@ you MUST redirect the user using a custom URL Scheme to your app. For example, i
 should use `https://example.com/auth/apple` as RedirectURL and redirect the user to `example://auth/apple`.
 
 Your custom URL Scheme must be registered using `-schemes` flag in `gogio`.
+
+In case of JavaScript/WASM, you can use Apple SDK, that is optional and automatically detected by the package.
+
+```javascript
+<script type="text/javascript" src="https://appleid.cdn-apple.com/appleauth/static/jsapi/appleid/1/en_US/appleid.auth.js" async></script>
+```
+> Remember to update your Content-Security-Policy to allow `appleid.cdn-apple.com` and such.
 
 ### Google
 
