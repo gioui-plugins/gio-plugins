@@ -3,11 +3,9 @@
 package webview
 
 import (
+	"golang.org/x/sys/windows"
 	"os"
 	"path/filepath"
-	"unsafe"
-
-	"golang.org/x/sys/windows"
 )
 
 var (
@@ -50,7 +48,26 @@ func init() {
 
 var (
 	// referenceHolder prevents GC from releasing the COM object.
-	referenceHolder = make(map[unsafe.Pointer]struct{}, 64)
+	referenceHolder = make(map[uintptr]int, 64)
+
+	add = windows.NewCallback(func(this uintptr) uintptr {
+		if this == 0 {
+			return 0
+		}
+		referenceHolder[this] += 1
+		return 0
+	})
+
+	release = windows.NewCallback(func(this uintptr) uintptr {
+		if this == 0 {
+			return 0
+		}
+		referenceHolder[this] -= 1
+		if referenceHolder[this] == 0 {
+			delete(referenceHolder, this)
+		}
+		return 0
+	})
 )
 
 type (
@@ -413,8 +430,7 @@ type (
 	_ICoreWebView2CreateCoreWebView2EnvironmentCompletedHandler struct {
 		VTBL *_ICoreWebView2CreateCoreWebView2EnvironmentCompletedHandlerVTBL
 
-		Counter uintptr
-		Invoke  func(this *_ICoreWebView2CreateCoreWebView2EnvironmentCompletedHandler, err uintptr, val *_ICoreWebView2Environment) uintptr
+		Invoke func(this *_ICoreWebView2CreateCoreWebView2EnvironmentCompletedHandler, err uintptr, val *_ICoreWebView2Environment) uintptr
 	}
 
 	// _ICoreWebView2CreateCoreWebView2EnvironmentCompletedHandlerVTBL implements https://docs.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2createcorewebview2environmentcompletedhandler.
@@ -429,19 +445,8 @@ var _CoreWebView2CreateCoreWebView2EnvironmentCompletedHandlerVTBL = &_ICoreWebV
 		Query: windows.NewCallback(func(this *_ICoreWebView2CreateCoreWebView2EnvironmentCompletedHandler, _, o uintptr) uintptr {
 			return 0
 		}),
-		Add: windows.NewCallback(func(this *_ICoreWebView2CreateCoreWebView2EnvironmentCompletedHandler) uintptr {
-			referenceHolder[unsafe.Pointer(this)] = struct{}{}
-			this.Counter += 1
-			return this.Counter
-		}),
-		Release: windows.NewCallback(func(this *_ICoreWebView2CreateCoreWebView2EnvironmentCompletedHandler) uintptr {
-			this.Counter -= 1
-			if this.Counter == 0 {
-				delete(referenceHolder, unsafe.Pointer(this))
-				*this = _ICoreWebView2CreateCoreWebView2EnvironmentCompletedHandler{}
-			}
-			return this.Counter + 1
-		}),
+		Add:     add,
+		Release: release,
 	},
 	Invoke: windows.NewCallback(func(this *_ICoreWebView2CreateCoreWebView2EnvironmentCompletedHandler, err uintptr, val *_ICoreWebView2Environment) uintptr {
 		if this == nil {
@@ -456,8 +461,7 @@ type (
 	_ICoreWebView2CreateCoreWebView2ControllerCompletedHandler struct {
 		VTBL *_ICoreWebView2CreateCoreWebView2ControllerCompletedHandlerVTBL
 
-		Counter uintptr
-		Invoke  func(this *_ICoreWebView2CreateCoreWebView2ControllerCompletedHandler, err uintptr, val *_ICoreWebView2Controller) uintptr
+		Invoke func(this *_ICoreWebView2CreateCoreWebView2ControllerCompletedHandler, err uintptr, val *_ICoreWebView2Controller) uintptr
 	}
 
 	// _ICoreWebView2CreateCoreWebView2ControllerCompletedHandlerVTBL implements https://docs.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2createcorewebview2controllercompletedhandler
@@ -472,19 +476,8 @@ var _CoreWebView2CreateCoreWebView2ControllerCompletedHandlerVTBL = &_ICoreWebVi
 		Query: windows.NewCallback(func(this *_ICoreWebView2CreateCoreWebView2ControllerCompletedHandler, _, o uintptr) uintptr {
 			return 0
 		}),
-		Add: windows.NewCallback(func(this *_ICoreWebView2CreateCoreWebView2ControllerCompletedHandler) uintptr {
-			referenceHolder[unsafe.Pointer(this)] = struct{}{}
-			this.Counter += 1
-			return this.Counter
-		}),
-		Release: windows.NewCallback(func(this *_ICoreWebView2CreateCoreWebView2ControllerCompletedHandler) uintptr {
-			this.Counter -= 1
-			if this.Counter == 0 {
-				delete(referenceHolder, unsafe.Pointer(this))
-				*this = _ICoreWebView2CreateCoreWebView2ControllerCompletedHandler{}
-			}
-			return this.Counter + 1
-		}),
+		Add:     add,
+		Release: release,
 	},
 	Invoke: windows.NewCallback(func(this *_ICoreWebView2CreateCoreWebView2ControllerCompletedHandler, err uintptr, val *_ICoreWebView2Controller) uintptr {
 		if this == nil {
@@ -499,8 +492,7 @@ type (
 	_ICoreWebView2AddScriptToExecuteOnDocumentCreatedCompletedHandler struct {
 		VTBL *_ICoreWebView2AddScriptToExecuteOnDocumentCreatedCompletedHandlerVTBL
 
-		Counter uintptr
-		Invoke  func(this *_ICoreWebView2AddScriptToExecuteOnDocumentCreatedCompletedHandler, err uintptr, id uintptr) uintptr
+		Invoke func(this *_ICoreWebView2AddScriptToExecuteOnDocumentCreatedCompletedHandler, err uintptr, id uintptr) uintptr
 	}
 
 	// _ICoreWebView2AddScriptToExecuteOnDocumentCreatedCompletedHandlerVTBL implements https://docs.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2addscripttoexecuteondocumentcreatedcompletedhandler?view=webview2-1.0.1264.42
@@ -515,19 +507,8 @@ var _CoreWebView2AddScriptToExecuteOnDocumentCreatedCompletedHandlerVTBL = &_ICo
 		Query: windows.NewCallback(func(this *_ICoreWebView2AddScriptToExecuteOnDocumentCreatedCompletedHandler, _, o uintptr) uintptr {
 			return 0
 		}),
-		Add: windows.NewCallback(func(this *_ICoreWebView2AddScriptToExecuteOnDocumentCreatedCompletedHandler) uintptr {
-			referenceHolder[unsafe.Pointer(this)] = struct{}{}
-			this.Counter += 1
-			return this.Counter
-		}),
-		Release: windows.NewCallback(func(this *_ICoreWebView2AddScriptToExecuteOnDocumentCreatedCompletedHandler) uintptr {
-			this.Counter -= 1
-			if this.Counter == 0 {
-				delete(referenceHolder, unsafe.Pointer(this))
-				*this = _ICoreWebView2AddScriptToExecuteOnDocumentCreatedCompletedHandler{}
-			}
-			return this.Counter + 1
-		}),
+		Add:     add,
+		Release: release,
 	},
 	Invoke: windows.NewCallback(func(this *_ICoreWebView2AddScriptToExecuteOnDocumentCreatedCompletedHandler, err uintptr, id uintptr) uintptr {
 		if this == nil {
@@ -561,8 +542,7 @@ type (
 	_ICoreWebView2GetCookiesCompletedHandler struct {
 		VTBL *_ICoreWebView2GetCookiesCompletedHandlerVTBL
 
-		Counter uintptr
-		Invoke  func(this *_ICoreWebView2GetCookiesCompletedHandler, err uintptr, cookies *_ICoreWebView2CookieList) uintptr
+		Invoke func(this *_ICoreWebView2GetCookiesCompletedHandler, err uintptr, cookies *_ICoreWebView2CookieList) uintptr
 	}
 
 	_ICoreWebView2GetCookiesCompletedHandlerVTBL struct {
@@ -576,19 +556,8 @@ var _CoreWebView2GetCookiesCompletedHandlerVTBL = &_ICoreWebView2GetCookiesCompl
 		Query: windows.NewCallback(func(this *_ICoreWebView2GetCookiesCompletedHandler, _, o uintptr) uintptr {
 			return 0
 		}),
-		Add: windows.NewCallback(func(this *_ICoreWebView2GetCookiesCompletedHandler) uintptr {
-			referenceHolder[unsafe.Pointer(this)] = struct{}{}
-			this.Counter += 1
-			return this.Counter
-		}),
-		Release: windows.NewCallback(func(this *_ICoreWebView2GetCookiesCompletedHandler) uintptr {
-			this.Counter -= 1
-			if this.Counter == 0 {
-				delete(referenceHolder, unsafe.Pointer(this))
-				*this = _ICoreWebView2GetCookiesCompletedHandler{}
-			}
-			return this.Counter + 1
-		}),
+		Add:     add,
+		Release: release,
 	},
 	Invoke: windows.NewCallback(func(this *_ICoreWebView2GetCookiesCompletedHandler, err uintptr, cookies *_ICoreWebView2CookieList) uintptr {
 		if this == nil {
@@ -638,8 +607,8 @@ type (
 	_ICoreWebView2FrameWebMessageReceivedEventHandler struct {
 		VTBL *_ICoreWebView2FrameWebMessageReceivedEventHandlerVTBL
 
-		Counter uintptr
-		Invoke  func(this *_ICoreWebView2FrameWebMessageReceivedEventHandler, frame uintptr, args *_ICoreWebView2WebMessageReceivedEventArgs) uintptr
+		Token  uintptr
+		Invoke func(this *_ICoreWebView2FrameWebMessageReceivedEventHandler, frame uintptr, args *_ICoreWebView2WebMessageReceivedEventArgs) uintptr
 	}
 
 	_ICoreWebView2FrameWebMessageReceivedEventHandlerVTBL struct {
@@ -654,17 +623,8 @@ var (
 			Query: windows.NewCallback(func(this *_ICoreWebView2FrameWebMessageReceivedEventHandler, _, o uintptr) uintptr {
 				return 0
 			}),
-			Add: windows.NewCallback(func(this *_ICoreWebView2FrameWebMessageReceivedEventHandler) uintptr {
-				this.Counter += 1
-				return this.Counter
-			}),
-			Release: windows.NewCallback(func(this *_ICoreWebView2FrameWebMessageReceivedEventHandler) uintptr {
-				this.Counter -= 1
-				if this.Counter == 0 {
-					*this = _ICoreWebView2FrameWebMessageReceivedEventHandler{}
-				}
-				return this.Counter + 1
-			}),
+			Add:     add,
+			Release: release,
 		},
 		Invoke: windows.NewCallback(func(this *_ICoreWebView2FrameWebMessageReceivedEventHandler, frame uintptr, args *_ICoreWebView2WebMessageReceivedEventArgs) uintptr {
 			if this == nil {
@@ -692,8 +652,7 @@ type (
 	_ICoreWebView2ExecuteScriptCompletedHandler struct {
 		VTBL *_ICoreWebView2ExecuteScriptCompletedHandlerVTBL
 
-		Counter uintptr
-		Invoke  func(this *_ICoreWebView2ExecuteScriptCompletedHandler, err uintptr, resultObjectAsJson uintptr) uintptr
+		Invoke func(this *_ICoreWebView2ExecuteScriptCompletedHandler, err uintptr, resultObjectAsJson uintptr) uintptr
 	}
 
 	_ICoreWebView2ExecuteScriptCompletedHandlerVTBL struct {
@@ -707,19 +666,8 @@ var _CoreWebView2ExecuteScriptCompletedHandlerVTBL = &_ICoreWebView2ExecuteScrip
 		Query: windows.NewCallback(func(this *_ICoreWebView2ExecuteScriptCompletedHandler, _, o uintptr) uintptr {
 			return 0
 		}),
-		Add: windows.NewCallback(func(this *_ICoreWebView2ExecuteScriptCompletedHandler) uintptr {
-			referenceHolder[unsafe.Pointer(this)] = struct{}{}
-			this.Counter += 1
-			return this.Counter
-		}),
-		Release: windows.NewCallback(func(this *_ICoreWebView2ExecuteScriptCompletedHandler) uintptr {
-			this.Counter -= 1
-			if this.Counter == 0 {
-				delete(referenceHolder, unsafe.Pointer(this))
-				*this = _ICoreWebView2ExecuteScriptCompletedHandler{}
-			}
-			return this.Counter + 1
-		}),
+		Add:     add,
+		Release: release,
 	},
 	Invoke: windows.NewCallback(func(this *_ICoreWebView2ExecuteScriptCompletedHandler, err uintptr, resultObjectAsJson uintptr) uintptr {
 		if this == nil {
@@ -733,8 +681,8 @@ type (
 	_ICoreWebView2DocumentTitleChangedEventHandler struct {
 		VTBL *_ICoreWebView2DocumentTitleChangedEventHandlerVTBL
 
-		Counter uintptr
-		Invoke  func(this *_ICoreWebView2DocumentTitleChangedEventHandler, w *_ICoreWebView2, v uintptr) uintptr
+		Token  uintptr
+		Invoke func(this *_ICoreWebView2DocumentTitleChangedEventHandler, w *_ICoreWebView2, v uintptr) uintptr
 	}
 
 	_ICoreWebView2DocumentTitleChangedEventHandlerVTBL struct {
@@ -748,19 +696,8 @@ var _CoreWebView2DocumentTitleChangedEventHandlerVTBL = &_ICoreWebView2DocumentT
 		Query: windows.NewCallback(func(this *_ICoreWebView2DocumentTitleChangedEventHandler, _, o uintptr) uintptr {
 			return 0
 		}),
-		Add: windows.NewCallback(func(this *_ICoreWebView2DocumentTitleChangedEventHandler) uintptr {
-			referenceHolder[unsafe.Pointer(this)] = struct{}{}
-			this.Counter += 1
-			return this.Counter
-		}),
-		Release: windows.NewCallback(func(this *_ICoreWebView2DocumentTitleChangedEventHandler) uintptr {
-			this.Counter -= 1
-			if this.Counter == 0 {
-				delete(referenceHolder, unsafe.Pointer(this))
-				*this = _ICoreWebView2DocumentTitleChangedEventHandler{}
-			}
-			return this.Counter + 1
-		}),
+		Add:     add,
+		Release: release,
 	},
 	Invoke: windows.NewCallback(func(this *_ICoreWebView2DocumentTitleChangedEventHandler, w *_ICoreWebView2, v uintptr) uintptr {
 		if this == nil {
@@ -774,8 +711,8 @@ type (
 	_ICoreWebView2SourceChangedEventHandler struct {
 		VTBL *_ICoreWebView2SourceChangedEventHandlerVTBL
 
-		Counter uintptr
-		Invoke  func(this *_ICoreWebView2SourceChangedEventHandler, w *_ICoreWebView2, v uintptr) uintptr
+		Token  uintptr
+		Invoke func(this *_ICoreWebView2SourceChangedEventHandler, w *_ICoreWebView2, v uintptr) uintptr
 	}
 
 	_ICoreWebView2SourceChangedEventHandlerVTBL struct {
@@ -789,19 +726,8 @@ var _CoreWebView2SourceChangedEventHandlerVTBL = &_ICoreWebView2SourceChangedEve
 		Query: windows.NewCallback(func(this *_ICoreWebView2SourceChangedEventHandler, _, o uintptr) uintptr {
 			return 0
 		}),
-		Add: windows.NewCallback(func(this *_ICoreWebView2SourceChangedEventHandler) uintptr {
-			referenceHolder[unsafe.Pointer(this)] = struct{}{}
-			this.Counter += 1
-			return this.Counter
-		}),
-		Release: windows.NewCallback(func(this *_ICoreWebView2SourceChangedEventHandler) uintptr {
-			this.Counter -= 1
-			if this.Counter == 0 {
-				delete(referenceHolder, unsafe.Pointer(this))
-				*this = _ICoreWebView2SourceChangedEventHandler{}
-			}
-			return this.Counter + 1
-		}),
+		Add:     add,
+		Release: release,
 	},
 	Invoke: windows.NewCallback(func(this *_ICoreWebView2SourceChangedEventHandler, w *_ICoreWebView2, v uintptr) uintptr {
 		if this == nil {
@@ -847,8 +773,7 @@ type (
 	_ICoreWebView2ClearBrowsingDataCompletedHandler struct {
 		VTBL *_ICoreWebView2ClearBrowsingDataCompletedHandlerVTBL
 
-		Counter uintptr
-		Invoke  func(this *_ICoreWebView2ClearBrowsingDataCompletedHandler, err uintptr) uintptr
+		Invoke func(this *_ICoreWebView2ClearBrowsingDataCompletedHandler, err uintptr) uintptr
 	}
 
 	_ICoreWebView2ClearBrowsingDataCompletedHandlerVTBL struct {
@@ -862,19 +787,8 @@ var _CoreWebView2ClearBrowsingDataCompletedHandler = &_ICoreWebView2ClearBrowsin
 		Query: windows.NewCallback(func(this *_ICoreWebView2ClearBrowsingDataCompletedHandler, _, o uintptr) uintptr {
 			return 0
 		}),
-		Add: windows.NewCallback(func(this *_ICoreWebView2ClearBrowsingDataCompletedHandler) uintptr {
-			referenceHolder[unsafe.Pointer(this)] = struct{}{}
-			this.Counter += 1
-			return this.Counter
-		}),
-		Release: windows.NewCallback(func(this *_ICoreWebView2ClearBrowsingDataCompletedHandler) uintptr {
-			this.Counter -= 1
-			if this.Counter == 0 {
-				delete(referenceHolder, unsafe.Pointer(this))
-				*this = _ICoreWebView2ClearBrowsingDataCompletedHandler{}
-			}
-			return this.Counter + 1
-		}),
+		Add:     add,
+		Release: release,
 	},
 	Invoke: windows.NewCallback(func(this *_ICoreWebView2ClearBrowsingDataCompletedHandler, err uintptr) uintptr {
 		if this == nil {

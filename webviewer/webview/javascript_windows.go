@@ -12,15 +12,19 @@ import (
 )
 
 type javascriptManager struct {
-	webview   *webview
-	jsHandler internal.Handle
-	callbacks sync.Map // map[string]func(message string)
-	callback  *_ICoreWebView2FrameWebMessageReceivedEventHandler
+	webview          *webview
+	jsHandler        internal.Handle
+	callbacks        sync.Map // map[string]func(message string)
+	callback         *_ICoreWebView2FrameWebMessageReceivedEventHandler
+	runJSHandler     *_ICoreWebView2ExecuteScriptCompletedHandler
+	jsJSDone         chan error
+	installJSHandler *_ICoreWebView2AddScriptToExecuteOnDocumentCreatedCompletedHandler
 }
 
 func newJavascriptManager(w *webview) *javascriptManager {
 	r := &javascriptManager{webview: w}
 	r.jsHandler = internal.NewHandle(r)
+	r.jsJSDone = make(chan error, 1)
 	w.scheduler.MustRun(func() {
 		r.installCallback()
 		r.installJavascript(fmt.Sprintf(scriptCallback, `window.chrome.webview.postMessage`))
@@ -44,36 +48,36 @@ func (j *javascriptManager) installCallback() {
 			return 0
 		},
 	}
+	j.runJSHandler = &_ICoreWebView2ExecuteScriptCompletedHandler{
+		VTBL: _CoreWebView2ExecuteScriptCompletedHandlerVTBL,
+		Invoke: func(this *_ICoreWebView2ExecuteScriptCompletedHandler, err uintptr, resulAsJson uintptr) uintptr {
+			j.jsJSDone <- nil
+			return 0
+		},
+	}
+	j.installJSHandler = &_ICoreWebView2AddScriptToExecuteOnDocumentCreatedCompletedHandler{
+		VTBL: _CoreWebView2AddScriptToExecuteOnDocumentCreatedCompletedHandlerVTBL,
+		Invoke: func(this *_ICoreWebView2AddScriptToExecuteOnDocumentCreatedCompletedHandler, err uintptr, id uintptr) uintptr {
+			return 0
+		},
+	}
 
 	j.webview.scheduler.MustRun(func() {
-		var r uint64
 		syscall.SyscallN(
 			j.webview.driver.webview2.VTBL.AddWebMessageReceived,
 			uintptr(unsafe.Pointer(j.webview.driver.webview2)),
 			uintptr(unsafe.Pointer(j.callback)),
-			uintptr(unsafe.Pointer(&r)),
+			uintptr(unsafe.Pointer(&j.callback.Token)),
 		)
 	})
 }
 
 // RunJavaScript implements the JavascriptManager interface.
 func (j *javascriptManager) RunJavaScript(js string) error {
-	done := make(chan error, 1)
-	fr := internal.NewHandle(done)
-	defer fr.Delete()
-
 	for _, c := range js {
 		if c == 0x00 {
 			return ErrInvalidJavascript
 		}
-	}
-
-	handler := &_ICoreWebView2ExecuteScriptCompletedHandler{
-		VTBL: _CoreWebView2ExecuteScriptCompletedHandlerVTBL,
-		Invoke: func(this *_ICoreWebView2ExecuteScriptCompletedHandler, err uintptr, resulAsJson uintptr) uintptr {
-			done <- nil
-			return 0
-		},
 	}
 
 	text := syscall.StringToUTF16Ptr(js)
@@ -83,11 +87,11 @@ func (j *javascriptManager) RunJavaScript(js string) error {
 			j.webview.driver.webview2.VTBL.ExecuteScript,
 			uintptr(unsafe.Pointer(j.webview.driver.webview2)),
 			uintptr(unsafe.Pointer(text)),
-			uintptr(unsafe.Pointer(handler)),
+			uintptr(unsafe.Pointer(j.runJSHandler)),
 		)
 	})
 
-	return <-done
+	return <-j.jsJSDone
 }
 
 // InstallJavascript implements the JavascriptManager interface.
@@ -108,6 +112,7 @@ func (j *javascriptManager) installJavascript(js string) {
 		j.webview.driver.webview2.VTBL.AddScriptToExecuteOnDocumentCreated,
 		uintptr(unsafe.Pointer(j.webview.driver.webview2)),
 		uintptr(unsafe.Pointer(syscall.StringToUTF16Ptr(js))),
+		uintptr(unsafe.Pointer(j.installJSHandler)),
 	)
 }
 
