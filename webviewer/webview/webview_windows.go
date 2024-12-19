@@ -21,7 +21,6 @@ type driver struct {
 	config Config
 	active uint32
 	dir    []uint16
-	err    error
 
 	controllerCompletedHandler  *_ICoreWebView2CreateCoreWebView2ControllerCompletedHandler
 	environmentCompletedHandler *_ICoreWebView2CreateCoreWebView2EnvironmentCompletedHandler
@@ -38,7 +37,6 @@ func (r *driver) attach(w *webview) error {
 	cerr := make(chan error, 1)
 
 	if err := r.checkInstall(); err != nil {
-		r.err = err
 		return err
 	}
 
@@ -52,7 +50,10 @@ func (r *driver) attach(w *webview) error {
 	w.mutex.Unlock()
 
 	go config.RunOnMain(func() {
-		windows.CoInitializeEx(0, 0x2)
+		if err := windows.CoInitializeEx(0, 0x2); err != nil {
+			cerr <- err
+			return
+		}
 
 		r.callbackLoad = &_ICoreWebView2SourceChangedEventHandler{
 			VTBL: _CoreWebView2SourceChangedEventHandlerVTBL,
@@ -92,8 +93,8 @@ func (r *driver) attach(w *webview) error {
 				syscall.SyscallN(r.webview2.VTBL._IUnknownVTBL.Query, uintptr(unsafe.Pointer(r.webview2)), uintptr(unsafe.Pointer(&_GUIDCoreWebView213)), uintptr(unsafe.Pointer(&r.webview213)))
 
 				// [Windows] Hook the events
-				syscall.SyscallN(r.webview2.VTBL.AddSourceChanged, uintptr(unsafe.Pointer(r.webview2)), uintptr(unsafe.Pointer(r.callbackLoad)))
-				syscall.SyscallN(r.webview2.VTBL.AddDocumentTitleChanged, uintptr(unsafe.Pointer(r.webview2)), uintptr(unsafe.Pointer(r.callbackTitle)))
+				syscall.SyscallN(r.webview2.VTBL.AddSourceChanged, uintptr(unsafe.Pointer(r.webview2)), uintptr(unsafe.Pointer(r.callbackLoad)), uintptr(unsafe.Pointer(&r.callbackLoad.Token)))
+				syscall.SyscallN(r.webview2.VTBL.AddDocumentTitleChanged, uintptr(unsafe.Pointer(r.webview2)), uintptr(unsafe.Pointer(r.callbackTitle)), uintptr(unsafe.Pointer(&r.callbackTitle.Token)))
 
 				atomic.AddUint32(&r.active, 1)
 
@@ -128,7 +129,6 @@ func (r *driver) attach(w *webview) error {
 
 	go func() {
 		if err := <-cerr; err != nil {
-			r.err = err
 			return
 		}
 
