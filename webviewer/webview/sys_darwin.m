@@ -54,6 +54,7 @@ void enableDebug(CFTypeRef config) {
 CFTypeRef create(CFTypeRef config, uintptr_t handler) {
 	giowebview *webView = [[giowebview alloc] initWithFrame:CGRectMake(0,0,0,0) configuration: (__bridge WKWebViewConfiguration *)config];
     webView.handler = handler;
+    webView.hidden = YES;
 
     NSString * watch[2] = { @("URL"), @("title") };
     for (uint64_t i = 0; i < 2; i++) {
@@ -79,6 +80,12 @@ void resize(CFTypeRef web, CFTypeRef windowRef, float x, float y, float w, float
 	NSView *view = (__bridge NSView *)windowRef;
 	y = (view.bounds.size.height - h) - y;
 	#endif
+
+	if (w == 0 && h == 0) {
+	    webView.hidden = YES;
+    } else {
+        webView.hidden = NO;
+    }
 
 	[webView setFrame: CGRectMake((CGFloat)x, (CGFloat)y, (CGFloat)w, (CGFloat)h)];
 }
