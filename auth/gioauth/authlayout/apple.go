@@ -5,13 +5,11 @@ import (
 	"gioui.org/layout"
 	"gioui.org/unit"
 	"github.com/gioui-plugins/gio-plugins/auth/gioauth/authlayout/internal"
-	"github.com/inkeliz/giosvg"
 	"image/color"
 )
 
 // DefaultLightAppleButtonStyle is the default style for Apple buttons.
 var DefaultLightAppleButtonStyle = ButtonStyle{
-	Text:            "Continue with Apple",
 	TextSize:        unit.Dp(16),
 	TextFont:        font.Font{},
 	TextShaper:      internal.ShaperGoogleRoboto,
@@ -20,12 +18,13 @@ var DefaultLightAppleButtonStyle = ButtonStyle{
 	IconAlignment:   layout.Start,
 	BackgroundColor: color.NRGBA{R: 0, G: 0, B: 0, A: 255},
 	IconColor:       color.NRGBA{R: 255, G: 255, B: 255, A: 255},
+	IconVector:      internal.VectorAppleLogo,
+	IconPadding:     24,
 	Format:          FormatRounded,
 }
 
 // DefaultDarkAppleButtonStyle is the default style for Apple buttons.
 var DefaultDarkAppleButtonStyle = ButtonStyle{
-	Text:            "Continue with Apple",
 	TextSize:        unit.Dp(16),
 	TextFont:        font.Font{},
 	TextShaper:      internal.ShaperGoogleRoboto,
@@ -34,26 +33,27 @@ var DefaultDarkAppleButtonStyle = ButtonStyle{
 	IconAlignment:   layout.Start,
 	BackgroundColor: color.NRGBA{R: 255, G: 255, B: 255, A: 255},
 	IconColor:       color.NRGBA{A: 255},
+	IconVector:      internal.VectorAppleLogo,
+	IconPadding:     24,
 	Format:          FormatRounded,
 }
 
-// AppleDummyButton is a button that can be used to sign in with Apple.
-// It doesn't perform any action, it just displays a button.
-type AppleDummyButton struct {
-	ButtonStyle
-	Pointer
-	icon *giosvg.Icon
+// DefaultAppleTextContinue is the default text for Google buttons.
+var DefaultAppleTextContinue = [2]string{
+	"Continue with Apple",
+	"Sign in",
 }
 
-// Layout lays out the button, with the default text (from ButtonStyle).
-func (g *AppleDummyButton) Layout(gtx layout.Context) layout.Dimensions {
-	return g.LayoutText(gtx, g.Text)
-}
-
-// LayoutText lays out the button with the given text.
-func (g *AppleDummyButton) LayoutText(gtx layout.Context, text string) layout.Dimensions {
-	if g.icon == nil {
-		g.icon = giosvg.NewIcon(internal.VectorAppleLogo)
+func NewAppleButton() *Button {
+	return &Button{
+		ButtonStyle: DefaultLightAppleButtonStyle,
+		ButtonTexts: DefaultAppleTextContinue,
 	}
-	return g.layoutText(gtx, g.icon, &g.Pointer, text, 0, gtx.Dp(24))
+}
+
+func NewAppleButtonDark() *Button {
+	return &Button{
+		ButtonStyle: DefaultDarkAppleButtonStyle,
+		ButtonTexts: DefaultAppleTextContinue,
+	}
 }
