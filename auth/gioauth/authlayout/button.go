@@ -26,32 +26,56 @@ const (
 	FormatPill
 )
 
+// ButtonTexts is a list of texts for the button.
+// The first is preferred, the second is fallback,
+// when the first doesn't fit the button width.
+type ButtonTexts [2]string
+
 // ButtonStyle is the style for Google buttons.
 //
 // Notice that you may violate some branding guidelines, it's
 // safer to use DefaultGoogleButtonStyle or DefaultAppleButtonStyle.
 type ButtonStyle struct {
-	Text                string
-	TextSize            unit.Dp
-	TextFont            font.Font
-	TextShaper          *text.Shaper
-	TextColor           color.NRGBA
-	TextAlignment       layout.Alignment
-	IconAlignment       layout.Alignment
-	IconColor           color.NRGBA
-	BackgroundColor     color.NRGBA
+	// TextSize is the size of the text.
+	TextSize unit.Dp
+	// TextFont is the font to use for the text.
+	TextFont font.Font
+	// TextShaper is the shaper to use for the text.
+	TextShaper *text.Shaper
+	// TextColor is the color of the text.
+	TextColor color.NRGBA
+	// TextAlignment is the alignment of the text.
+	TextAlignment layout.Alignment
+	// IconAlignment is the alignment of the icon.
+	IconAlignment layout.Alignment
+	// IconColor is the color of the icon.
+	IconColor color.NRGBA
+	// IconSize is the size of the icon.
+	IconSize unit.Dp
+	// IconPadding is the padding of the icon.
+	IconPadding unit.Dp
+	// IconVector is the vector of the icon.
+	IconVector giosvg.Vector
+	// BackgroundColor is the color of the background.
+	BackgroundColor color.NRGBA
+	// BackgroundIconColor is the color of the background of the icon.
 	BackgroundIconColor color.NRGBA
-	BorderColor         color.NRGBA
-	BorderThickness     unit.Dp
-	Format              Format
+	// BorderColor is the color of the border.
+	BorderColor color.NRGBA
+	// BorderThickness is the thickness of the border.
+	BorderThickness unit.Dp
+	// Format is the format of the button.
+	Format Format
+
+	icon *giosvg.Icon
 }
 
-func (b ButtonStyle) label(gtx layout.Context, text string) (op.CallOp, layout.Dimensions) {
+func (b *ButtonStyle) label(gtx layout.Context, text string) (call op.CallOp, dims layout.Dimensions) {
 	gtx.Constraints.Min.X = 0
 	gtx.Constraints.Min.Y = 0
 
 	r := op.Record(gtx.Ops)
-	dims := widget.Label{}.Layout(gtx, b.TextShaper, b.TextFont, gtx.Metric.DpToSp(b.TextSize), text, toLabelColor(gtx, b.TextColor))
+	dims = widget.Label{}.Layout(gtx, b.TextShaper, b.TextFont, gtx.Metric.DpToSp(b.TextSize), text, toLabelColor(gtx, b.TextColor))
 	return r.Stop(), dims
 }
 
@@ -61,8 +85,16 @@ func toLabelColor(gtx layout.Context, c color.NRGBA) op.CallOp {
 	return r.Stop()
 }
 
-func (b ButtonStyle) layoutText(gtx layout.Context, icon *giosvg.Icon, pointer *Pointer, text string, logoSize int, logoPadding int) layout.Dimensions {
-	label, labelDims := b.label(gtx, text)
+func (b *ButtonStyle) LayoutText(gtx layout.Context, pointer *Pointer, texts ButtonTexts) layout.Dimensions {
+	return b.layoutText(gtx, pointer, texts, 0)
+}
+
+func (b *ButtonStyle) layoutText(gtx layout.Context, pointer *Pointer, texts ButtonTexts, textIndex int) layout.Dimensions {
+	if b.icon == nil {
+		b.icon = giosvg.NewIcon(b.IconVector)
+	}
+
+	label, labelDims := b.label(gtx, texts[textIndex])
 
 	minHeight := int(math.Round(float64(labelDims.Size.Y) * 233 / 100))
 
@@ -73,17 +105,26 @@ func (b ButtonStyle) layoutText(gtx layout.Context, icon *giosvg.Icon, pointer *
 		Right:  unit.Dp(16),
 	}
 
-	if logoSize == 0 {
-		logoSize = labelDims.Size.Y
+	iconSize := gtx.Dp(b.IconSize)
+	iconPadding := gtx.Dp(b.IconPadding)
+
+	if b.IconSize == 0 {
+		iconSize = labelDims.Size.Y
 	}
 
-	avalSize := gtx.Constraints.Max.X - (labelDims.Size.X + gtx.Dp(inset.Left) + gtx.Dp(inset.Right) + logoSize)
-	if avalSize < 0 {
-		// The label is too long, we need to render the icon-only button.
+	avalSize := gtx.Constraints.Max.X - (labelDims.Size.X + gtx.Dp(inset.Left) + gtx.Dp(inset.Right) + iconSize + iconPadding)
+	isLogoOnly := avalSize < 0
+	if avalSize > iconPadding && b.TextAlignment != layout.Start && b.IconAlignment != layout.Middle {
+		iconPadding = 0
 	}
 
-	if avalSize > (logoPadding*2) && b.TextAlignment != layout.Start && b.IconAlignment != layout.Middle {
-		logoPadding = 0
+	if isLogoOnly && textIndex != len(texts)-1 {
+		return b.layoutText(gtx, pointer, texts, textIndex+1)
+	}
+
+	if isLogoOnly {
+		labelDims.Size.X = 0
+		iconPadding = 0
 	}
 
 	main := op.Record(gtx.Ops)
@@ -91,50 +132,55 @@ func (b ButtonStyle) layoutText(gtx layout.Context, icon *giosvg.Icon, pointer *
 		d := layout.Dimensions{Size: image.Pt(gtx.Constraints.Max.X, labelDims.Size.Y)}
 
 		{
+			align := b.IconAlignment
+			if isLogoOnly {
+				align = layout.Middle
+			}
+
 			// Logo
 			var off op.TransformStack
-			switch b.IconAlignment {
+			switch align {
 			case layout.Start, layout.Baseline:
 				off = op.Offset(image.Pt(0, 0)).Push(gtx.Ops)
 			case layout.Middle:
-				off = op.Offset(image.Pt((gtx.Constraints.Max.X-logoSize-logoPadding-labelDims.Size.X)/2, 0)).Push(gtx.Ops)
+				off = op.Offset(image.Pt((gtx.Constraints.Max.X-iconSize-iconPadding-labelDims.Size.X)/2, 0)).Push(gtx.Ops)
 			case layout.End:
-				off = op.Offset(image.Pt(gtx.Constraints.Max.X-logoSize, 0)).Push(gtx.Ops)
+				off = op.Offset(image.Pt(gtx.Constraints.Max.X-iconSize, 0)).Push(gtx.Ops)
 			}
 
 			// Logo Background
 			padding := gtx.Dp(6)
 			offBackground := op.Offset(image.Pt(-padding/2, -padding/2)).Push(gtx.Ops)
-			background := clip.UniformRRect(image.Rectangle{Max: image.Pt(logoSize+padding, logoSize+padding)}, (logoSize+padding)/2).Push(gtx.Ops)
+			background := clip.UniformRRect(image.Rectangle{Max: image.Pt(iconSize+padding, iconSize+padding)}, (iconSize+padding)/2).Push(gtx.Ops)
 			paint.Fill(gtx.Ops, b.BackgroundIconColor)
 			background.Pop()
 			offBackground.Pop()
 
 			gtx := gtx
 			gtx.Constraints.Min = image.Point{}
-			gtx.Constraints.Max.X, gtx.Constraints.Max.Y = logoSize, logoSize
+			gtx.Constraints.Max.X, gtx.Constraints.Max.Y = iconSize, iconSize
 			if b.IconColor.A != 0 {
 				paint.ColorOp{Color: b.IconColor}.Add(gtx.Ops)
 			}
 
 			iconR := op.Record(gtx.Ops)
-			dimsIcon := icon.Layout(gtx)
+			dimsIcon := b.icon.Layout(gtx)
 			iconOp := iconR.Stop()
 
-			iconOff := op.Offset(image.Pt((logoSize-dimsIcon.Size.X)/2, (logoSize-dimsIcon.Size.Y)/2)).Push(gtx.Ops)
+			iconOff := op.Offset(image.Pt((iconSize-dimsIcon.Size.X)/2, (iconSize-dimsIcon.Size.Y)/2)).Push(gtx.Ops)
 			iconOp.Add(gtx.Ops)
 			iconOff.Pop()
 
 			off.Pop()
 		}
 
-		{
+		if !isLogoOnly {
 			// Text
 			gtx := gtx
-			gtx.Constraints.Max.X = gtx.Constraints.Max.X - logoSize - logoPadding
+			gtx.Constraints.Max.X = gtx.Constraints.Max.X - iconSize - iconPadding
 
 			if b.TextAlignment != layout.End {
-				defer op.Offset(image.Pt(logoSize+logoPadding, 0)).Push(gtx.Ops).Pop()
+				defer op.Offset(image.Pt(iconSize+iconPadding, 0)).Push(gtx.Ops).Pop()
 			}
 
 			switch b.TextAlignment {

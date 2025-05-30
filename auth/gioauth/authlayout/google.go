@@ -5,13 +5,11 @@ import (
 	"gioui.org/layout"
 	"gioui.org/unit"
 	"github.com/gioui-plugins/gio-plugins/auth/gioauth/authlayout/internal"
-	"github.com/inkeliz/giosvg"
 	"image/color"
 )
 
 // DefaultLightGoogleButtonStyle is the default style for Google buttons.
 var DefaultLightGoogleButtonStyle = ButtonStyle{
-	Text:            "Continue with Google",
 	TextSize:        unit.Dp(16),
 	TextFont:        font.Font{},
 	TextShaper:      internal.ShaperGoogleRoboto,
@@ -19,12 +17,13 @@ var DefaultLightGoogleButtonStyle = ButtonStyle{
 	TextAlignment:   layout.Middle,
 	IconAlignment:   layout.Start,
 	BackgroundColor: color.NRGBA{R: 255, G: 255, B: 255, A: 255},
+	IconVector:      internal.VectorGoogleLogo,
+	IconPadding:     24,
 	Format:          FormatRounded,
 }
 
 // DefaultDarkGoogleButtonStyle is the default style for Google buttons.
 var DefaultDarkGoogleButtonStyle = ButtonStyle{
-	Text:                "Continue with Google",
 	TextSize:            unit.Dp(16),
 	TextFont:            font.Font{},
 	TextShaper:          internal.ShaperGoogleRoboto,
@@ -33,38 +32,27 @@ var DefaultDarkGoogleButtonStyle = ButtonStyle{
 	IconAlignment:       layout.Start,
 	BackgroundColor:     color.NRGBA{R: 66, G: 133, B: 244, A: 255},
 	BackgroundIconColor: color.NRGBA{R: 255, G: 255, B: 255, A: 255},
+	IconVector:          internal.VectorGoogleLogo,
+	IconPadding:         24,
 	Format:              FormatRounded,
 }
 
-// GoogleDummyButton is a button that can be used to sign in with Google.
-// It doesn't perform any action, it just displays a button.
-//
-// You need to call Clicked (from ButtonStyle) to check if the button was
-// clicked, and Layout to lay out the button.
-//
-// Usually you would do something similar to:
-//
-//	if googleButton.Clicked(gtx) {
-//	   // Perform the Google sign in.
-//	   gtx.Execute(gioauth.Open{Tag: tag, Provider: google.IdentifierGoogle, Nonce: nonce})
-//	}
-//
-// googleButton.Layout(gtx)
-type GoogleDummyButton struct {
-	ButtonStyle
-	Pointer
-	icon *giosvg.Icon
+// DefaultGoogleTextContinue is the default text for Google buttons.
+var DefaultGoogleTextContinue = [2]string{
+	"Continue with Google",
+	"Sign in",
 }
 
-// Layout lays out the button, with the default text (from ButtonStyle).
-func (g *GoogleDummyButton) Layout(gtx layout.Context) layout.Dimensions {
-	return g.LayoutText(gtx, g.Text)
-}
-
-// LayoutText lays out the button with the given text.
-func (g *GoogleDummyButton) LayoutText(gtx layout.Context, text string) layout.Dimensions {
-	if g.icon == nil {
-		g.icon = giosvg.NewIcon(internal.VectorGoogleLogo)
+func NewGoogleButton() *Button {
+	return &Button{
+		ButtonStyle: DefaultLightGoogleButtonStyle,
+		ButtonTexts: DefaultGoogleTextContinue,
 	}
-	return g.layoutText(gtx, g.icon, &g.Pointer, text, 0, gtx.Dp(24))
+}
+
+func NewGoogleButtonDark() *Button {
+	return &Button{
+		ButtonStyle: DefaultDarkGoogleButtonStyle,
+		ButtonTexts: DefaultGoogleTextContinue,
+	}
 }
