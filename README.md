@@ -1,6 +1,10 @@
 Gio-Plugins
 -------
 
+Compatible with Gio v0.8.0 (except "Auth", which [required a forked version](https://github.com/inkeliz/gio)).
+
+------
+
 Gio plugins is a system to use _third-party_ plugins similar to Gio features, this package also holds one collection
 of plugins for the [Gio](https://gioui.org). All plugins uses the same interface, and just one line of code must be
 added in the main-loop, as explained below. _Furthermore, some packages can be used as standalone and doesn't require
