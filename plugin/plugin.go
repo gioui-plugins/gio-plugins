@@ -23,6 +23,16 @@ func newQueue() *queue {
 	}
 }
 
+func newInvalidateTrampoline(window *app.Window) chan struct{} {
+	c := make(chan struct{}, 1)
+	go func() {
+		for range c {
+			window.Invalidate()
+		}
+	}()
+	return c
+}
+
 // Plugin is the main interface for the plugins.
 type Plugin struct {
 	window *app.Window
@@ -33,8 +43,6 @@ type Plugin struct {
 	// double buffered events
 	eventsCustomNext    *queue
 	eventsCustomCurrent *queue
-
-	eventsPool []event.Event
 
 	RedirectEvent    map[reflect.Type][]int
 	RedirectOp       map[reflect.Type][]int
@@ -47,6 +55,8 @@ type Plugin struct {
 
 	OriginalFrame  func(ops *op.Ops)
 	OriginalSource input.Source
+
+	invalidator chan struct{}
 }
 
 // NewPlugin creates a new plugin.
@@ -60,6 +70,10 @@ func NewPlugin(w *app.Window) *Plugin {
 		RedirectEvent:       make(map[reflect.Type][]int, 128),
 		eventsCustomNext:    newQueue(),
 		eventsCustomCurrent: newQueue(),
+
+		// That is required to prevent deadlock when sending events
+		// in the main-thread. Gio bug.
+		invalidator: newInvalidateTrampoline(w),
 	}
 
 	for index, pf := range registeredPlugins {
@@ -102,7 +116,7 @@ func (l *Plugin) SendEvent(tag event.Tag, data event.Event) {
 	l.eventsCustomNext.taggedEvents[tag] = append(l.eventsCustomNext.taggedEvents[tag], data)
 
 	if !l.Invalidated.Load() {
-		l.window.Invalidate()
+		l.invalidator <- struct{}{}
 		l.Invalidated.Store(true)
 	}
 }
@@ -119,7 +133,7 @@ func (l *Plugin) SendEventUntagged(tag uint64, data event.Event) {
 	l.eventsCustomNext.untaggedEvents[tag] = append(l.eventsCustomNext.untaggedEvents[tag], data)
 
 	if !l.Invalidated.Load() {
-		l.window.Invalidate()
+		l.invalidator <- struct{}{}
 		l.Invalidated.Store(true)
 	}
 }

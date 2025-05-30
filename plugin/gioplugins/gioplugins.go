@@ -94,7 +94,8 @@ func _execute(gtx layout.Context, cmd input.Command) {
 
 // gioInputSource must match the input.Source.
 type gioInputSource struct {
-	r *input.Router
+	r        *input.Router
+	disabled bool
 }
 
 func init() {
