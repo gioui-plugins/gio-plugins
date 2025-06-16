@@ -47,7 +47,7 @@ gioplugins.Execute(gtx, gioexplorer.OpenFileCmd{
 
 ### Operations:
 
-Operations must be added with `gtx.Execute` method. The operation will be executed at the end of the frame.
+Operations must be added with `gioplugins.Execute` method. The operation will be executed at the end of the frame.
 
 - `gioexplorer.OpenFileCmd`:
   - Opens the native file dialog to open/import a single file.

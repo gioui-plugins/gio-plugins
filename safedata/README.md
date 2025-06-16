@@ -15,27 +15,27 @@ This package can be used as standalone (with/without Gio) and also as plugin for
 
 ```go
 config := Config{
-App: "MyApp"
-// ...
+  App: "MyApp"
+  // ...
 }
 
 sh := safedata.NewSafeData(config)
 
 secret := safedata.Secret{
-Identifier:  "AccessToken",
-Description: "AccessToken for MyApp",
-Data:        []byte{0xDE, 0xAD, 0xBE, 0xEF},
+  Identifier:  "AccessToken",
+  Description: "AccessToken for MyApp",
+  Data:        []byte{0xDE, 0xAD, 0xBE, 0xEF},
 }
 
 // Inserting/updating data:
 if err := sh.Set(secret); err != nil {
-// ...
+  // ...
 }
 
 // Retrieve data:
 myToken, err := sh.Get("AccessToken")
 if err != nil {
-// ...
+  // ...
 }
 ```
 
@@ -47,7 +47,7 @@ using `giosafedata.NewConfigFromViewEvent`.
 
 ### Operations:
 
-Operations must be added with `gtx.Execute` method. The operation will be executed at the end of the frame.
+Operations must be added with `gioplugins.Execute` method. The operation will be executed at the end of the frame.
 
 - `giosafedata.WriteSecretCmd`:
     - Writes a Secret.
