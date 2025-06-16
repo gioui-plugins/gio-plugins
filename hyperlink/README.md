@@ -37,7 +37,7 @@ gioplugins.Execute(gtx, giohyperlink.OpenOp{URI: &url.URL{
 
 ### Operations:
 
-Operations must be added with `gtx.Execute` method. The operation will be executed at the end of the frame.
+Operations must be added with `gioplugins.Execute` method. The operation will be executed at the end of the frame.
 
 - `giohyperlink.OpenCmd`:
     - Opens the link in the default browser. Currently, only supports `http` and `https` schemes.

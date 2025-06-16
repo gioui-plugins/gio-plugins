@@ -3,6 +3,10 @@ Gio-Plugins
 
 Compatible with Gio v0.8.0 (except "Auth", which [required a forked version](https://github.com/inkeliz/gio)).
 
+> [!NOTE]
+> This package is not maintained by the Gio core team, and it is not part of the official Gio project. It is used
+> in a commercial application, and some efforts are made to keep it up-to-date with internal changes. 
+
 ------
 
 Gio plugins is a system to use _third-party_ plugins similar to Gio features, this package also holds one collection
@@ -60,7 +64,8 @@ pingpong.PingOp{Tag: &something}.Add(gtx.Ops)
 gioplugins.Execute(gtx, pingpong.PingCmd{Tag: &something})
 ```
 
-> Note: It's uses `gioplugins.Execute` and not `gtx.Execute`!
+> [!IMPORTANT]  
+> It's uses `gioplugins.Execute` and not `gtx.Execute`!
 
 You can receive responses using the `Tag`, similar Gio-core operations:
 
@@ -91,13 +96,15 @@ Of course, `pingpong` has no use in real-world applications, but it can be used 
 | **[Hyperlink](https://github.com/gioui-plugins/gio-plugins/tree/main/hyperlink)** | Open hyperlinks in the default browser.                                          | _Android, iOS, macOS, Windows, WebAssembly_                 |  
 | **[Explorer](https://github.com/gioui-plugins/gio-plugins/tree/main/explorer)**   | Opens the native file-dialog, to read/write files.                               | _Android, iOS, macOS, Windows, WebAssembly_                 |  
 | **[Safedata](https://github.com/gioui-plugins/gio-plugins/tree/main/safedata)**   | Read/Write files into the secure storage of the device.                          | _Android, iOS, macOS, Windows, WebAssembly_                 |
+| **[Auth](https://github.com/gioui-plugins/gio-plugins/tree/main/auth)**         | Authenticate the user using third party (Google and Apple).                      | _Android, iOS, macOS, Windows, WebAssembly_                 |
 
 **We have few plugins planned:**
 
 Some plugins are planned, but not yet implemented, follow the development at https://github.com/orgs/gioui-plugins/projects/1. Also, 
 consider send some 👍 on issues which mentions features that you like.
 
-If you want to help, please open an issue or a PR! If you want to suggest a plugin, please open an issue.
+> [!TIP]
+> If you want to help, please open an issue or a PR! If you want to suggest a plugin, please open an issue.
 
 -----------
 
@@ -150,18 +157,41 @@ integrity of native-APIs, so we can't guarantee that the native-APIs will have t
 Since we have limited resources and devices, we can't test all plugins on all platforms and devices. Currently, we have
 a few devices available and with limited range of OS versions. Plugins are usually tested on those devices:
 
-- **Android**: Motorola Droid Max, Motorola E6, Xiaomi A7, Xiaomi Note 9, (+ BrowserStack)
-- **iOS**: iPhone SE 2Gen (2020), (+ BrowserStack)
-- **WASM**: Chrome, Firefox, Safari, (+ BrowserStack)
-- **Windows**: Custom (Ryzen 3900X+RX 5700XT), Proxmox VM (EPYC 7501P)
-- **MacOS**: MacBook Air (M1, 2020)
-- **Linux**: Proxmox VM (EPYC 7501P)
-- **FreeBSD**: Proxmox VM (EPYC 7501P)
+- **Android**: 
+  - Motorola Droid Maxx, 
+  - Motorola G 2Gen,
+  - Motorola E6, 
+  - Motorola E14,
+  - Motorola E15,
+  - Xiaomi A7, 
+  - Xiaomi Note 9,
+  - Xiaomi Redmi A3,
+  - Samsung Galaxy A20e,
+  - SPC Discovery,
+  - Blackberry Key One,
+  - (+ BrowserStack)
+- **iOS**: 
+  - iPhone SE 2Gen (2020), 
+  - iPad Air 5Gen,
+  - (+ BrowserStack),
+- **WASM**: 
+  - Chrome, 
+  - Firefox, 
+  - Safari, 
+  - (+ BrowserStack)
+- **Windows**: 
+  - Custom Device (RYZEN 3900X + RX 7900XT), 
+  - Custom VM (EPYC 7501P),
+- **MacOS**: 
+  - MacBook Air (M1, 2020)
+  - MacStudio (M2 Max, 2022)
 
 Tests are performed manually, since most features interact with the native platform, and automated tests are not
 easy to implement. We are open to suggestions on how to improve the testing process.
 
-Please, if you find any bug, open an issue or a PR!
+> [!TIP]
+> Please, if you find any bug, open an issue or a PR! If area looking for more devices to test, if you are in Europe and
+> have a device that you can lend to us, please contact us.
 
 ### Hacking
 
