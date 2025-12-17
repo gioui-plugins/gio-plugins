@@ -13,6 +13,8 @@ import (
 // NewWindow creates a new window.
 // That is just a alias to gioui.org/app.Window, you
 // still need to use Hijack to get the events.
+//
+// Deprecated: use app.Window directly.
 func NewWindow() *app.Window {
 	return new(app.Window)
 }
@@ -45,12 +47,37 @@ func Hijack(w *app.Window) event.Event {
 		instance = createInstance(w)
 	}
 
-	evt := instance.Plugin.ProcessEventFromGio(w.Event())
+	evt := instance.Plugin.ProcessEventFromWindow(w.Event())
 	if e, ok := evt.(app.FrameEvent); ok {
 		updateInstance(instance, e.Source)
 	}
 
 	return evt
+}
+
+// ProxyEvents proxies events from app.Events, which are global events.
+// GioPlugins will NOT inject new global events, it will only receive them and forward them to the plugins.
+//
+// You can use it like this:
+//
+//	go func() {
+//	    for e := range gioplugins.ProxyEvents(app.Events) {
+//	        // Handle global event e
+//	    }
+//	}()
+//
+// If you don't want to handle events, you can call the function as follows:
+//
+//	go gioplugins.ProxyEvents(app.Events)
+//
+// That will be enough to forward the events to the plugins.
+func ProxyEvents(events func(func(event.Event) bool)) {
+	for evt := range events {
+		handlers.Range(func(key, value any) bool {
+			value.(*instance).Plugin.ProcessEventFromApp(evt)
+			return true
+		})
+	}
 }
 
 // Event returns custom events from the last frame.

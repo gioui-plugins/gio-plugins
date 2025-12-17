@@ -36,6 +36,19 @@ type Handler interface {
 	Event(evt event.Event)
 }
 
+// HandlerGlobal is the interface that represents the Plugin for global events.
+type HandlerGlobal interface {
+	Handler
+
+	// TypeGlobalEvent returns the list of global events that the plugin can handle and
+	// are interested in.
+	// GlobalEvent are data that received from app.Events, instead of app.Window.Event.
+	TypeGlobalEvent() []reflect.Type
+
+	// GlobalEvent is called when a global event is sent to the plugin.
+	GlobalEvent(evt event.Event)
+}
+
 // Filter is used to filter events, extends event.Filter.
 type Filter interface {
 	event.Filter

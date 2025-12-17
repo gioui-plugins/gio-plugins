@@ -44,9 +44,10 @@ type Plugin struct {
 	eventsCustomNext    *queue
 	eventsCustomCurrent *queue
 
-	RedirectEvent    map[reflect.Type][]int
-	RedirectOp       map[reflect.Type][]int
-	RedirectCommands map[reflect.Type][]int
+	RedirectEvent       map[reflect.Type][]int
+	RedirectGlobalEvent map[reflect.Type][]int
+	RedirectOp          map[reflect.Type][]int
+	RedirectCommands    map[reflect.Type][]int
 
 	visited map[uintptr]struct{}
 
@@ -68,6 +69,7 @@ func NewPlugin(w *app.Window) *Plugin {
 		RedirectOp:          make(map[reflect.Type][]int, 128),
 		RedirectCommands:    make(map[reflect.Type][]int, 128),
 		RedirectEvent:       make(map[reflect.Type][]int, 128),
+		RedirectGlobalEvent: make(map[reflect.Type][]int, 128),
 		eventsCustomNext:    newQueue(),
 		eventsCustomCurrent: newQueue(),
 
@@ -98,6 +100,15 @@ func NewPlugin(w *app.Window) *Plugin {
 				h.RedirectEvent[redirEvent] = make([]int, 0, 4)
 			}
 			h.RedirectEvent[redirEvent] = append(h.RedirectEvent[redirEvent], index)
+		}
+
+		if gp, ok := h.Plugins[index].(HandlerGlobal); ok {
+			for _, redirEvent := range gp.TypeGlobalEvent() {
+				if h.RedirectGlobalEvent[redirEvent] == nil {
+					h.RedirectGlobalEvent[redirEvent] = make([]int, 0, 4)
+				}
+				h.RedirectGlobalEvent[redirEvent] = append(h.RedirectGlobalEvent[redirEvent], index)
+			}
 		}
 	}
 
@@ -287,8 +298,8 @@ func (l *Plugin) Op(o *unsafeOps) {
 	}
 }
 
-// ProcessEventFromGio processes the event from Gio.
-func (l *Plugin) ProcessEventFromGio(evt event.Event) event.Event {
+// ProcessEventFromWindow processes the event from Gio.
+func (l *Plugin) ProcessEventFromWindow(evt event.Event) event.Event {
 	for _, index := range l.RedirectEvent[reflect.TypeOf(evt)] {
 		l.Plugins[index].Event(evt)
 	}
@@ -314,5 +325,12 @@ func (l *Plugin) ProcessEventFromGio(evt event.Event) event.Event {
 		return e
 	default:
 		return evt
+	}
+}
+
+// ProcessEventFromApp processes the global event from the app.
+func (l *Plugin) ProcessEventFromApp(evt event.Event) {
+	for _, index := range l.RedirectGlobalEvent[reflect.TypeOf(evt)] {
+		l.Plugins[index].(HandlerGlobal).GlobalEvent(evt)
 	}
 }
