@@ -27,7 +27,7 @@ var f = gioplugins.Event
 
 func main() {
 	go func() {
-		w := gioplugins.NewWindow()
+		w := &app.Window{}
 		w.Option(app.Size(unit.Dp(800), unit.Dp(700)), app.MinSize(unit.Dp(400), unit.Dp(400)))
 
 		if err := loop(w); err != nil {

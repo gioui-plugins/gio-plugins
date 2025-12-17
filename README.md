@@ -1,11 +1,15 @@
 Gio-Plugins
 -------
 
-Compatible with Gio v0.8.0 (except "Auth", which [required a forked version](https://github.com/inkeliz/gio)).
+Compatible with Gio v0.9.1 (go get gioui.org@7bcb315ee174467d8e51c214ee434c41207cc718)
 
 > [!NOTE]
 > This package is not maintained by the Gio core team, and it is not part of the official Gio project. It is used
-> in a commercial application, and some efforts are made to keep it up-to-date with internal changes. 
+> in a commercial application, and some efforts are made to keep it up-to-date with internal changes.
+
+> [!IMPORTANT]
+> You may need to use a FORKED GOGIO to build your application with those plugins,
+> see [gogio-fork](https://github.com/inkeliz/gio-cmd).
 
 ------
 
@@ -34,28 +38,35 @@ First, you must download the `plugin` package:
 go get -u github.com/gioui-plugins/gio-plugins@latest
 ```
 
-Now, you need to modify your event-loop, you must include `gioplugins.Hijack(window)` in your event-loop, before handling
-events:
+You need to modify your event-loop, you must include `gioplugins.Hijack(window)` in your event-loop, before handling
+events and `gioplugins.ProxyEvents(app.Events)`, like this:
 
 ```diff
 window := &app.Window{} // Gio window
 
-for { 
+go func() {
+  for { 
 +   evt := gioplugins.Hijack(window) // Gio main event loop
-
-    switch evt := evt.(type) {
+  
+      switch evt := evt.(type) {
         // ...
-    }
-}
+      }
+  }
+}()
+
+go gioplugins.ProxyEvents(app.Events) // Proxy Gio events to gioplugins
+
+app.Main()
 ```
 
 Each plugin has its own README.md file, explaining how to use it. In general, you can simple
-use `nameOfPlugin.SomeOp{}.Add(gtx.Ops)`, similar of how you use `pointer.PassOp{}.Add(gtx.Ops)`, native 
+use `nameOfPlugin.SomeOp{}.Add(gtx.Ops)`, similar of how you use `pointer.PassOp{}.Add(gtx.Ops)`, native
 from Gio. Beginning with Gio 0.6, it also introduces `Command`, which is executed using `gtx.Execute`, you can
-also use Commands, if the plugin supports it, for instance `gioplugins.Execute(gtx, gioshare.TextCmd{Text: "Hello, World!"})`, 
+also use Commands, if the plugin supports it, for instance
+`gioplugins.Execute(gtx, gioshare.TextCmd{Text: "Hello, World!"})`,
 similar to what you are familiar with `gtx.Execute(clipboard.WriteCmd{Text: "Hello, World!"})`.
 
-Once `gioplugins.Event` is set, you can use the plugins as simple `op` operations or `cmd` commands. If you are unsure 
+Once `gioplugins.Event` is set, you can use the plugins as simple `op` operations or `cmd` commands. If you are unsure
 if the plugin is working, you can use the `pingpong` package, which will return on `PongEvent` to the given Tag:
 
 ```go
@@ -71,22 +82,32 @@ You can receive responses using the `Tag`, similar Gio-core operations:
 
 ```go
 for {
-	evt, ok := gioplugins.Event(pingpong.Filter{Tag: &something})
-	if !ok {
-		break
-    } 
-	
-    if evt, ok := evt.(pingpong.PongEvent); ok {
-        fmt.Println(evt.Pong)
-    } 
+  evt, ok := gioplugins.Event(gtx, pingpong.Filter{Tag: &something})
+  if !ok {
+    break
+  }
+  
+  if evt, ok := evt.(pingpong.PongEvent); ok {
+    fmt.Println(evt.Pong)
+  } 
 }
 ```
 
 Of course, `pingpong` has no use in real-world applications, but it can be used to test if the plugin is working.
 
+> [!IMPORTANT]
+> It uses `gioplugins.Event` and not `gtx.Event`!
+
 ## Plugins
 
-**We have few plugins available:**
+**Available from Gio (not in this repository):**
+
+| Name                                                       | Description                                                              |
+|------------------------------------------------------------|--------------------------------------------------------------------------|
+| **[Clipboard](https://pkg.go.dev/gioui.org/io/clipboard)** | Read/Write text from/to the native clipboard.                            |
+| **[Deeplink](https://pkg.go.dev/gioui.org/app)**           | Handle deeplinks (custom URL schemes) using the native platform support. |
+
+**Available plugins in this repository:**
 
 | Name                                                                              | Description                                                                      | OS                                                          |
 |-----------------------------------------------------------------------------------|----------------------------------------------------------------------------------|-------------------------------------------------------------|
@@ -96,11 +117,16 @@ Of course, `pingpong` has no use in real-world applications, but it can be used 
 | **[Hyperlink](https://github.com/gioui-plugins/gio-plugins/tree/main/hyperlink)** | Open hyperlinks in the default browser.                                          | _Android, iOS, macOS, Windows, WebAssembly_                 |  
 | **[Explorer](https://github.com/gioui-plugins/gio-plugins/tree/main/explorer)**   | Opens the native file-dialog, to read/write files.                               | _Android, iOS, macOS, Windows, WebAssembly_                 |  
 | **[Safedata](https://github.com/gioui-plugins/gio-plugins/tree/main/safedata)**   | Read/Write files into the secure storage of the device.                          | _Android, iOS, macOS, Windows, WebAssembly_                 |
-| **[Auth](https://github.com/gioui-plugins/gio-plugins/tree/main/auth)**         | Authenticate the user using third party (Google and Apple).                      | _Android, iOS, macOS, Windows, WebAssembly_                 |
+| **[Auth](https://github.com/gioui-plugins/gio-plugins/tree/main/auth)**           | Authenticate the user using third party (Google and Apple).                      | _Android, iOS, macOS, Windows, WebAssembly_                 |
+| **ALTCHA (Coming Soon)**                                                          | Display captchas using ALTCHA, a reCaptcha alternative.                          | _Android, iOS, macOS, Windows, WebAssembly_                 |
+| **InAppPay (Coming Soon)**                                                        | Display in-app products to buy, using Google Play, Apple Store and Aptoide.      | _Android, iOS_                                              |
+| **Ads (Coming Soon)**                                                             | Display advertisements using AdMob.                                              | _Android, iOS_                                              |
 
-**We have few plugins planned:**
+* ALTCHA, Google Play, Apple Store and Aptoide are names trademarks of their respective owners.
+  Currently, those plugins are not endorsed by those companies.
 
-Some plugins are planned, but not yet implemented, follow the development at https://github.com/orgs/gioui-plugins/projects/1. Also, 
+More plugins are planned, but not yet implemented, follow the development
+at https://github.com/orgs/gioui-plugins/projects/1. Also,
 consider send some 👍 on issues which mentions features that you like.
 
 > [!TIP]
@@ -128,18 +154,18 @@ Most packages are compatible with the latest version of Gio, and only the latest
 that internal changes in the Gio API can break the compatibility with `plugin`. None of the packages has stable API,
 and breaking changes can happen at any time.
 
-Most plugins are compatible with Android 5+, iOS 13+, MacOS 12+, Windows 10+ and WebAssembly. Currently, we consider
-the Windows and Android as high-priority, and the WebAssembly as medium-priority, MacOS and iOS as low-priority.
+Most plugins are compatible with Android 5+, iOS 13+, MacOS 12+, Windows 10+ and WebAssembly.
+
 Furthermore, we don't have any plans to support Linux and FreeBSD due to the low market-share and the lack of API
 standards.
 
 | Priority | OS          | Arch         |
 |----------|-------------|--------------|
-| High     | Windows     | AMD64        |
 | High     | Android     | ARM64, ARMv7 |
-| Medium   | WebAssembly | WASMv1       |
+| High     | iOS         | ARM64        |
+| Medium   | Windows     | AMD64        |
+| Low      | WebAssembly | WASMv1       |
 | Low      | MacOS       | ARM64, AMD64 |
-| Low      | iOS         | ARM64        |
 | Ignored  | FreeBSD     | -            |
 | Ignored  | Linux       | -            |
 
@@ -157,34 +183,34 @@ integrity of native-APIs, so we can't guarantee that the native-APIs will have t
 Since we have limited resources and devices, we can't test all plugins on all platforms and devices. Currently, we have
 a few devices available and with limited range of OS versions. Plugins are usually tested on those devices:
 
-- **Android**: 
-  - Motorola Droid Maxx, 
-  - Motorola G 2Gen,
-  - Motorola E6, 
-  - Motorola E14,
-  - Motorola E15,
-  - Xiaomi A7, 
-  - Xiaomi Note 9,
-  - Xiaomi Redmi A3,
-  - Samsung Galaxy A20e,
-  - SPC Discovery,
-  - Blackberry Key One,
-  - (+ BrowserStack)
-- **iOS**: 
-  - iPhone SE 2Gen (2020), 
-  - iPad Air 5Gen,
-  - (+ BrowserStack),
-- **WASM**: 
-  - Chrome, 
-  - Firefox, 
-  - Safari, 
-  - (+ BrowserStack)
-- **Windows**: 
-  - Custom Device (RYZEN 3900X + RX 7900XT), 
-  - Custom VM (EPYC 7501P),
-- **MacOS**: 
-  - MacBook Air (M1, 2020)
-  - MacStudio (M2 Max, 2022)
+- **Android**:
+    - Motorola Droid Maxx,
+    - Motorola G 2Gen,
+    - Motorola E6,
+    - Motorola E14,
+    - Motorola E15,
+    - Xiaomi A7,
+    - Xiaomi Note 9,
+    - Xiaomi Redmi A3,
+    - Samsung Galaxy A20e,
+    - SPC Discovery,
+    - Blackberry Key One,
+    - (+ BrowserStack)
+- **iOS**:
+    - iPhone SE 2Gen (2020),
+    - iPad Air 5Gen,
+    - (+ BrowserStack),
+- **WASM**:
+    - Chrome,
+    - Firefox,
+    - Safari,
+    - (+ BrowserStack)
+- **Windows**:
+    - Custom Device (RYZEN 3900X + RX 7900XT),
+    - Custom VM (EPYC 7501P),
+- **MacOS**:
+    - MacBook Air (M1, 2020)
+    - MacStudio (M2 Max, 2022)
 
 Tests are performed manually, since most features interact with the native platform, and automated tests are not
 easy to implement. We are open to suggestions on how to improve the testing process.

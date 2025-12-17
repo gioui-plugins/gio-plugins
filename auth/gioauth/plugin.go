@@ -3,7 +3,6 @@ package gioauth
 import (
 	"gioui.org/app"
 	"gioui.org/io/event"
-	"gioui.org/io/transfer"
 	"github.com/gioui-plugins/gio-plugins/auth"
 	"github.com/gioui-plugins/gio-plugins/auth/providers"
 	"github.com/gioui-plugins/gio-plugins/plugin"
@@ -59,24 +58,6 @@ func (p *authPlugin) Execute(cmd interface{}) {
 // Event implements plugin.Handler.
 func (p *authPlugin) Event(evt event.Event) {
 	switch evt := evt.(type) {
-	case app.FrameEvent:
-		for {
-			evt, ok := evt.Source.Event(transfer.URLFilter{Scheme: ""})
-			if !ok {
-				break
-			}
-
-			switch evt := evt.(type) {
-			case transfer.URLEvent:
-				if p.client != nil {
-					if err := p.client.ProcessCustomSchemeCallback(evt.URL.String()); err != nil {
-						p.plugin.SendEventUntagged(intName, ErrorEvent(auth.ErrorEvent{Error: err}))
-					}
-				} else {
-					p.startupURL = evt.URL.String()
-				}
-			}
-		}
 	case app.ViewEvent:
 		if p.client == nil {
 			p.config = NewConfigFromViewEvent(p.window, evt)
@@ -105,4 +86,24 @@ func (p *authPlugin) Event(evt event.Event) {
 			p.startupURL = ""
 		}
 	}
+}
+
+func (p *authPlugin) TypeGlobalEvent() []reflect.Type {
+	return wantGlobalEvents
+}
+
+func (p *authPlugin) GlobalEvent(evt event.Event) {
+	/*
+		switch evt := evt.(type) {
+
+			case app.URLEvent:
+				if p.client != nil {
+					if err := p.client.ProcessCustomSchemeCallback(evt.URL.String()); err != nil {
+						p.plugin.SendEventUntagged(intName, ErrorEvent(auth.ErrorEvent{Error: err}))
+					}
+				} else {
+					p.startupURL = evt.URL.String()
+				}
+		}
+	*/
 }
