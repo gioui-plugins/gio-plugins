@@ -1,6 +1,7 @@
 package gioauth
 
 import (
+	"gioui.org/app"
 	"github.com/gioui-plugins/gio-plugins/auth"
 	"github.com/gioui-plugins/gio-plugins/plugin"
 	"reflect"
@@ -12,7 +13,7 @@ var (
 		reflect.TypeOf(plugin.EndFrameEvent{}),
 	}
 	wantGlobalEvents = []reflect.Type{
-		// reflect.TypeOf(app.URLEvent{}),
+		reflect.TypeOf(app.URLEvent{}),
 	}
 )
 
