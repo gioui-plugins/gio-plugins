@@ -93,17 +93,14 @@ func (p *authPlugin) TypeGlobalEvent() []reflect.Type {
 }
 
 func (p *authPlugin) GlobalEvent(evt event.Event) {
-	/*
-		switch evt := evt.(type) {
-
-			case app.URLEvent:
-				if p.client != nil {
-					if err := p.client.ProcessCustomSchemeCallback(evt.URL.String()); err != nil {
-						p.plugin.SendEventUntagged(intName, ErrorEvent(auth.ErrorEvent{Error: err}))
-					}
-				} else {
-					p.startupURL = evt.URL.String()
-				}
+	switch evt := evt.(type) {
+	case app.URLEvent:
+		if p.client != nil {
+			if err := p.client.ProcessCustomSchemeCallback(evt.URL.String()); err != nil {
+				p.plugin.SendEventUntagged(intName, ErrorEvent(auth.ErrorEvent{Error: err}))
+			}
+		} else {
+			p.startupURL = evt.URL.String()
 		}
-	*/
+	}
 }
