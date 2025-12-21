@@ -99,6 +99,8 @@ Of course, `pingpong` has no use in real-world applications, but it can be used 
 > It uses `gioplugins.Event` and not `gtx.Event`!
 
 ## Plugins
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fgioui-plugins%2Fgio-plugins.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Fgioui-plugins%2Fgio-plugins?ref=badge_shield)
+
 
 **Available from Gio (not in this repository):**
 
@@ -231,3 +233,6 @@ is faster. On Linux/FreeBSD you may need to use C and CGO to interact with the n
 
 This package is licensed under the MIT License, some pre-compiled files may have other license. See
 the [LICENSE](LICENSE) file for details.
+
+
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fgioui-plugins%2Fgio-plugins.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2Fgioui-plugins%2Fgio-plugins?ref=badge_large)
