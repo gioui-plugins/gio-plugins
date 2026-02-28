@@ -2,8 +2,6 @@ module demo
 
 go 1.22
 
-replace gioui.org => ../../../../gio
-
 replace github.com/gioui-plugins/gio-plugins => ../../../
 
 require (
