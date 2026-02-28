@@ -1,14 +1,18 @@
-GO = "go"
-GOGIO = "gioui.org/cmd/gogio"
-ANDROID_SDK_ROOT = ""
-ANDROID_JAVA_ROOT = ""
-TEMP = ""
+GO ?= "go"
+GOGIO ?= "gioui.org/cmd/gogio"
+ANDROID_SDK_ROOT ?= ""
+ANDROID_JAVA_ROOT ?= ""
 
 ifeq ($(shell uname -s), Darwin)
-    ANDROID_SDK_ROOT = "$(HOME)/Library/Android/sdk/"
-    ANDROID_JAVA_ROOT = /Library/Java/JavaVirtualMachines/zulu-11.jdk/Contents/Home/bin
-    ANDROID_PLATFORM = $(ANDROID_SDK_ROOT)/platforms/$(shell ls $(ANDROID_SDK_ROOT)/platforms | sort -n | tail -n 1)
+    ANDROID_SDK_ROOT ?= "$(HOME)/Library/Android/sdk/"
+    ANDROID_JAVA_ROOT ?= /Library/Java/JavaVirtualMachines/zulu-11.jdk/Contents/Home/bin
+    ANDROID_PLATFORM ?= $(ANDROID_SDK_ROOT)/platforms/$(shell ls $(ANDROID_SDK_ROOT)/platforms | sort -n | tail -n 1)
     TEMP = /tmp
+endif
+
+ifeq ($(shell uname -s), Linux)
+    TEMP = /tmp
+	ANDROID_PLATFORM ?= $(ANDROID_SDK_ROOT)/platforms/$(shell ls $(ANDROID_SDK_ROOT)/platforms | sort -n | tail -n 1)
 endif
 
 define generate_java
