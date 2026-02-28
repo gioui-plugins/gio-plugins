@@ -1,15 +1,13 @@
 module demo
 
-go 1.22
-
-replace gioui.org => ../../../gio
+go 1.24.0
 
 replace github.com/gioui-plugins/gio-plugins => ../../
 
 require (
-	gioui.org v0.6.1-0.20240607083507-1151eac07d84
+	gioui.org v0.9.1-0.20251215212054-7bcb315ee174
 	github.com/gioui-plugins/gio-plugins v0.0.0-00010101000000-000000000000
-	golang.org/x/image v0.7.0
+	golang.org/x/image v0.26.0
 )
 
 require (
@@ -18,12 +16,12 @@ require (
 	gioui.org/shader v1.0.8 // indirect
 	git.wow.st/gmp/jni v0.0.0-20210610011705-34026c7e22d0 // indirect
 	github.com/akavel/rsrc v0.10.1 // indirect
-	github.com/go-text/typesetting v0.1.1 // indirect
-	golang.org/x/exp v0.0.0-20221012211006-4de253d81b95 // indirect
-	golang.org/x/exp/shiny v0.0.0-20220921164117-439092de6870 // indirect
-	golang.org/x/mod v0.17.0 // indirect
-	golang.org/x/sync v0.7.0 // indirect
-	golang.org/x/sys v0.20.0 // indirect
-	golang.org/x/text v0.15.0 // indirect
-	golang.org/x/tools v0.21.0 // indirect
+	github.com/go-text/typesetting v0.3.0 // indirect
+	golang.org/x/exp v0.0.0-20250408133849-7e4ce0ab07d0 // indirect
+	golang.org/x/exp/shiny v0.0.0-20250408133849-7e4ce0ab07d0 // indirect
+	golang.org/x/mod v0.30.0 // indirect
+	golang.org/x/sync v0.19.0 // indirect
+	golang.org/x/sys v0.39.0 // indirect
+	golang.org/x/text v0.32.0 // indirect
+	golang.org/x/tools v0.39.0 // indirect
 )
