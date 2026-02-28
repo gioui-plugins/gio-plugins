@@ -87,17 +87,29 @@ public class explorer_android {
         }
     }
 
-    public void saveFile(View view, String ext, int id) {
+    public void saveFile(View view, String filename, int id) {
         askPermission(view);
 
         ((Activity) view.getContext()).runOnUiThread(new Runnable() {
             public void run() {
                 registerFrag(view);
                 export_codes.add(Integer.valueOf(id));
-                
+
+                String ext = "";
+                int i = filename.lastIndexOf('.');
+                if (i > 0) {
+                    ext = filename.substring(i + 1);
+                }
+
                 final Intent intent = new Intent(Intent.ACTION_CREATE_DOCUMENT);
-                intent.setType(MimeTypeMap.getSingleton().getMimeTypeFromExtension(ext));
+                if (ext.isEmpty()) {
+                    intent.setType("*/*");
+                } else {
+                    intent.setType(MimeTypeMap.getSingleton().getMimeTypeFromExtension(ext));
+                }
                 intent.addCategory(Intent.CATEGORY_OPENABLE);
+                intent.putExtra(Intent.EXTRA_TITLE, filename);
+
                 frag.startActivityForResult(Intent.createChooser(intent, ""), id);
             }
         });
