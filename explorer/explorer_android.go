@@ -10,8 +10,6 @@ import "C"
 import (
 	"errors"
 	"io"
-	"path/filepath"
-	"runtime"
 	"runtime/cgo"
 	"strings"
 	"sync"
@@ -104,6 +102,8 @@ func (e *driver) saveFile(filename string, mime mimetype.MimeType) (io.WriteClos
 	callback := func(r result) {
 		res <- r
 	}
+	cgocallback := cgo.NewHandle(callback)
+	defer cgocallback.Delete()
 
 	go e.config.RunOnMain(func() {
 		err := jni.Do(jni.JVMFor(app.JavaVM()), func(env jni.Env) error {
@@ -112,8 +112,8 @@ func (e *driver) saveFile(filename string, mime mimetype.MimeType) (io.WriteClos
 
 			return jni.CallVoidMethod(env, e.explorerObject, e.explorerMethodSave,
 				jni.Value(e.config.View),
-				jni.Value(jni.JavaString(env, strings.TrimPrefix(strings.ToLower(filepath.Ext(filename)), "."))),
-				jni.Value(cgo.NewHandle(callback)),
+				jni.Value(jni.JavaString(env, strings.TrimPrefix(filename, "."))),
+				jni.Value(cgocallback),
 			)
 		})
 
@@ -126,7 +126,6 @@ func (e *driver) saveFile(filename string, mime mimetype.MimeType) (io.WriteClos
 	if r.error != nil {
 		return nil, r.error
 	}
-	runtime.KeepAlive(callback)
 	return r.file.(io.WriteCloser), nil
 }
 
@@ -139,6 +138,9 @@ func (e *driver) openFile(mime []mimetype.MimeType) (io.ReadCloser, error) {
 		res <- r
 		s.Reset()
 	}
+
+	cgocallback := cgo.NewHandle(callback)
+	defer cgocallback.Delete()
 
 	go e.config.RunOnMain(func() {
 		err := jni.Do(jni.JVMFor(app.JavaVM()), func(env jni.Env) error {
@@ -155,7 +157,7 @@ func (e *driver) openFile(mime []mimetype.MimeType) (io.ReadCloser, error) {
 			return jni.CallVoidMethod(env, e.explorerObject, e.explorerMethodOpen,
 				jni.Value(e.config.View),
 				jni.Value(jni.JavaString(env, s.String())),
-				jni.Value(cgo.NewHandle(callback)),
+				jni.Value(cgocallback),
 			)
 		})
 		if err != nil {
@@ -167,7 +169,6 @@ func (e *driver) openFile(mime []mimetype.MimeType) (io.ReadCloser, error) {
 	if r.error != nil {
 		return nil, r.error
 	}
-	runtime.KeepAlive(callback)
 	return r.file.(io.ReadCloser), nil
 }
 
