@@ -2,13 +2,14 @@ package giowebview
 
 import (
 	"container/list"
+	"reflect"
+	"sync"
+
 	"gioui.org/app"
 	"gioui.org/f32"
 	"gioui.org/io/event"
 	"github.com/gioui-plugins/gio-plugins/plugin"
 	"github.com/gioui-plugins/gio-plugins/webviewer/webview"
-	"reflect"
-	"sync"
 )
 
 func init() {
