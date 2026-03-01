@@ -2,6 +2,7 @@ package webview
 
 import (
 	"fmt"
+	"runtime"
 	"strings"
 	"sync"
 	"syscall"
@@ -19,6 +20,7 @@ type javascriptManager struct {
 	runJSHandler     *_ICoreWebView2ExecuteScriptCompletedHandler
 	jsJSDone         chan error
 	installJSHandler *_ICoreWebView2AddScriptToExecuteOnDocumentCreatedCompletedHandler
+	pinner           runtime.Pinner
 }
 
 func newJavascriptManager(w *webview) *javascriptManager {
@@ -48,6 +50,10 @@ func (j *javascriptManager) installCallback() {
 			return 0
 		},
 	}
+	j.pinner.Pin(j.callback)
+	j.pinner.Pin(j.callback.VTBL)
+	j.pinner.Pin(&j.callback.Invoke)
+
 	j.runJSHandler = &_ICoreWebView2ExecuteScriptCompletedHandler{
 		VTBL: _CoreWebView2ExecuteScriptCompletedHandlerVTBL,
 		Invoke: func(this *_ICoreWebView2ExecuteScriptCompletedHandler, err uintptr, resulAsJson uintptr) uintptr {
@@ -55,12 +61,19 @@ func (j *javascriptManager) installCallback() {
 			return 0
 		},
 	}
+	j.pinner.Pin(j.runJSHandler)
+	j.pinner.Pin(j.runJSHandler.VTBL)
+	j.pinner.Pin(&j.runJSHandler.Invoke)
+
 	j.installJSHandler = &_ICoreWebView2AddScriptToExecuteOnDocumentCreatedCompletedHandler{
 		VTBL: _CoreWebView2AddScriptToExecuteOnDocumentCreatedCompletedHandlerVTBL,
 		Invoke: func(this *_ICoreWebView2AddScriptToExecuteOnDocumentCreatedCompletedHandler, err uintptr, id uintptr) uintptr {
 			return 0
 		},
 	}
+	j.pinner.Pin(j.installJSHandler)
+	j.pinner.Pin(j.installJSHandler.VTBL)
+	j.pinner.Pin(&j.installJSHandler.Invoke)
 
 	j.webview.scheduler.MustRun(func() {
 		syscall.SyscallN(
@@ -74,13 +87,10 @@ func (j *javascriptManager) installCallback() {
 
 // RunJavaScript implements the JavascriptManager interface.
 func (j *javascriptManager) RunJavaScript(js string) error {
-	for _, c := range js {
-		if c == 0x00 {
-			return ErrInvalidJavascript
-		}
+	text, err := syscall.UTF16PtrFromString(js)
+	if err != nil {
+		return ErrInvalidJavascript
 	}
-
-	text := syscall.StringToUTF16Ptr(js)
 
 	j.webview.scheduler.MustRun(func() {
 		syscall.SyscallN(

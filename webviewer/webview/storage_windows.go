@@ -90,6 +90,12 @@ func (s *cookieManager) Cookies(fn DataLooper[CookieData]) (err error) {
 		},
 	}
 
+	pinner := runtime.Pinner{}
+	pinner.Pin(handler)
+	pinner.Pin(handler.VTBL)
+	pinner.Pin(&handler.Invoke)
+	defer pinner.Unpin()
+
 	s.scheduler.MustRun(func() {
 		syscall.SyscallN(
 			s._ICoreWebView2CookieManager.VTBL.GetCookies,

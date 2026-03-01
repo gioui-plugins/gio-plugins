@@ -3,9 +3,10 @@
 package webview
 
 import (
-	"golang.org/x/sys/windows"
 	"os"
 	"path/filepath"
+
+	"golang.org/x/sys/windows"
 )
 
 var (
@@ -442,7 +443,7 @@ type (
 
 var _CoreWebView2CreateCoreWebView2EnvironmentCompletedHandlerVTBL = &_ICoreWebView2CreateCoreWebView2EnvironmentCompletedHandlerVTBL{
 	_IUnknownVTBL: _IUnknownVTBL{
-		Query: windows.NewCallback(func(this *_ICoreWebView2CreateCoreWebView2EnvironmentCompletedHandler, _, o uintptr) uintptr {
+		Query: windows.NewCallback(func(this *_ICoreWebView2CreateCoreWebView2EnvironmentCompletedHandler, _, _ uintptr) uintptr {
 			return 0
 		}),
 		Add:     add,
@@ -473,7 +474,7 @@ type (
 
 var _CoreWebView2CreateCoreWebView2ControllerCompletedHandlerVTBL = &_ICoreWebView2CreateCoreWebView2ControllerCompletedHandlerVTBL{
 	_IUnknownVTBL: _IUnknownVTBL{
-		Query: windows.NewCallback(func(this *_ICoreWebView2CreateCoreWebView2ControllerCompletedHandler, _, o uintptr) uintptr {
+		Query: windows.NewCallback(func(this *_ICoreWebView2CreateCoreWebView2ControllerCompletedHandler, _, _ uintptr) uintptr {
 			return 0
 		}),
 		Add:     add,

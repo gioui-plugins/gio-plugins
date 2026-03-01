@@ -1,6 +1,9 @@
 package giowebview
 
 import (
+	"image"
+	"reflect"
+
 	"gioui.org/app"
 	"gioui.org/f32"
 	"gioui.org/io/event"
@@ -8,8 +11,6 @@ import (
 	"gioui.org/unit"
 	"github.com/gioui-plugins/gio-plugins/plugin"
 	"github.com/gioui-plugins/gio-plugins/webviewer/webview"
-	"image"
-	"reflect"
 )
 
 var wantOps = []reflect.Type{

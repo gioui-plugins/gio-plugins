@@ -3,6 +3,7 @@ package webview
 import (
 	"net/url"
 	"os"
+	"runtime"
 	"sync/atomic"
 	"syscall"
 	"unsafe"
@@ -28,6 +29,8 @@ type driver struct {
 	webview2                    *_ICoreWebView2
 	webview22                   *_ICoreWebView22
 	webview213                  *_ICoreWebView213
+
+	pinner runtime.Pinner
 
 	callbackTitle *_ICoreWebView2DocumentTitleChangedEventHandler
 	callbackLoad  *_ICoreWebView2SourceChangedEventHandler
@@ -67,6 +70,9 @@ func (r *driver) attach(w *webview) error {
 				return 0
 			},
 		}
+		r.pinner.Pin(r.callbackLoad)
+		r.pinner.Pin(r.callbackLoad.VTBL)
+		r.pinner.Pin(&r.callbackLoad.Invoke)
 
 		r.callbackTitle = &_ICoreWebView2DocumentTitleChangedEventHandler{
 			VTBL: _CoreWebView2DocumentTitleChangedEventHandlerVTBL,
@@ -80,11 +86,15 @@ func (r *driver) attach(w *webview) error {
 				return 0
 			},
 		}
+		r.pinner.Pin(r.callbackTitle)
+		r.pinner.Pin(r.callbackTitle.VTBL)
+		r.pinner.Pin(&r.callbackTitle.Invoke)
 
 		r.controllerCompletedHandler = &_ICoreWebView2CreateCoreWebView2ControllerCompletedHandler{
 			VTBL: _CoreWebView2CreateCoreWebView2ControllerCompletedHandlerVTBL,
 			Invoke: func(this *_ICoreWebView2CreateCoreWebView2ControllerCompletedHandler, err uintptr, val *_ICoreWebView2Controller) uintptr {
 				r.controller = val
+
 				syscall.SyscallN(val.VTBL._IUnknownVTBL.Add, uintptr(unsafe.Pointer(r.controller)))
 				syscall.SyscallN(val.VTBL.GetCoreWebView2, uintptr(unsafe.Pointer(val)), uintptr(unsafe.Pointer(&r.webview2)))
 				syscall.SyscallN(r.webview2.VTBL._IUnknownVTBL.Add, uintptr(unsafe.Pointer(r.webview2)))
@@ -101,10 +111,14 @@ func (r *driver) attach(w *webview) error {
 				return 0
 			},
 		}
+		r.pinner.Pin(r.controllerCompletedHandler)
+		r.pinner.Pin(r.controllerCompletedHandler.VTBL)
+		r.pinner.Pin(&r.controllerCompletedHandler.Invoke)
 
 		r.environmentCompletedHandler = &_ICoreWebView2CreateCoreWebView2EnvironmentCompletedHandler{
 			VTBL: _CoreWebView2CreateCoreWebView2EnvironmentCompletedHandlerVTBL,
 			Invoke: func(this *_ICoreWebView2CreateCoreWebView2EnvironmentCompletedHandler, err uintptr, val *_ICoreWebView2Environment) uintptr {
+
 				syscall.SyscallN(val.VTBL._IUnknownVTBL.Add, uintptr(unsafe.Pointer(val)))
 
 				syscall.SyscallN(val.VTBL.CreateCoreWebView2Controller, uintptr(unsafe.Pointer(val)), config.HWND, uintptr(unsafe.Pointer(r.controllerCompletedHandler)))
@@ -112,6 +126,9 @@ func (r *driver) attach(w *webview) error {
 				return 0
 			},
 		}
+		r.pinner.Pin(r.environmentCompletedHandler)
+		r.pinner.Pin(r.environmentCompletedHandler.VTBL)
+		r.pinner.Pin(&r.environmentCompletedHandler.Invoke)
 
 		pathPtr := uintptr(0)
 		if len(r.dir) > 0 {
