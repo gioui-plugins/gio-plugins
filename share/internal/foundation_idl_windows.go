@@ -1,8 +1,9 @@
 package internal
 
 import (
-	"github.com/go-ole/go-ole"
 	"unsafe"
+
+	"github.com/go-ole/go-ole"
 )
 
 /*
@@ -33,13 +34,14 @@ func NewIUriRuntimeClassFactory(r **IUriRuntimeClassFactory) error {
 	return nil
 }
 
-func (i *IUriRuntimeClassFactory) CreateUri(s string, r **IUriRuntimeClass) (err error) {
+func (i *IUriRuntimeClassFactory) CreateUri(s string, r *uintptr) (err error) {
 	sw, err := ole.NewHString(s)
 	if err != nil {
 		return err
 	}
 	//defer ole.DeleteHString(sw)
 
+	// @todo fix memory leak
 	return call(i.VTBL.CreateUri, uintptr(unsafe.Pointer(i)), uintptr(sw), uintptr(unsafe.Pointer(r)))
 }
 
