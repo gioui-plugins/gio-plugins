@@ -172,8 +172,29 @@ func (i *IDataPackage) SetText(s string) error {
 	return call(i.VTBL.SetText, uintptr(unsafe.Pointer(i)), uintptr(sw))
 }
 
+func (i *IDataPackage) SetHtmlFormat(s string) error {
+	sw, err := ole.NewHString(s)
+	if err != nil {
+		return err
+	}
+	return call(i.VTBL.SetHtmlFormat, uintptr(unsafe.Pointer(i)), uintptr(sw))
+}
+
 func (i *IDataPackage) SetUri(s string) error {
 	return nil
+}
+
+type OperationMode uintptr
+
+const (
+	OperationModeUnspecified OperationMode = iota
+	OperationModeCopy
+	OperationModeMove
+	OperationModeLink
+)
+
+func (i *IDataPackage) SetRequestedOperation(v OperationMode) error {
+	return call(i.VTBL.SetRequestedOperation, uintptr(unsafe.Pointer(i)), uintptr(v))
 }
 
 func (i *IDataPackage) GetIDataPackage2(r **IDataPackage2) error {
@@ -191,8 +212,8 @@ type (
 	}
 )
 
-func (i *IDataPackage2) SetWebLink(uri *IUriRuntimeClass) error {
-	return call(i.VTBL.SetWebLink, uintptr(unsafe.Pointer(i)), uintptr(unsafe.Pointer(uri)))
+func (i *IDataPackage2) SetWebLink(uri uintptr) error {
+	return call(i.VTBL.SetWebLink, uintptr(unsafe.Pointer(i)), uri)
 }
 
 /*
@@ -229,6 +250,15 @@ func (i *IDataPackagePropertySet) SetTitle(s string) error {
 	}
 	// @TODO memory leak
 	return call(i.VTBL.SetTitle, uintptr(unsafe.Pointer(i)), uintptr(sw))
+}
+
+func (i *IDataPackagePropertySet) SetDescription(s string) error {
+	sw, err := ole.NewHString(s)
+	if err != nil {
+		return err
+	}
+	// @TODO memory leak
+	return call(i.VTBL.SetDescription, uintptr(unsafe.Pointer(i)), uintptr(sw))
 }
 
 /*

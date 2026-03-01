@@ -3,9 +3,10 @@
 package share
 
 import (
+	"sync"
+
 	"github.com/gioui-plugins/gio-plugins/share/internal"
 	"github.com/go-ole/go-ole"
-	"sync"
 )
 
 type driver struct {
@@ -58,7 +59,8 @@ func (e *driver) init() {
 
 	callback := func(transfer *internal.IDataTransferManager, args *internal.IDataRequestedEventArgs) int {
 		e.mutex.Lock()
-		defer e.mutex.Unlock()
+		shareable := e.shareable
+		e.mutex.Unlock()
 
 		var dataRequest *internal.IDataRequest
 		if err := args.GetRequest(&dataRequest); err != nil {
@@ -80,24 +82,19 @@ func (e *driver) init() {
 			return ole.E_FAIL
 		}
 
-		switch e.mode {
-		case 0:
-			dataProperty.SetTitle(e.shareable[0])
-			dataPackage.SetText(e.shareable[1])
-		case 1:
-			dataProperty.SetTitle(e.shareable[0])
-			dataPackage.SetText(e.shareable[1])
-
-			var uri *internal.IUriRuntimeClass
-			if err := e._IUriRuntimeClassFactory.CreateUri(e.shareable[2], &uri); err != nil {
-				return ole.S_OK
-			}
-
-			dataPackage2.SetWebLink(uri)
+		if err := dataProperty.SetTitle(shareable[0]); err != nil {
+			return ole.E_FAIL
 		}
 
-		dataRequest.SetData(dataPackage)
-		return 1
+		if err := dataPackage.SetText(shareable[1]); err != nil {
+			return ole.E_FAIL
+		}
+
+		if err := dataRequest.SetData(dataPackage); err != nil {
+			return ole.E_FAIL
+		}
+
+		return ole.S_OK
 	}
 
 	e._ITypedEventHandler = internal.NewTypedEventHandler(func(transfer *internal.IDataTransferManager, args *internal.IDataRequestedEventArgs) int {
