@@ -1,0 +1,66 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>com.inkeliz.pushnotification</groupId>
+  <artifactId>pushnotification</artifactId>
+  <version>1.0.0</version>
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>com.simpligility.maven.plugins</groupId>
+        <artifactId>android-maven-plugin</artifactId>
+        <version>4.1.0</version>
+        <extensions>true</extensions>
+        <configuration>
+          <sign>
+            <debug>false</debug>
+          </sign>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+  <repositories>
+    <repository>
+      <id>google-maven</id>
+      <name>Google Maven Repository</name>
+      <url>https://maven.google.com/</url>
+    </repository>
+  </repositories>
+  <packaging>aar</packaging>
+  <dependencies>
+    <!-- Source: https://mvnrepository.com/artifact/com.google.firebase/firebase-messaging -->
+    <dependency>
+        <groupId>com.google.android.gms</groupId>
+        <artifactId>play-services-tasks</artifactId>
+        <version>18.4.1</version>
+        <scope>compile</scope>
+        <type>aar</type>
+    </dependency>
+    <dependency>
+      <groupId>com.google.android.gms</groupId>
+      <artifactId>play-services-base</artifactId>
+      <version>18.10.0</version>
+      <scope>compile</scope>
+      <type>aar</type>
+    </dependency>
+    <dependency>
+        <groupId>com.google.firebase</groupId>
+        <artifactId>firebase-messaging</artifactId>
+        <version>25.0.1</version>
+        <scope>compile</scope>
+        <type>aar</type>
+
+        <exclusions>
+            <exclusion>
+                <groupId>com.google.android.gms</groupId>
+                <artifactId>play-services-tasks</artifactId>
+            </exclusion>
+            <exclusion>
+                <groupId>com.google.android.gms</groupId>
+                <artifactId>play-services-base</artifactId>
+            </exclusion>
+        </exclusions>
+    </dependency>
+  </dependencies>
+  <name>gio-plugins-pushnotification</name>
+</project>
