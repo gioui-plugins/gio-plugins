@@ -31,6 +31,12 @@ The MIT LICENSE is NOT applicable for the following files:
 - auth/gioauth/authlayout/internal/google_logo.svg
 - auth/gioauth/authlayout/internal/google_font.ttf
 
+The MIT LICENSE is NOT applicable for any file that are inside /vendors directory:
+- pushnotifications/vendors
+- auth/vendors
+- ads/vendors
+- inapppay/vendors
+
 Those files are licensed under the following license:
 
 - webviewer/webview/sys_windows_386.dll
