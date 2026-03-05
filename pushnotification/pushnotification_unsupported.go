@@ -17,6 +17,6 @@ func configureDriver(d *driver, config Config) {
 	d.config = config
 }
 
-func (d *driver) requestToken() error {
-	return ErrNotAvailable
+func (d *driver) requestToken() (Token, error) {
+	return Token{}, ErrNotAvailable
 }
