@@ -1,0 +1,45 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>com.inkeliz.inapppay</groupId>
+  <artifactId>inapppay</artifactId>
+  <version>1.0.0</version>
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>com.simpligility.maven.plugins</groupId>
+        <artifactId>android-maven-plugin</artifactId>
+        <version>4.1.0</version>
+        <extensions>true</extensions>
+        <configuration>
+          <sign>
+            <debug>false</debug>
+          </sign>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+  <repositories>
+    <repository>
+      <id>google-maven</id>
+      <name>Google Maven Repository</name>
+      <url>https://maven.google.com/</url>
+    </repository>
+    <repository>
+        <id>maven-central</id>
+        <name>Maven Central</name>
+        <url>https://repo1.maven.org/maven2</url>
+    </repository>
+  </repositories>
+  <packaging>aar</packaging>
+  <dependencies>
+     <!-- https://mvnrepository.com/artifact/com.android.billingclient/billing -->
+    <dependency>
+        <groupId>com.android.billingclient</groupId>
+        <artifactId>billing</artifactId>
+        <version>6.0.1</version>
+        <type>aar</type>
+    </dependency>
+  </dependencies>
+  <name>gio-plugins-inapppay</name>
+</project>

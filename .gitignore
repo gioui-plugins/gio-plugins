@@ -1,3 +1,16 @@
 /.idea
 auth/vendors/android/target
+pushnotification/vendors/android/target
+ads/vendors/android/target
+inapppay/vendors/android/target
 .DS_Store
+*.apk
+*.idsig
+*.aab
+*.app
+*.ipa
+*.exe
+iosgiodemoprofile.mobileprovision
+macosgiodemoprofile.provisionprofile
+iosgiodemopublish.mobileprovision
+appicon.png
