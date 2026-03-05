@@ -21,4 +21,5 @@ func UpdateConfigFromViewEvent(c *inapppay.Config, w *app.Window, event app.View
 		return
 	}
 	c.View = evt.View
+	c.RunOnMain = w.Run
 }
