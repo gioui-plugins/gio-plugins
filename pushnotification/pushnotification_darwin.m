@@ -17,25 +17,15 @@
 
 @implementation PushDelegate
 
-- (void)userNotificationCenter:(UNUserNotificationCenter *)center
-       willPresentNotification:(UNNotification *)notification
-         withCompletionHandler:(void (^)(UNNotificationPresentationOptions options))completionHandler
-{
+- (void)userNotificationCenter:(UNUserNotificationCenter *)center willPresentNotification:(UNNotification *)notification withCompletionHandler:(void (^)(UNNotificationPresentationOptions options))completionHandler {
 #if TARGET_OS_IPHONE
-    completionHandler(UNNotificationPresentationOptionAlert |
-                      UNNotificationPresentationOptionSound |
-                      UNNotificationPresentationOptionBadge);
+    completionHandler(UNNotificationPresentationOptionAlert | UNNotificationPresentationOptionSound | UNNotificationPresentationOptionBadge);
 #else
-    completionHandler(UNNotificationPresentationOptionBanner |
-                      UNNotificationPresentationOptionSound |
-                      UNNotificationPresentationOptionBadge);
+    completionHandler(UNNotificationPresentationOptionBanner | UNNotificationPresentationOptionSound | UNNotificationPresentationOptionBadge);
 #endif
 }
 
-- (void)userNotificationCenter:(UNUserNotificationCenter *)center
-didReceiveNotificationResponse:(UNNotificationResponse *)response
-         withCompletionHandler:(void(^)(void))completionHandler
-{
+- (void)userNotificationCenter:(UNUserNotificationCenter *)center didReceiveNotificationResponse:(UNNotificationResponse *)response withCompletionHandler:(void(^)(void))completionHandler {
     completionHandler();
 }
 
@@ -133,22 +123,11 @@ void requestPushToken(void* handler) {
     }
     delegate.goHandler = handler;
 
-    UNAuthorizationOptions options =
-        (UNAuthorizationOptionAlert |
-         UNAuthorizationOptionSound |
-         UNAuthorizationOptionBadge);
+    UNAuthorizationOptions options = (UNAuthorizationOptionAlert | UNAuthorizationOptionSound | UNAuthorizationOptionBadge);
 
-    [[UNUserNotificationCenter currentNotificationCenter]
-        requestAuthorizationWithOptions:options
-                      completionHandler:^(BOOL granted, NSError * _Nullable error) {
-
+    [[UNUserNotificationCenter currentNotificationCenter] requestAuthorizationWithOptions:options completionHandler:^(BOOL granted, NSError * _Nullable error) {
         if (error != nil) {
             gioplugins_pushnotification_on_push_token_received(handler, NULL, [[error localizedDescription] UTF8String]);
-            return;
-        }
-
-        if (!granted) {
-            gioplugins_pushnotification_on_push_token_received(handler, NULL, "permission denied");
             return;
         }
 
