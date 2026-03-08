@@ -8,6 +8,4 @@ type Config struct {
 	HWND uintptr
 	// RunOnMain is a function that runs on the main UI thread.
 	RunOnMain func(func())
-
-	WindowsAzureConfig
 }

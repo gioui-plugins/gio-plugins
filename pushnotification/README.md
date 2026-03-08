@@ -10,13 +10,18 @@ to distinguish between the different providers and send the notification to the 
 It requires an external server to send the push notifications. That is a major difference from Gio-X Notify, which only
 allows sending notifications when the app is running.
 
+The push-notification token is OS-specific. While it's possible to use an external library (such as, but not limited to,
+Firebase) to unify the API, it still requires the OS-specific token. The FCM on iOS still uses the APNs token. Because
+of that, using FCM on iOS is just another dependency. Furthermore, the FCM doesn't support Windows (WNS). Azure App
+Service do support Windows, Android and iOS, but it's Azure, which is terrible.
+
 > [!TIP]
 > Do NOT request the token on every app start, as that may cause the permission prompt to be shown at inappropriate
 > times.
 
 > [!IMPORTANT]
-> The WebAssembly version requires a service worker to be registered, the gio-cmd2 will generate a service worker for
-> you, but you need to copy that file to your web server (similar to how you copy .wasm and .js files).
+> The WebAssembly version requires a service worker to be registered, the inkeliz/gogio will generate a service worker
+> for you, but you need to copy that file to your web server (similar to how you copy .wasm and .js files).
 
 > [!NOTE]
 > Be sure to validate the endpoint before sending push notifications, otherwise your server is prone to SSRF attacks.
@@ -25,17 +30,21 @@ allows sending notifications when the app is running.
 
 ## Before you start
 
-Android: you need to create a Firebase project and download the `google-services.json` file, and set `Config` based on
-`google-services.json` information.
+- **Android**: you need to create a Firebase project and download the `google-services.json` file, and set `Config`
+  based on
+  `google-services.json` information.
 
-macOS/iOS: you need to create a Provisioning Profile with Push Notifications capability and use `gogio` with the same
-profile.
+- **macOS/iOS**: you need to create a Provisioning Profile with Push Notifications capability and use `gogio` with the
+  same
+  profile.
 
-WebAssembly: you need to register a service worker and need to use HTTPS to serve your web app. You also need to
-generate a `VAPID` and provide it in the Config. The Service Worker expect the data (which is pushed by the server) to
-be in "Declarative Web Push Format" (see https://notifications.spec.whatwg.org/#dictdef-notificationoptions).
+- **WebAssembly**: you need to register a service worker and need to use HTTPS to serve your web app. You also need to
+  generate a `VAPID` and provide it in the Config. The Service Worker expect the data (which is pushed by the server) to
+  be in "Declarative Web Push Format" (see https://notifications.spec.whatwg.org/#dictdef-notificationoptions).
 
-Windows: you need to bundle it as MSIX and register it in Azure platform and pray for the best. It might not work.
+- **Windows**: you need to bundle it as MSIX and register it in Azure platform and pray for the best. I recommend using
+  AdvancedInstaller Express, which is free and easier to use (you don't need to download Windows SDK). However, you can
+  also use Visual Studio to build it. On Azure you create one "App Registry" and the same on Partner Center.
 
 ## Usage
 
@@ -62,11 +71,11 @@ if needed.
 
 ## Features
 
-| OS                  | Windows | Android                                                                | MacOS                                                                                   | iOS                                                                                     | WebAssembly                                                                 |
-|---------------------|---------|------------------------------------------------------------------------|-----------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------|-----------------------------------------------------------------------------|
-| Get Token           | Testing | ✔                                                                      | ✔                                                                                       | ✔                                                                                       | ✔¹                                                                          |
-| Subscribe to Topics | ❌       | ❌                                                                      | ❌                                                                                       | ❌                                                                                       | ❌                                                                           |
-| API                 | --      | [Firebase Messaging](https://firebase.google.com/docs/cloud-messaging) | [UNUserNotificationCenter](https://developer.apple.com/documentation/usernotifications) | [UNUserNotificationCenter](https://developer.apple.com/documentation/usernotifications) | [PushManager](https://developer.mozilla.org/en-US/docs/Web/API/PushManager) |
+| OS                  | Windows                                                                                                                                                          | Android                                                                | MacOS                                                                                   | iOS                                                                                     | WebAssembly                                                                 |
+|---------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------|-----------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------|-----------------------------------------------------------------------------|
+| Get Token           | ?                                                                                                                                                                | ✔                                                                      | ✔                                                                                       | ✔                                                                                       | ✔¹                                                                          |
+| Subscribe to Topics | ❌                                                                                                                                                                | ❌                                                                      | ❌                                                                                       | ❌                                                                                       | ❌                                                                           |
+| API                 | [PushNotificationChannelManager](https://learn.microsoft.com/en-us/uwp/api/windows.networking.pushnotifications.pushnotificationchannelmanager?view=winrt-26100) | [Firebase Messaging](https://firebase.google.com/docs/cloud-messaging) | [UNUserNotificationCenter](https://developer.apple.com/documentation/usernotifications) | [UNUserNotificationCenter](https://developer.apple.com/documentation/usernotifications) | [PushManager](https://developer.mozilla.org/en-US/docs/Web/API/PushManager) |
 
 - ❌ = Not supported (Yet).
 - ✔ = Supported.
