@@ -168,8 +168,7 @@ func (c *iPushNotificationChannel) uri() (string, error) {
 // ── Public API ────────────────────────────────────────────────────────────────
 
 type requestURI struct {
-	azureAppID string
-	done       chan result
+	done chan result
 }
 
 type result struct {
@@ -189,49 +188,35 @@ func init() {
 		}
 
 		for req := range getURIChan {
-			uri, err := getChannel(req.azureAppID)
+			uri, err := getChannel()
 			req.done <- result{uri: uri, err: err}
 		}
 	}()
 }
 
 // GetChannelURI returns the WNS channel URI for this device.
-// azureAppID is your Azure AAD Application (client) ID.
 // Requires app to be packaged (MSIX) for package identity.
-func GetChannelURI(azureAppID string) (string, error) {
+func GetChannelURI() (string, error) {
 	req := requestURI{
-		azureAppID: azureAppID,
-		done:       make(chan result, 1),
+		done: make(chan result, 1),
 	}
 	getURIChan <- req
 	res := <-req.done
 	return res.uri, res.err
 }
 
-func getChannel(azureAppID string) (string, error) {
+func getChannel() (string, error) {
 	// 1. Get activation factory
 	var statics *iPushNotificationChannelManagerStatics
 	if err := newIPushNotificationChannelManagerStatics(&statics); err != nil {
 		return "", fmt.Errorf("newIPushNotificationChannelManagerStatics: %w", err)
 	}
 
-	// 2. Build app ID HSTRING
-	appIDHStr, err := ole.NewHString(azureAppID)
-	if err != nil {
-		return "", fmt.Errorf("NewHString: %w", err)
-	}
-	defer ole.DeleteHString(appIDHStr)
-
-	// 3. Call CreateChannelForApplicationAsyncWithApplicationId (slot 7)
+	// 2. Call CreateChannelForApplicationAsync (slot 6) — uses the current app
 	var op *iAsyncOperation
-	hr, _, _ := syscall.SyscallN(
-		statics.vtbl.CreateChannelForAppAsyncWithId,
-		uintptr(unsafe.Pointer(statics)),
-		uintptr(appIDHStr),
-		uintptr(unsafe.Pointer(&op)),
-	)
+	hr, _, _ := syscall.SyscallN(statics.vtbl.CreateChannelForAppAsync, uintptr(unsafe.Pointer(statics)), uintptr(unsafe.Pointer(&op)))
 	if err := hrErr(hr); err != nil {
-		return "", fmt.Errorf("CreateChannelForAppAsyncWithId: %w", err)
+		return "", fmt.Errorf("CreateChannelForAppAsync: %w", err)
 	}
 
 	// 4. QI for IAsyncInfo to poll status
@@ -246,10 +231,9 @@ func getChannel(azureAppID string) (string, error) {
 		if err != nil {
 			return "", fmt.Errorf("get_Status: %w", err)
 		}
-		fmt.Printf("async status: %d\n", s)
 		switch s {
 		case AsyncStatusCompleted:
-			// continue below
+			break
 		case AsyncStatusError:
 			return "", fmt.Errorf("async failed: %w", info.errorCode())
 		case AsyncStatusCanceled:
@@ -268,8 +252,6 @@ func getChannel(azureAppID string) (string, error) {
 		return ch.uri()
 	}
 }
-
-// ── HRESULT ───────────────────────────────────────────────────────────────────
 
 func hrErr(hr uintptr) error {
 	if int32(hr) >= 0 {

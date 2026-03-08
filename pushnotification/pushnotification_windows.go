@@ -22,7 +22,7 @@ func configureDriver(d *driver, config Config) {
 }
 
 func (d *driver) requestToken() (Token, error) {
-	token, err := internal.GetChannelURI(d.config.WindowsAzureConfig.ObjectID)
+	token, err := internal.GetChannelURI()
 	if err != nil {
 		return Token{}, err
 	}

@@ -33,9 +33,6 @@ func init() {
 			APIKey:    "AIzaSyAsoYXdF2fF5RVkGoMVj9SrsaVm_svJNfY",
 			SenderID:  "1051400967388",
 		},
-		pushnotification.WindowsAzureConfig{
-			ObjectID: "{068adefd-2e04-4902-b237-06fc6735be37}",
-		},
 		pushnotification.BrowserConfig{
 			VAPIDPublicKey: "BHl9S60ITx6ZGJa4aJgcB8A15uvjJUIG4U0xQ-IMVsdiy34Ory5Vjtk3uvwQ7-0ZykhuSCmp_3on4c_JZiGFxSw",
 		},

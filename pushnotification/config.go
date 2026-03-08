@@ -28,12 +28,5 @@ type BrowserConfig struct {
 	VAPIDPublicKey string
 }
 
-// WindowsAzureConfig represents the config for Azure ObjectADD.
-type WindowsAzureConfig struct {
-	// ObjectID is the ObjectID of the Azure ObjectADD.
-	ObjectID string
-}
-
 func (a AndroidFirebaseConfig) implementsExternalConfig() {}
 func (b BrowserConfig) implementsExternalConfig()         {}
-func (w WindowsAzureConfig) implementsExternalConfig()    {}
