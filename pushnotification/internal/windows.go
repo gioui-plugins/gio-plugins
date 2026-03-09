@@ -168,7 +168,8 @@ func (c *iPushNotificationChannel) uri() (string, error) {
 // ── Public API ────────────────────────────────────────────────────────────────
 
 type requestURI struct {
-	done chan result
+	done  chan result
+	appid string
 }
 
 type result struct {
@@ -188,7 +189,7 @@ func init() {
 		}
 
 		for req := range getURIChan {
-			uri, err := getChannel()
+			uri, err := getChannel(req.appid)
 			req.done <- result{uri: uri, err: err}
 		}
 	}()
@@ -196,16 +197,17 @@ func init() {
 
 // GetChannelURI returns the WNS channel URI for this device.
 // Requires app to be packaged (MSIX) for package identity.
-func GetChannelURI() (string, error) {
+func GetChannelURI(appid string) (string, error) {
 	req := requestURI{
-		done: make(chan result, 1),
+		done:  make(chan result, 1),
+		appid: appid,
 	}
 	getURIChan <- req
 	res := <-req.done
 	return res.uri, res.err
 }
 
-func getChannel() (string, error) {
+func getChannel(appid string) (string, error) {
 	// 1. Get activation factory
 	var statics *iPushNotificationChannelManagerStatics
 	if err := newIPushNotificationChannelManagerStatics(&statics); err != nil {
@@ -214,9 +216,20 @@ func getChannel() (string, error) {
 
 	// 2. Call CreateChannelForApplicationAsync (slot 6) — uses the current app
 	var op *iAsyncOperation
-	hr, _, _ := syscall.SyscallN(statics.vtbl.CreateChannelForAppAsync, uintptr(unsafe.Pointer(statics)), uintptr(unsafe.Pointer(&op)))
-	if err := hrErr(hr); err != nil {
-		return "", fmt.Errorf("CreateChannelForAppAsync: %w", err)
+
+	if appid == "" {
+		hr, _, _ := syscall.SyscallN(statics.vtbl.CreateChannelForAppAsync, uintptr(unsafe.Pointer(statics)), uintptr(unsafe.Pointer(&op)))
+		if err := hrErr(hr); err != nil {
+			return "", fmt.Errorf("CreateChannelForAppAsync: %w", err)
+		}
+	} else {
+		idH, _ := ole.NewHString(appid)
+		defer ole.DeleteHString(idH)
+
+		hr, _, _ := syscall.SyscallN(statics.vtbl.CreateChannelForAppAsyncWithId, uintptr(unsafe.Pointer(statics)), uintptr(idH), uintptr(unsafe.Pointer(&op)))
+		if err := hrErr(hr); err != nil {
+			return "", fmt.Errorf("CreateChannelForAppAsync: %w", err)
+		}
 	}
 
 	// 4. QI for IAsyncInfo to poll status
