@@ -1,14 +1,15 @@
 package plugin
 
 import (
-	"gioui.org/app"
-	"gioui.org/io/event"
-	"gioui.org/io/input"
-	"gioui.org/op"
 	"reflect"
 	"sync"
 	"sync/atomic"
 	"unsafe"
+
+	"gioui.org/app"
+	"gioui.org/io/event"
+	"gioui.org/io/input"
+	"gioui.org/op"
 )
 
 type queue struct {
@@ -143,6 +144,13 @@ func (l *Plugin) SendEventUntagged(tag uint64, data event.Event) {
 
 	l.eventsCustomNext.untaggedEvents[tag] = append(l.eventsCustomNext.untaggedEvents[tag], data)
 
+	if !l.Invalidated.Load() {
+		l.invalidator <- struct{}{}
+		l.Invalidated.Store(true)
+	}
+}
+
+func (l *Plugin) Invalidate() {
 	if !l.Invalidated.Load() {
 		l.invalidator <- struct{}{}
 		l.Invalidated.Store(true)

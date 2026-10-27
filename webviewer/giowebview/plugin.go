@@ -2,11 +2,11 @@ package giowebview
 
 import (
 	"container/list"
+	"image"
 	"reflect"
 	"sync"
 
 	"gioui.org/app"
-	"gioui.org/f32"
 	"gioui.org/io/event"
 	"github.com/gioui-plugins/gio-plugins/plugin"
 	"github.com/gioui-plugins/gio-plugins/webviewer/webview"
@@ -21,10 +21,8 @@ func init() {
 			window: w,
 			plugin: plugin,
 
-			tags:   make(map[event.Tag]int),
-			views:  make([]webview.WebView, 0, 8),
-			seem:   make([]bool, 0, 8),
-			bounds: make([][2]f32.Point, 0, 8),
+			tags:  make(map[event.Tag]int),
+			views: make([]webview.WebView, 0, 8),
 		}
 
 		go p.runFuncs()
@@ -41,14 +39,10 @@ type webViewPlugin struct {
 	funcsChan  chan struct{}
 	funcsMutex sync.Mutex
 
-	tags   map[event.Tag]int
-	views  []webview.WebView
-	seem   []bool
-	bounds [][2]f32.Point
-
-	activeIndex int
-	activeTag   event.Tag
-	active      webview.WebView
+	tags      map[event.Tag]int
+	tagsMutex sync.Mutex
+	views     []webview.WebView
+	bounds    []image.Rectangle
 
 	frame app.FrameEvent
 
@@ -68,18 +62,8 @@ func (p *webViewPlugin) TypeEvent() []reflect.Type { return wantEvent }
 // Op implements plugin.Handler.
 func (p *webViewPlugin) Op(op interface{}) {
 	switch v := op.(type) {
-	case *WebViewOp:
-		defer _WebViewOpPool.Release(v)
-
+	case WebViewOp:
 		v.execute(p.window, p)
-	case *OffsetOp:
-		defer _OffsetOpPool.Release(v)
-
-		v.execute(p.window, p)
-	case *RectOp:
-		defer _RectOpPool.Release(v)
-
-		v.execute(p.window, p, p.frame)
 	}
 }
 
@@ -113,40 +97,22 @@ func (p *webViewPlugin) Event(evt event.Event) {
 
 		p.frame = evt
 
-		// Reset the seen map.
-		for s := range p.seem {
-			p.seem[s] = false
-		}
+	case plugin.EndFrameEvent:
+		p.process()
 
 	case app.DestroyEvent:
 		for _, v := range p.views {
 			v.Close()
 		}
-
-	case plugin.EndFrameEvent:
-		p.process()
-
-		// If remain unseen, makes it invisible (0x0)
-		for i, v := range p.seem {
-			if !v {
-				p.views[i].Resize(webview.Point{}, webview.Point{})
-			}
-		}
-
-		for i := range p.bounds {
-			p.bounds[i][0] = f32.Point{}
-			p.bounds[i][1] = f32.Point{}
-		}
-
-		p.activeIndex = 0
-		p.active = nil
-		p.activeTag = nil
 	}
 }
 
 func (p *webViewPlugin) getWebView(tag event.Tag) (webview.WebView, bool) {
+	p.tagsMutex.Lock()
+	defer p.tagsMutex.Unlock()
+
 	i, ok := p.tags[tag]
-	if !ok {
+	if !ok || i == -1 {
 		return nil, false
 	}
 	return p.views[i], true
@@ -192,6 +158,5 @@ func eventsListener(wv webview.WebView, w *app.Window, p *webViewPlugin, tag eve
 		case webview.TitleEvent:
 			p.plugin.SendEvent(tag, TitleEvent(evt))
 		}
-		w.Invalidate()
 	}
 }

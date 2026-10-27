@@ -31,6 +31,9 @@ type WebView interface {
 
 	// JavascriptManager returns the JavascriptManager for the webview.
 	JavascriptManager() JavascriptManager
+
+	// ViewPointer returns the pointer to the underlying view.
+	ViewPointer() uintptr
 }
 
 type internalWebView interface {

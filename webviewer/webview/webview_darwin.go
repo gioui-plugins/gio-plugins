@@ -8,13 +8,13 @@ package webview
 #include <stdint.h>
 #import <Foundation/Foundation.h>
 
-extern CFTypeRef config();
-extern CFTypeRef create(CFTypeRef config, uintptr_t handler);
-extern void resize(CFTypeRef web, CFTypeRef windowRef, float x, float y, float w, float h);
-extern void run(CFTypeRef web, CFTypeRef windowRef);
-extern void seturl(CFTypeRef web, char *u);
-extern void hide(CFTypeRef web);
-extern void show(CFTypeRef web);
+extern CFTypeRef webview_config();
+extern CFTypeRef webview_create(CFTypeRef config, uintptr_t handler);
+extern void webview_resize(CFTypeRef web, CFTypeRef windowRef, float x, float y, float w, float h);
+extern void webview_run(CFTypeRef web, CFTypeRef windowRef);
+extern void webview_seturl(CFTypeRef web, char *u);
+extern void webview_hide(CFTypeRef web);
+extern void webview_show(CFTypeRef web);
 
 void webview_cf_release(CFTypeRef obj) {
 	CFRelease(obj);
@@ -35,33 +35,37 @@ type driver struct {
 	webviewConfig C.CFTypeRef
 }
 
-func (r *driver) attach(w *webview) (err error) {
-	r.config.RunOnMain(func() {
+func (r *driver) attach(w *webview) (_ error) {
+	cerr := make(chan error, 1)
+	go r.config.RunOnMain(func() {
 		w.mutex.Lock()
 		defer w.mutex.Unlock()
 
-		r.webviewConfig = C.config()
+		r.webviewConfig = C.webview_config()
 		r.setDebug()
-		r.webviewObject = C.create(r.webviewConfig, C.uintptr_t(uintptr(w.handle)))
+		r.webviewObject = C.webview_create(r.webviewConfig, C.uintptr_t(uintptr(w.handle)))
 
 		w.javascriptManager = newJavascriptManager(w)
 		w.dataManager = newDataManager(w)
 
-		C.run(r.webviewObject, C.CFTypeRef(r.config.View))
+		C.webview_run(r.webviewObject, C.CFTypeRef(r.config.View))
+		cerr <- nil
 	})
+
+	err := <-cerr
 
 	w.mutex.Lock()
 	config := r.config
 	w.mutex.Unlock()
 	w.scheduler.SetRunner(config.RunOnMain)
 
-	return nil
+	return err
 }
 
 func (r *driver) resize(w *webview, pos [4]float32) {
 	if pos[2] == 0 && pos[3] == 0 {
 		if w.visible {
-			C.hide(r.webviewObject)
+			C.webview_hide(r.webviewObject)
 			w.visible = false
 		}
 	} else {
@@ -80,7 +84,7 @@ func (r *driver) resize(w *webview, pos [4]float32) {
 			}
 		}
 
-		C.resize(
+		C.webview_resize(
 			r.webviewObject,
 			C.CFTypeRef(r.config.View),
 			C.float(posFloat[0]),
@@ -89,7 +93,7 @@ func (r *driver) resize(w *webview, pos [4]float32) {
 			C.float(posFloat[3]),
 		)
 		if !w.visible {
-			C.show(r.webviewObject)
+			C.webview_show(r.webviewObject)
 			w.visible = true
 		}
 	}
@@ -104,11 +108,15 @@ func (r *driver) navigate(w *webview, url *url.URL) {
 	u := C.CString(url.String())
 	defer C.free(unsafe.Pointer(u))
 
-	C.seturl(r.webviewObject, u)
+	C.webview_seturl(r.webviewObject, u)
 }
 
 func (r *driver) close(w *webview) {
 	C.webview_cf_release(r.webviewObject)
 	C.webview_cf_release(r.webviewConfig)
 	return
+}
+
+func (r *driver) viewPointer() uintptr {
+	return uintptr(unsafe.Pointer(r.webviewObject))
 }

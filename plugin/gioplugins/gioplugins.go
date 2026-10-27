@@ -1,13 +1,14 @@
 package gioplugins
 
 import (
+	"sync"
+	"unsafe"
+
 	"gioui.org/app"
 	"gioui.org/io/event"
 	"gioui.org/io/input"
 	"gioui.org/layout"
 	"github.com/gioui-plugins/gio-plugins/plugin"
-	"sync"
-	"unsafe"
 )
 
 // NewWindow creates a new window.

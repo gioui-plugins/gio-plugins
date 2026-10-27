@@ -3,6 +3,7 @@ package webview
 import (
 	"fmt"
 	"net/url"
+	"unsafe"
 
 	"github.com/inkeliz/go_inkwasm/inkwasm"
 )
@@ -56,4 +57,8 @@ func (r *driver) navigate(w *webview, url *url.URL) {
 
 func (r *driver) close(w *webview) {
 	removeChild(r.config.Element, r.iframe)
+}
+
+func (r *driver) viewPointer() uintptr {
+	return uintptr(unsafe.Pointer(&r.iframe))
 }

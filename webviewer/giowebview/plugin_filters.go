@@ -18,6 +18,8 @@ func (f Filter) Tag() event.Tag {
 // Matches implements plugin.Filter interface.
 func (f Filter) Matches(e event.Event) bool {
 	switch e.(type) {
+	case ReadyEvent:
+		return true
 	case StorageEvent:
 		return true
 	case CookiesEvent:

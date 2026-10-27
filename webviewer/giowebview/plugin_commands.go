@@ -1,11 +1,12 @@
 package giowebview
 
 import (
+	"net/url"
+	"reflect"
+
 	"gioui.org/app"
 	"gioui.org/io/event"
 	"github.com/gioui-plugins/gio-plugins/webviewer/webview"
-	"net/url"
-	"reflect"
 )
 
 var wantCommands = []reflect.Type{
@@ -232,7 +233,9 @@ func (o NavigateCmd) execute(_ *app.Window, p *webViewPlugin, _ app.FrameEvent) 
 	if err != nil {
 		return
 	}
-	current.Navigate(u)
+	p.run(func() {
+		current.Navigate(u)
+	})
 }
 
 func (o SetCookieCmd) execute(_ *app.Window, p *webViewPlugin, _ app.FrameEvent) {

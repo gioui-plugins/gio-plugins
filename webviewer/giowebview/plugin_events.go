@@ -1,10 +1,11 @@
 package giowebview
 
 import (
+	"reflect"
+
 	"gioui.org/app"
 	"github.com/gioui-plugins/gio-plugins/plugin"
 	"github.com/gioui-plugins/gio-plugins/webviewer/webview"
-	"reflect"
 )
 
 var wantEvent = []reflect.Type{
@@ -13,6 +14,9 @@ var wantEvent = []reflect.Type{
 	reflect.TypeOf(app.DestroyEvent{}),
 	reflect.TypeOf(plugin.EndFrameEvent{}),
 }
+
+// ReadyEvent is the event sent when the webview is ready to be used.
+type ReadyEvent struct{}
 
 // CookiesEvent is the event sent when ListCookieCmd is executed.
 type CookiesEvent struct {
@@ -71,6 +75,7 @@ type RemoveStorageEvent struct {
 	Error error
 }
 
+func (c ReadyEvent) ImplementsEvent()        {}
 func (c StorageEvent) ImplementsEvent()      {}
 func (c CookiesEvent) ImplementsEvent()      {}
 func (c MessageEvent) ImplementsEvent()      {}

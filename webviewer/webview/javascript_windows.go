@@ -27,10 +27,13 @@ func newJavascriptManager(w *webview) *javascriptManager {
 	r := &javascriptManager{webview: w}
 	r.jsHandler = internal.NewHandle(r)
 	r.jsJSDone = make(chan error, 1)
+	done := make(chan struct{}, 1)
 	w.scheduler.MustRun(func() {
 		r.installCallback()
 		r.installJavascript(fmt.Sprintf(scriptCallback, `window.chrome.webview.postMessage`))
+		done <- struct{}{}
 	})
+	<-done
 	return r
 }
 
