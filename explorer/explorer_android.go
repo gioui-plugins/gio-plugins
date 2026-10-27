@@ -15,7 +15,6 @@ import (
 	"sync"
 	"unsafe"
 
-	"gioui.org/app"
 	"git.wow.st/gmp/jni"
 	"github.com/gioui-plugins/gio-plugins/explorer/mimetype"
 )
@@ -61,7 +60,7 @@ func (e *driver) init() error {
 			return nil // Already initialized
 		}
 
-		class, err := jni.LoadClass(env, jni.ClassLoaderFor(env, jni.Object(app.AppContext())), "org/gioui/x/explorer/explorer_android")
+		class, err := jni.LoadClass(env, jni.ClassLoaderFor(env, jni.Object(e.config.Context)), "org/gioui/x/explorer/explorer_android")
 		if err != nil {
 			return err
 		}
@@ -81,7 +80,7 @@ func (e *driver) init() error {
 }
 
 func (e *driver) destroy() {
-	jni.Do(jni.JVMFor(app.JavaVM()), func(env jni.Env) error {
+	jni.Do(jni.JVMFor(e.config.VM), func(env jni.Env) error {
 		e.mutex.Lock()
 		defer e.mutex.Unlock()
 
@@ -99,14 +98,21 @@ func (e *driver) destroy() {
 
 func (e *driver) saveFile(filename string, mime mimetype.MimeType) (io.WriteCloser, error) {
 	res := make(chan result)
-	callback := func(r result) {
-		res <- r
+
+	callback := func(ctx, vm *uintptr) func(result) {
+		*ctx = e.config.Context
+		*vm = e.config.VM
+		
+		return func(r result) {
+			res <- r
+		}
 	}
+
 	cgocallback := cgo.NewHandle(callback)
 	defer cgocallback.Delete()
 
 	go e.config.RunOnMain(func() {
-		err := jni.Do(jni.JVMFor(app.JavaVM()), func(env jni.Env) error {
+		err := jni.Do(jni.JVMFor(e.config.VM), func(env jni.Env) error {
 			e.mutex.Lock()
 			defer e.mutex.Unlock()
 
@@ -133,17 +139,22 @@ func (e *driver) openFile(mime []mimetype.MimeType) (io.ReadCloser, error) {
 	s := stringBuilderPool.Get().(*strings.Builder)
 
 	res := make(chan result)
-	callback := func(r result) {
-		defer stringBuilderPool.Put(s)
-		res <- r
-		s.Reset()
+	callback := func(ctx, vm *uintptr) func(result) {
+		*ctx = e.config.Context
+		*vm = e.config.VM
+
+		return func(r result) {
+			defer stringBuilderPool.Put(s)
+			res <- r
+			s.Reset()
+		}
 	}
 
 	cgocallback := cgo.NewHandle(callback)
 	defer cgocallback.Delete()
 
 	go e.config.RunOnMain(func() {
-		err := jni.Do(jni.JVMFor(app.JavaVM()), func(env jni.Env) error {
+		err := jni.Do(jni.JVMFor(e.config.VM), func(env jni.Env) error {
 			e.mutex.Lock()
 			defer e.mutex.Unlock()
 
@@ -183,9 +194,13 @@ func Java_org_gioui_x_explorer_explorer_1android_ExportCallback(env *C.JNIEnv, _
 }
 
 func fileCallback(env *C.JNIEnv, stream C.jobject, handler C.jlong, err C.jstring) {
-	if callback, ok := cgo.Handle(handler).Value().(func(result)); ok {
+	if callbackFactory, ok := cgo.Handle(handler).Value().(func(ctx, vm *uintptr) func(result)); ok {
 		var res result
 		env := jni.EnvFor(uintptr(unsafe.Pointer(env)))
+
+		var ctx, vm uintptr
+		callback := callbackFactory(&ctx, &vm)
+
 		if stream == 0 {
 			res.error = ErrUserDecline
 			if err != 0 {
@@ -194,7 +209,7 @@ func fileCallback(env *C.JNIEnv, stream C.jobject, handler C.jlong, err C.jstrin
 				}
 			}
 		} else {
-			file, err := newFile(env, jni.NewGlobalRef(env, jni.Object(uintptr(stream))))
+			file, err := newFile(env, jni.Object(uintptr(stream)), ctx, vm)
 			if file != nil {
 				res.file = file
 			}

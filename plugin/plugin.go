@@ -253,9 +253,15 @@ func (l *Plugin) Frame(ops *op.Ops) {
 	l.eventsCustomNextMutex.Lock()
 	l.eventsCustomCurrentMutex.Lock()
 	for v := range l.eventsCustomCurrent.taggedEvents {
+		for i := range l.eventsCustomCurrent.taggedEvents[v] {
+			l.eventsCustomCurrent.taggedEvents[v][i] = nil
+		}
 		l.eventsCustomCurrent.taggedEvents[v] = l.eventsCustomCurrent.taggedEvents[v][:0]
 	}
 	for v := range l.eventsCustomCurrent.untaggedEvents {
+		for i := range l.eventsCustomCurrent.untaggedEvents[v] {
+			l.eventsCustomCurrent.untaggedEvents[v][i] = nil
+		}
 		l.eventsCustomCurrent.untaggedEvents[v] = l.eventsCustomCurrent.untaggedEvents[v][:0]
 	}
 	l.eventsCustomCurrentMutex.Unlock()

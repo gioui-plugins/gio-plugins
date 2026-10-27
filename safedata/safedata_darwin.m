@@ -49,43 +49,46 @@ uint8_t updateSecret(char * identifier, char * desc, uint8_t * value, uint64_t v
 }
 
 CFTypeRef getSecret(char * identifier, uint32_t * retLength) {
-   NSMutableDictionary *query = [[NSMutableDictionary alloc] init];
-   [query setObject:(__bridge id)kSecClassGenericPassword forKey:(__bridge id)kSecClass];
-   [query setObject:(__bridge id)kCFBooleanTrue forKey:(__bridge id)kSecReturnAttributes];
-   if (identifier == NULL) {
-      [query setObject:(__bridge id)kSecMatchLimitAll forKey:(__bridge id)kSecMatchLimit];
-      [query setObject:(__bridge id)kCFBooleanFalse forKey:(__bridge id)kSecReturnData];
-   } else {
-      NSString *i = [NSString stringWithUTF8String:identifier];
-      [query setObject:i forKey:(__bridge id)kSecAttrAccount];
-      [query setObject:(__bridge id)kSecMatchLimitOne forKey:(__bridge id)kSecMatchLimit];
-      [query setObject:(__bridge id)kCFBooleanTrue forKey:(__bridge id)kSecReturnData];
-   }
-
-   NSArray *array = NULL;
-   OSStatus status = 0;
-   if (identifier == NULL) {
-      CFArrayRef res = NULL;
-      status = SecItemCopyMatching((__bridge CFDictionaryRef)query, (CFTypeRef *)&res);
-      if (status != 0 || res == NULL) {
-        return NULL;
+   // Go callers may not have an autorelease pool.
+   @autoreleasepool {
+      NSMutableDictionary *query = [[NSMutableDictionary alloc] init];
+      [query setObject:(__bridge id)kSecClassGenericPassword forKey:(__bridge id)kSecClass];
+      [query setObject:(__bridge id)kCFBooleanTrue forKey:(__bridge id)kSecReturnAttributes];
+      if (identifier == NULL) {
+         [query setObject:(__bridge id)kSecMatchLimitAll forKey:(__bridge id)kSecMatchLimit];
+         [query setObject:(__bridge id)kCFBooleanFalse forKey:(__bridge id)kSecReturnData];
+      } else {
+         NSString *i = [NSString stringWithUTF8String:identifier];
+         [query setObject:i forKey:(__bridge id)kSecAttrAccount];
+         [query setObject:(__bridge id)kSecMatchLimitOne forKey:(__bridge id)kSecMatchLimit];
+         [query setObject:(__bridge id)kCFBooleanTrue forKey:(__bridge id)kSecReturnData];
       }
-      array = (__bridge NSArray*)res;
-   } else {
-      CFDictionaryRef res = NULL;
-      status = SecItemCopyMatching((__bridge CFDictionaryRef)query, (CFTypeRef *)&res);
-      if (status != 0 || res == NULL) {
-        return NULL;
+
+      NSArray *array = NULL;
+      OSStatus status = 0;
+      if (identifier == NULL) {
+         CFArrayRef res = NULL;
+         status = SecItemCopyMatching((__bridge CFDictionaryRef)query, (CFTypeRef *)&res);
+         if (status != 0 || res == NULL) {
+            return NULL;
+         }
+         array = CFBridgingRelease(res);
+      } else {
+         CFDictionaryRef res = NULL;
+         status = SecItemCopyMatching((__bridge CFDictionaryRef)query, (CFTypeRef *)&res);
+         if (status != 0 || res == NULL) {
+            return NULL;
+         }
+         array = @[CFBridgingRelease(res)];
       }
-      array = @[(__bridge NSDictionary*)res];
-   }
 
-   *retLength = [array count];
-   if ([array count] == 0) {
-       return 0;
-   }
+      *retLength = [array count];
+      if ([array count] == 0) {
+         return 0;
+      }
 
-   return CFBridgingRetain(array);
+      return CFBridgingRetain(array);
+   }
 }
 
 uint8_t getSecretAt(CFTypeRef array, uint32_t index, char ** retId, char ** retDesc, uint8_t ** retData, uint32_t * sizeData) {

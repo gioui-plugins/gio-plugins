@@ -6,7 +6,6 @@ import (
 	"runtime"
 	"sync"
 
-	"gioui.org/app"
 	"git.wow.st/gmp/jni"
 )
 
@@ -14,6 +13,7 @@ import (
 //go:generate jar cf file_android.jar -C explorer_file_android/classes .
 
 type File struct {
+	VM 		  uintptr
 	stream    jni.Object
 	libObject jni.Object
 
@@ -32,8 +32,8 @@ var (
 	fileMethodError jni.MethodID
 )
 
-func initFileManager(env jni.Env) error {
-	class, err := jni.LoadClass(env, jni.ClassLoaderFor(env, jni.Object(app.AppContext())), "org/gioui/x/explorer/file_android")
+func initFileManager(env jni.Env, ctx uintptr) error {
+	class, err := jni.LoadClass(env, jni.ClassLoaderFor(env, jni.Object(ctx)), "org/gioui/x/explorer/file_android")
 	if err != nil {
 		return err
 	}
@@ -47,21 +47,12 @@ func initFileManager(env jni.Env) error {
 	return nil
 }
 
-func newFile(env jni.Env, stream jni.Object) (io.ReadWriteCloser, error) {
+func newFile(env jni.Env, stream jni.Object, ctx, vm uintptr) (io.ReadWriteCloser, error) {
 	fileManagerOnce.Do(func() {
-		initFileManager(env)
+		initFileManager(env, ctx)
 	})
 
-	stream = jni.NewGlobalRef(env, stream)
-	f := &File{
-		stream: stream,
-	}
-
-	runtime.SetFinalizer(f, func(f *File) {
-		f.Close()
-	})
-
-	class, err := jni.LoadClass(env, jni.ClassLoaderFor(env, jni.Object(app.AppContext())), "org/gioui/x/explorer/file_android")
+	class, err := jni.LoadClass(env, jni.ClassLoaderFor(env, jni.Object(ctx)), "org/gioui/x/explorer/file_android")
 	if err != nil {
 		return nil, err
 	}
@@ -71,12 +62,19 @@ func newFile(env jni.Env, stream jni.Object) (io.ReadWriteCloser, error) {
 		return nil, err
 	}
 
-	// For some reason, using `f.stream` as argument for a constructor (`public file_android(Object j) {}`) doesn't work.
-	if err := jni.CallVoidMethod(env, obj, jni.GetMethodID(env, class, "setHandle", `(Ljava/lang/Object;)V`), jni.Value(f.stream)); err != nil {
+	// For some reason, using `stream` as argument for a constructor (`public file_android(Object j) {}`) doesn't work.
+	if err := jni.CallVoidMethod(env, obj, jni.GetMethodID(env, class, "setHandle", `(Ljava/lang/Object;)V`), jni.Value(stream)); err != nil {
 		return nil, err
 	}
 
-	f.libObject = jni.NewGlobalRef(env, obj)
+	f := &File{
+		VM:		   vm,
+		stream:    jni.NewGlobalRef(env, stream),
+		libObject: jni.NewGlobalRef(env, obj),
+	}
+	runtime.SetFinalizer(f, func(f *File) {
+		f.Close()
+	})
 
 	return f, nil
 
@@ -90,9 +88,14 @@ func (f *File) Read(b []byte) (n int, err error) {
 		return 0, nil // Avoid unnecessary call to JNI.
 	}
 
-	err = jni.Do(jni.JVMFor(app.JavaVM()), func(env jni.Env) error {
+	err = jni.Do(jni.JVMFor(f.VM), func(env jni.Env) error {
 		if len(b) != f.sharedBufferLen {
-			f.sharedBuffer = jni.Object(jni.NewGlobalRef(env, jni.Object(jni.NewByteArray(env, b))))
+			buffer := jni.NewByteArray(env, b)
+			defer jni.DeleteLocalRef(env, jni.Object(buffer))
+			if f.sharedBuffer != 0 {
+				jni.DeleteGlobalRef(env, f.sharedBuffer)
+			}
+			f.sharedBuffer = jni.NewGlobalRef(env, jni.Object(buffer))
 			f.sharedBufferLen = len(b)
 		}
 
@@ -107,6 +110,7 @@ func (f *File) Read(b []byte) (n int, err error) {
 		n = copy(b, jni.GetByteArrayElements(env, jni.ByteArray(f.sharedBuffer))[:int(size)])
 		return nil
 	})
+	runtime.KeepAlive(f)
 	if err != nil {
 		return 0, err
 	}
@@ -124,8 +128,10 @@ func (f *File) Write(b []byte) (n int, err error) {
 		return 0, nil // Avoid unnecessary call to JNI.
 	}
 
-	err = jni.Do(jni.JVMFor(app.JavaVM()), func(env jni.Env) error {
-		ok, err := jni.CallStaticBooleanMethod(env, fileManager, fileMethodWrite, jni.Value(f.libObject), jni.Value(jni.NewByteArray(env, b)))
+	err = jni.Do(jni.JVMFor(f.VM), func(env jni.Env) error {
+		buffer := jni.NewByteArray(env, b)
+		defer jni.DeleteLocalRef(env, jni.Object(buffer))
+		ok, err := jni.CallStaticBooleanMethod(env, fileManager, fileMethodWrite, jni.Value(f.libObject), jni.Value(buffer))
 		if err != nil {
 			return err
 		}
@@ -134,6 +140,7 @@ func (f *File) Write(b []byte) (n int, err error) {
 		}
 		return nil
 	})
+	runtime.KeepAlive(f)
 	if err != nil {
 		return 0, err
 	}
@@ -145,7 +152,13 @@ func (f *File) Close() error {
 		return io.ErrClosedPipe
 	}
 
-	return jni.Do(jni.JVMFor(app.JavaVM()), func(env jni.Env) error {
+	err := jni.Do(jni.JVMFor(f.VM), func(env jni.Env) error {
+		defer func() {
+			f.releaseRefs(env)
+			f.isClosed = true
+			runtime.SetFinalizer(f, nil)
+		}()
+
 		ok, err := jni.CallStaticBooleanMethod(env, fileManager, fileMethodClose, jni.Value(f.libObject))
 		if err != nil {
 			return err
@@ -154,15 +167,24 @@ func (f *File) Close() error {
 			return f.lastError(env)
 		}
 
-		f.isClosed = true
-		jni.DeleteGlobalRef(env, f.stream)
-		jni.DeleteGlobalRef(env, f.libObject)
-		if f.sharedBuffer != 0 {
-			jni.DeleteGlobalRef(env, f.sharedBuffer)
-		}
-
 		return nil
 	})
+	runtime.KeepAlive(f)
+	return err
+}
+
+func (f *File) releaseRefs(env jni.Env) {
+	if f.stream != 0 {
+		jni.DeleteGlobalRef(env, f.stream)
+	}
+	if f.libObject != 0 {
+		jni.DeleteGlobalRef(env, f.libObject)
+	}
+	if f.sharedBuffer != 0 {
+		jni.DeleteGlobalRef(env, f.sharedBuffer)
+	}
+	f.stream, f.libObject, f.sharedBuffer = 0, 0, 0
+	f.sharedBufferLen = 0
 }
 
 func (f *File) lastError(env jni.Env) error {
