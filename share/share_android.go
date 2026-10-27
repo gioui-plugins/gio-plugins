@@ -59,7 +59,7 @@ func (e *driver) destroy() {
 }
 
 func (e *driver) shareText(title, text string) error {
-	e.config.RunOnMain(func() {
+	go e.config.RunOnMain(func() {
 		jni.Do(jni.JVMFor(app.JavaVM()), func(env jni.Env) error {
 			title, text := jni.JavaString(env, title), jni.JavaString(env, text)
 			return jni.CallStaticVoidMethod(env, e.shareClass, e.shareMethodText, jni.Value(e.config.View), jni.Value(title), jni.Value(text))
@@ -70,7 +70,7 @@ func (e *driver) shareText(title, text string) error {
 }
 
 func (e *driver) shareWebsite(title, description, url string) error {
-	e.config.RunOnMain(func() {
+	go e.config.RunOnMain(func() {
 		jni.Do(jni.JVMFor(app.JavaVM()), func(env jni.Env) error {
 			title, text, link := jni.JavaString(env, title), jni.JavaString(env, description), jni.JavaString(env, url)
 			return jni.CallStaticVoidMethod(env, e.shareClass, e.shareMethodWebsite, jni.Value(e.config.View), jni.Value(title), jni.Value(text), jni.Value(link))

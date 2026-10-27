@@ -45,7 +45,7 @@ func initDriver(driver *driver) {
 			return err
 		}
 
-		destroyDriver(driver)
+		destroyDriver(env, driver)
 		driver.cls = jni.Class(jni.NewGlobalRef(env, jni.Object(lib)))
 		driver.encryptMid = jni.GetStaticMethodID(env, lib, "encrypt", "([BLjava/lang/String;)V")
 		driver.decryptMid = jni.GetStaticMethodID(env, lib, "decrypt", "(Ljava/lang/String;)[B")
@@ -54,12 +54,12 @@ func initDriver(driver *driver) {
 	})
 }
 
-func destroyDriver(driver *driver) {
+func destroyDriver(env jni.Env, driver *driver) {
 	if driver.cls == 0 {
 		return
 	}
 
-	jni.DeleteGlobalRef(jni.EnvFor(driver.javaVM), jni.Object(driver.cls))
+	jni.DeleteGlobalRef(env, jni.Object(driver.cls))
 	driver.cls = 0
 	driver.encryptMid = nil
 	driver.decryptMid = nil
