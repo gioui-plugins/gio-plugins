@@ -99,7 +99,7 @@ func (e *driver) init() {
 
 	e._ITypedEventHandler = internal.NewTypedEventHandler(func(transfer *internal.IDataTransferManager, args *internal.IDataRequestedEventArgs) int {
 		var r int
-		e.config.RunOnMain(func() {
+		go e.config.RunOnMain(func() {
 			r = callback(transfer, args)
 		})
 		return r

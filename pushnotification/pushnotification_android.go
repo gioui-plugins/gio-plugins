@@ -56,7 +56,7 @@ func configureDriver(d *driver, config Config) {
 func initDriver(d *driver) error {
 	return jni.Do(jni.JVMFor(d.config.VM), func(env jni.Env) error {
 		if d.clientClass != 0 && d.clientObject != 0 {
-			return nil
+			destroyDriver(env, d)
 		}
 
 		class, err := jni.LoadClass(env, jni.ClassLoaderFor(env, jni.Object(d.config.Context)), "com/inkeliz/pushnotification_android/pushnotification_android")
@@ -91,6 +91,13 @@ func initDriver(d *driver) error {
 
 		return nil
 	})
+}
+
+func destroyDriver(env jni.Env, d *driver) {
+	jni.DeleteGlobalRef(env, d.clientObject)
+	d.clientObject = 0
+	jni.DeleteGlobalRef(env, d.clientClass)
+	d.clientClass = 0
 }
 
 func (d *driver) requestToken() (Token, error) {
