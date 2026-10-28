@@ -23,25 +23,25 @@
 @end
 
 @interface giowebview : WKWebView
-@property (nonatomic, assign) uintptr_t handler;
+@property (nonatomic, assign) uintptr_t handle;
 @end
 
 @implementation giowebview
-    uintptr_t handler;
+    uintptr_t handle;
 
     -(void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary<NSKeyValueChangeKey,id> *)change context:(void *)context {
         if ([keyPath isEqual:@("URL")]) {
-            reportLoadStatus(self.handler, (char *)[[[self URL] absoluteString] UTF8String]);
+            reportLoadStatus(self.handle, (char *)[[[self URL] absoluteString] UTF8String]);
             return;
         }
         if ([keyPath isEqual:@("title")]) {
-            reportTitleStatus(self.handler, (char *)[[self title] UTF8String]);
+            reportTitleStatus(self.handle, (char *)[[self title] UTF8String]);
             return;
         }
     }
 @end
 
-CFTypeRef config() {
+CFTypeRef webview_config() {
     WKWebViewConfiguration *conf = [[WKWebViewConfiguration alloc] init];
     return CFBridgingRetain(conf);
 }
@@ -51,9 +51,9 @@ void enableDebug(CFTypeRef config) {
     [conf.preferences setValue:@YES forKey:@"developerExtrasEnabled"];
 }
 
-CFTypeRef create(CFTypeRef config, uintptr_t handler) {
+CFTypeRef webview_create(CFTypeRef config, uintptr_t handler) {
 	giowebview *webView = [[giowebview alloc] initWithFrame:CGRectMake(0,0,0,0) configuration: (__bridge WKWebViewConfiguration *)config];
-    webView.handler = handler;
+    webView.handle = handler;
     webView.hidden = YES;
 
     NSString * watch[2] = { @("URL"), @("title") };
@@ -72,7 +72,7 @@ CFTypeRef create(CFTypeRef config, uintptr_t handler) {
 	return CFBridgingRetain(webView);
 }
 
-void resize(CFTypeRef web, CFTypeRef windowRef, float x, float y, float w, float h) {
+void webview_resize(CFTypeRef web, CFTypeRef windowRef, float x, float y, float w, float h) {
 	WKWebView *webView = (__bridge WKWebView *)web;
 	#if TARGET_OS_IPHONE
 	UIView *view = (__bridge UIView *)windowRef;
@@ -90,17 +90,17 @@ void resize(CFTypeRef web, CFTypeRef windowRef, float x, float y, float w, float
 	[webView setFrame: CGRectMake((CGFloat)x, (CGFloat)y, (CGFloat)w, (CGFloat)h)];
 }
 
-void show(CFTypeRef web) {
+void webview_show(CFTypeRef web) {
 	WKWebView *webView = (__bridge WKWebView *)web;
 	[webView setHidden:NO];
 }
 
-void hide(CFTypeRef web) {
+void webview_hide(CFTypeRef web) {
 	WKWebView *webView = (__bridge WKWebView *)web;
 	[webView setHidden:YES];
 }
 
-void seturl(CFTypeRef web, char *u) {
+void webview_seturl(CFTypeRef web, char *u) {
 	WKWebView *webView = (__bridge WKWebView *)web;
 
 	NSURL *url = [NSURL URLWithString:@(u)];
@@ -108,16 +108,35 @@ void seturl(CFTypeRef web, char *u) {
 	[webView loadRequest:requestObj];
 }
 
-void run(CFTypeRef web, CFTypeRef windowRef) {
+void webview_run(CFTypeRef web, CFTypeRef windowRef) {
 	WKWebView *webView = (__bridge WKWebView *)web;
 	#if TARGET_OS_IPHONE
 	UIView *view = [((__bridge UIViewController *)windowRef) view];
+	[webView setBounds: view.frame];
+
+    // If view has a superview, add webview to superview below the Gio view
+    UIView *parentView = [view superview];
+    if (parentView != nil) {
+        [parentView addSubview:webView];
+        [parentView sendSubviewToBack:webView];
+    } else {
+        // Fallback: add as subview if no parent exists
+        [view addSubview:webView];
+        [view sendSubviewToBack:webView];
+    }
 	#else
 	NSView *view = (__bridge NSView *)windowRef;
-	#endif
+    [webView setBounds: view.frame];
 
-	[webView setBounds: view.frame];
-	[view addSubview:webView];
+    // If view has a superview, add webview to superview below the Gio view
+    NSView *parentView = [view superview];
+    if (parentView != nil) {
+        [parentView addSubview:webView positioned:NSWindowBelow relativeTo:view];
+    } else {
+        // Fallback: add as subview if no parent exists
+        [view addSubview:webView positioned:NSWindowBelow relativeTo:nil];
+    }
+	#endif
 }
 
 void getCookies(CFTypeRef config, uintptr_t handler, uintptr_t done) {

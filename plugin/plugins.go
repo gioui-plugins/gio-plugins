@@ -2,13 +2,14 @@ package plugin
 
 import (
 	"encoding/binary"
+	"reflect"
+	"sync"
+
 	"gioui.org/app"
 	"gioui.org/io/event"
 	"gioui.org/op"
 	"gioui.org/op/clip"
 	"golang.org/x/crypto/blake2b"
-	"reflect"
-	"sync"
 )
 
 // Handler is the interface that represents the Plugin.
@@ -85,8 +86,9 @@ var registeredPlugins []func(w *app.Window, handler *Plugin) Handler
 //
 // You MUST call Register during init() function, otherwise it will not work or
 // may cause unexpected behavior.
-func Register(plugin func(w *app.Window, handler *Plugin) Handler) {
+func Register(plugin func(w *app.Window, handler *Plugin) Handler) int {
 	registeredPlugins = append(registeredPlugins, plugin)
+	return len(registeredPlugins) - 1
 }
 
 type handlerFunc struct {

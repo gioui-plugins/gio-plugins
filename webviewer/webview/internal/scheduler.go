@@ -109,6 +109,17 @@ func (s *Scheduler) Run(method int, f func()) {
 	s.signal()
 }
 
+func (s *Scheduler) RunNow(f func()) {
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+
+	if s.runner == nil {
+		return
+	}
+
+	s.runner(f)
+}
+
 // MustRun runs a function in the scheduler, that is
 // guaranteed to run and duplication may happen if
 // misused.

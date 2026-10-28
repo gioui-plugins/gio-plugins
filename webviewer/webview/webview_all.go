@@ -57,15 +57,7 @@ func (w *webview) Resize(size Point, offset Point) {
 	}
 	w.lastPos = pos
 
-	w.scheduler.Run(idMethodResize, func() {
-		w.mutex.Lock()
-		defer w.mutex.Unlock()
-		if w.closed {
-			return
-		}
-
-		w.driver.resize(w, pos)
-	})
+	w.driver.resize(w, pos)
 }
 
 // Navigate implements the WebView interface.
@@ -105,4 +97,8 @@ func (w *webview) DataManager() DataManager { return w.dataManager }
 // JavascriptManager implements the WebView interface.
 func (w *webview) JavascriptManager() JavascriptManager {
 	return w.javascriptManager
+}
+
+func (w *webview) ViewPointer() uintptr {
+	return w.driver.viewPointer()
 }

@@ -16,17 +16,19 @@ type driver struct {
 	objWebView jni.Object
 
 	methods map[string]jni.MethodID
+	view    uintptr
 }
 
-func (r *driver) attach(w *webview) (err error) {
+func (r *driver) attach(w *webview) (_ error) {
 	w.scheduler.SetRunner(w.driver.config.RunOnMain)
 
 	w.mutex.Lock()
 	config := r.config
 	w.mutex.Unlock()
 
-	config.RunOnMain(func() {
-		err = jni.Do(config.VM, func(env jni.Env) error {
+	cerr := make(chan error, 1)
+	go config.RunOnMain(func() {
+		cerr <- jni.Do(config.VM, func(env jni.Env) error {
 			cls, err := jni.LoadClass(env, jni.ClassLoaderFor(env, config.Context), "com/inkeliz/webview/sys_android")
 			if err != nil {
 				return err
@@ -43,16 +45,17 @@ func (r *driver) attach(w *webview) (err error) {
 			// [Android] We need to create an GlobalRef of our class, otherwise we can't manipulate that afterwards.
 			r.objWebView = jni.Object(jni.NewGlobalRef(env, obj))
 
-			err = r.callArgs("webview_create", "(Landroid/view/View;J)V", func(env jni.Env) []jni.Value {
+			jview, err := r.callObjectArgs("webview_create", "(Landroid/view/View;J)Landroid/view/View;", func(env jni.Env) []jni.Value {
 				return []jni.Value{
 					jni.Value(config.View),
 					jni.Value(uintptr(w.handle)),
 				}
 			})
-
 			if err != nil {
 				return err
 			}
+
+			r.view = uintptr(jview)
 
 			if err := r.setProxy(); err != nil {
 				return err
@@ -74,11 +77,7 @@ func (r *driver) attach(w *webview) (err error) {
 		})
 	})
 
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return <-cerr
 }
 
 func (r *driver) configure(w *webview, config Config) {
@@ -125,11 +124,16 @@ func (r *driver) close(w *webview) {
 	go jni.Do(r.config.VM, func(env jni.Env) error {
 		jni.DeleteGlobalRef(env, jni.Object(r.clsWebView))
 		jni.DeleteGlobalRef(env, r.objWebView)
+		jni.DeleteGlobalRef(env, jni.Object(r.view))
 
 		return nil
 	})
 
 	r.objWebView, r.clsWebView = 0, 0
+}
+
+func (r *driver) viewPointer() uintptr {
+	return r.view
 }
 
 func (r *driver) call(name, sig string) (err error) {
@@ -143,6 +147,15 @@ func (r *driver) callArgs(name, sig string, args func(env jni.Env) []jni.Value) 
 		return jni.CallVoidMethod(env, r.objWebView, r.methodID(env, name, sig), args(env)...)
 	})
 	return err
+}
+
+func (r *driver) callObjectArgs(name, sig string, args func(env jni.Env) []jni.Value) (obj jni.Object, err error) {
+	err = jni.Do(r.config.VM, func(env jni.Env) error {
+		obj, err = jni.CallObjectMethod(env, r.objWebView, r.methodID(env, name, sig), args(env)...)
+		obj = jni.NewGlobalRef(env, obj)
+		return err
+	})
+	return obj, err
 }
 
 func (r *driver) callBooleanArgs(name, sig string, args func(env jni.Env) []jni.Value) (b bool, err error) {

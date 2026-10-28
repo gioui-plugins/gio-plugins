@@ -174,12 +174,13 @@ public class sys_android {
         });
     }
 
-    public void webview_create(View v, long handler) {
+    public View webview_create(View v, long handler) {
+        // Get the parent view (superview) - this is where we'll add the webview
         if (primaryView == null) {
-            if (v instanceof ViewGroup) {
+            primaryView = (ViewGroup) v.getParent();
+            // Fallback: if no parent exists, use the gioView itself as container
+            if (primaryView == null) {
                 primaryView = (ViewGroup) v;
-            } else {
-                primaryView = (ViewGroup) v.getParent();
             }
         }
 
@@ -197,8 +198,7 @@ public class sys_android {
         webSettings.setLoadWithOverviewMode(true);
         webSettings.setDomStorageEnabled(true);
         webSettings.setDatabaseEnabled(true);
-
-        webBrowser.setBackgroundColor(0xFFFFFFFF);
+        webBrowser.setBackgroundColor(0xffffffff);
 
         gowebview_webbrowser wb = new gowebview_webbrowser();
         wb.handler = handler;
@@ -209,9 +209,9 @@ public class sys_android {
         webBrowser.setWebChromeClient(wc);
 
         webBrowser.setVisibility(View.GONE);
-
         primaryView.addView(webBrowser);
-        primaryView.bringChildToFront(webBrowser);
+
+        return webBrowser;
     }
 
     public void webview_resize(int x, int y, int width, int height) {
@@ -221,48 +221,92 @@ public class sys_android {
     }
 
     public void webview_getCookies(long handler, long done) {
-        CookieManager cookieManager = CookieManager.getInstance();
-        String cookie = cookieManager.getCookie(webBrowser.getUrl());
+        try {
+            if (webBrowser.getUrl() == null) {
+                reportDone(done, "No URL loaded");
+                return;
+            }
 
-        getCookiesCallback(handler, cookie);
-        reportDone(done, "");
+            CookieManager cookieManager = CookieManager.getInstance();
+            if (cookieManager == null) {
+                reportDone(done, "Failed to get CookieManager instance");
+                return;
+            }
+
+            String cookie = cookieManager.getCookie(webBrowser.getUrl());
+            getCookiesCallback(handler, cookie);
+            reportDone(done, "");
+        } catch (Exception e) {
+            reportDone(done, e.getMessage());
+        }
     }
 
     public void webview_addCookie(String domain, String cookie, long done) {
-        if (domain.isEmpty()) {
-            domain = webBrowser.getUrl();
-        }
-
-        CookieManager cookieManager = CookieManager.getInstance();
-        cookieManager.setCookie(domain, cookie, new ValueCallback<Boolean>() {
-            @Override
-            public void onReceiveValue(Boolean value) {
-                reportDone(done, "");
+        try {
+            if (domain.isEmpty()) {
+                domain = webBrowser.getUrl();
+                if (domain == null || domain.isEmpty()) {
+                    reportDone(done, "No URL loaded to infer domain");
+                    return;
+                }
             }
-        });
+
+            CookieManager cookieManager = CookieManager.getInstance();
+            if (cookieManager == null) {
+                reportDone(done, "Failed to get CookieManager instance");
+                return;
+            }
+
+            cookieManager.setCookie(domain, cookie, new ValueCallback<Boolean>() {
+                @Override
+                public void onReceiveValue(Boolean value) {
+                    reportDone(done, "");
+                }
+            });
+        } catch (Exception e) {
+            reportDone(done, "Invalid cookie string: " + e.getMessage());
+            return;
+        }
     }
 
     public void webview_addCookie_flush(long done) {
-     CookieManager cookieManager = CookieManager.getInstance();
-     cookieManager.flush();
-     reportDone(done, "");
+        try {
+            CookieManager cookieManager = CookieManager.getInstance();
+            if (cookieManager == null) {
+                reportDone(done, "Failed to get CookieManager instance");
+                return;
+            }
+            cookieManager.flush();
+            reportDone(done, "");
+        } catch (Exception e) {
+            reportDone(done, "Failed to flush cookies: " + e.getMessage());
+        }
     }
 
     public void webview_clearData(long done) {
-        webBrowser.clearCache(true);
-        webBrowser.clearHistory();
-        webBrowser.clearFormData();
+        try {
+            webBrowser.clearCache(true);
+            webBrowser.clearHistory();
+            webBrowser.clearFormData();
 
-        WebStorage.getInstance().deleteAllData();
+            WebStorage.getInstance().deleteAllData();
 
-        CookieManager cookieManager = CookieManager.getInstance();
-        cookieManager.removeAllCookies(new ValueCallback<Boolean>() {
-            @Override
-            public void onReceiveValue(Boolean aBoolean) {
-                reportDone(done, "");
-                cookieManager.flush();
+            CookieManager cookieManager = CookieManager.getInstance();
+            if (cookieManager == null) {
+                reportDone(done, "Failed to get CookieManager instance");
+                return;
             }
-        });
+
+            cookieManager.removeAllCookies(new ValueCallback<Boolean>() {
+                @Override
+                public void onReceiveValue(Boolean aBoolean) {
+                    reportDone(done, "");
+                    cookieManager.flush();
+                }
+            });
+        } catch (Exception e) {
+            reportDone(done, "Failed to clear data: " + e.getMessage());
+        }
     }
 
     public void webview_navigate(String url) {
