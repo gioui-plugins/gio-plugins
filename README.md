@@ -1,7 +1,7 @@
 Gio-Plugins
 -------
 
-Compatible with Gio v0.9.1 (go get gioui.org@7bcb315ee174467d8e51c214ee434c41207cc718)
+Compatible with Gio v0.10.3
 
 > [!NOTE]
 > This package is not maintained by the Gio core team, and it is not part of the official Gio project. It is used
