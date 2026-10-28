@@ -76,33 +76,34 @@ CFTypeRef gioplugins_auth_createContextProvider(CFTypeRef view, uintptr_t id) {
 }
 
 uintptr_t gioplugins_auth_general_open(CFTypeRef contextProvider, char * url, char * scheme, uintptr_t id) {
-	NSURL * u = [NSURL URLWithString: [NSString stringWithUTF8String: url]];
-	NSString * s = [NSString stringWithUTF8String: scheme];
+    @autoreleasepool {
+        NSURL * u = [NSURL URLWithString: [NSString stringWithUTF8String: url]];
+        NSString * s = [NSString stringWithUTF8String: scheme];
+        free(url);
+        free(scheme);
 
-	ASWebAuthenticationSession * session = [[ASWebAuthenticationSession alloc] initWithURL:u callbackURLScheme:s completionHandler:^(NSURL *callbackURL, NSError *error) {
-		free(url);
-		free(scheme);
-
-        if (error == 0) {
-            auth_general_callback((char *) [callbackURL.absoluteString UTF8String], id);
-        } else {
-            if (error.domain == ASWebAuthenticationSessionErrorDomain) {
-                auth_report_error(error.code, id);
+        ASWebAuthenticationSession * session = [[ASWebAuthenticationSession alloc] initWithURL:u callbackURLScheme:s completionHandler:^(NSURL *callbackURL, NSError *error) {
+            if (error == 0) {
+                auth_general_callback((char *) [callbackURL.absoluteString UTF8String], id);
             } else {
-                auth_report_error(0, id);
+                if (error.domain == ASWebAuthenticationSessionErrorDomain) {
+                    auth_report_error(error.code, id);
+                } else {
+                    auth_report_error(0, id);
+                }
+            }
+        }];
+
+        session.presentationContextProvider = (__bridge GioPluginsAuthContextProvider *)contextProvider;
+        if (@available(iOS 13.4, *)) {
+            if (![session canStart]) {
+                return 1;
             }
         }
-    }];
+        [session start];
 
-    session.presentationContextProvider = (__bridge GioPluginsAuthContextProvider *)contextProvider;
-    if (@available(iOS 13.4, *)) {
-        if (![session canStart]) {
-            return 1;
-        }
+        return 0;
     }
-	[session start];
-
-	return 0;
 }
 
 CFTypeRef gioplugins_auth_apple_open(CFTypeRef contextProvider) {

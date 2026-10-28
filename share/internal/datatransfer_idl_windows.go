@@ -169,6 +169,7 @@ func (i *IDataPackage) SetText(s string) error {
 	if err != nil {
 		return err
 	}
+	defer ole.DeleteHString(sw)
 	return call(i.VTBL.SetText, uintptr(unsafe.Pointer(i)), uintptr(sw))
 }
 
@@ -177,6 +178,7 @@ func (i *IDataPackage) SetHtmlFormat(s string) error {
 	if err != nil {
 		return err
 	}
+	defer ole.DeleteHString(sw)
 	return call(i.VTBL.SetHtmlFormat, uintptr(unsafe.Pointer(i)), uintptr(sw))
 }
 

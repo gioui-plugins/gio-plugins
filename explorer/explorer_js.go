@@ -112,17 +112,16 @@ func await(value js.Value) ([]js.Value, bool) {
 
 	var s, f js.Func
 	s = js.FuncOf(func(this js.Value, args []js.Value) any {
-		defer s.Release()
-
 		res <- args
 		return nil
 	})
 	f = js.FuncOf(func(this js.Value, args []js.Value) any {
-		defer f.Release()
-
 		res <- nil
 		return nil
 	})
+
+	defer s.Release()
+	defer f.Release()
 
 	go value.Call("then", s).Call("catch", f)
 
